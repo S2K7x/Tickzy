@@ -3,6 +3,7 @@ import { readdir, readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 import pg from "pg";
+import { getConstructionPlans } from "pg-boss";
 
 export const MIGRATIONS_DIR = fileURLToPath(new URL("../migrations/", import.meta.url));
 const LOCK_KEY = 727_001; // arbitrary constant for pg_advisory_lock
@@ -47,9 +48,38 @@ export async function migrate(ownerUrl: string, dir: string = MIGRATIONS_DIR): P
         throw new Error(`Migration ${file} failed: ${(err as Error).message}`, { cause: err });
       }
     }
+    await installJobQueueSchema(client);
     return result;
   } finally {
     await client.query("SELECT pg_advisory_unlock($1)", [LOCK_KEY]).catch(() => undefined);
     await client.end();
   }
+}
+
+/**
+ * Installs pg-boss's schema with the owner role, then gives every object in it to `tickzy_app` (ADR-020).
+ * The runtime role therefore never needs CREATE on the database, yet can create per-queue partitions
+ * and run pg-boss's own version upgrades inside the schema it owns.
+ */
+export async function installJobQueueSchema(client: pg.Client): Promise<void> {
+  const { rows } = await client.query<{ installed: string | null }>("SELECT to_regclass('pgboss.version')::text AS installed");
+  if (!rows[0]?.installed) await client.query(getConstructionPlans("pgboss"));
+  await client.query(`DO $$
+    DECLARE r record;
+    BEGIN
+      EXECUTE 'ALTER SCHEMA pgboss OWNER TO tickzy_app';
+      FOR r IN SELECT c.relname, c.relkind FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
+               WHERE n.nspname = 'pgboss' AND c.relkind IN ('r', 'p', 'S', 'v') LOOP
+        EXECUTE format('ALTER %s pgboss.%I OWNER TO tickzy_app',
+          CASE r.relkind WHEN 'S' THEN 'SEQUENCE' WHEN 'v' THEN 'VIEW' ELSE 'TABLE' END, r.relname);
+      END LOOP;
+      FOR r IN SELECT t.typname FROM pg_type t JOIN pg_namespace n ON n.oid = t.typnamespace
+               WHERE n.nspname = 'pgboss' AND t.typtype IN ('e', 'd') LOOP
+        EXECUTE format('ALTER TYPE pgboss.%I OWNER TO tickzy_app', r.typname);
+      END LOOP;
+      FOR r IN SELECT p.oid::regprocedure AS sig FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
+               WHERE n.nspname = 'pgboss' LOOP
+        EXECUTE format('ALTER ROUTINE %s OWNER TO tickzy_app', r.sig);
+      END LOOP;
+    END $$`);
 }

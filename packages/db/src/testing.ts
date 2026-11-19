@@ -2,7 +2,9 @@ import pg from "pg";
 import { migrate } from "./migrate.ts";
 import { createDatabase, type Database } from "./client.ts";
 
-export const TEST_APP_PASSWORD = "tickzy_app_test";
+// Roles are cluster-wide: use the same local password as .env.example so running tests never breaks a dev server
+// sharing the same Postgres cluster. Override with TICKZY_APP_PASSWORD.
+export const TEST_APP_PASSWORD = process.env.TICKZY_APP_PASSWORD ?? "tickzy_app";
 
 export function testOwnerUrl(): string {
   return process.env.DATABASE_OWNER_URL ?? "postgres://tickzy_owner:tickzy@localhost:5432/tickzy_test";
