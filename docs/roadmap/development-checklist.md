@@ -2,20 +2,20 @@
 
 > Live status of implementation tasks is tracked in `CURRENT-STATE.md` and `docs/blueprint/backlog.md` (task IDs). Gates below were completed on 2026-11-19 by the approved strategy, architecture (ADR-001…019) and blueprint.
 
-- **Date:** 2026-11-19 · Nothing here is started; research phase only.
+- **Date:** 2026-11-19 · ADR numbers below refer to `docs/architecture/adr.md`.
 
 ## Before writing application code
 - [ ] Design-partner interviews done; ICP confirmed
 - [x] ADR-001 system shape (modular monolith) accepted
 - [x] ADR-002 language/runtime accepted
-- [x] ADR-003 tenancy model (shared schema + RLS + tenant directory) accepted
-- [x] ADR-004 (as ADR-003 API style in final numbering) API style & versioning accepted
-- [ ] ADR-005 jobs/workflows engine accepted (after S3)
-- [ ] ADR-006 realtime approach accepted (after S2)
-- [ ] ADR-007 frontend frameworks accepted (after S2)
-- [x] ADR-008 cloud (final: ADR-016)/regions accepted
-- [x] ADR-009 auth (final: ADR-006)/SSO vendor accepted
-- [ ] ADR-010 LLM gateway & provider policy accepted (after S5)
+- [x] ADR-003 API style & versioning accepted
+- [x] ADR-004 database (Postgres/Neon) accepted · ADR-005 tenancy accepted
+- [x] ADR-007 jobs (pg-boss behind JobQueue) accepted — S3 spike still to confirm SLA timer scale
+- [x] ADR-008 realtime (WS + NOTIFY) accepted
+- [x] ADR-009 frontend (Vite SPA) accepted
+- [x] ADR-016 hosting/regions accepted
+- [x] ADR-006 auth/SSO accepted (re-confirm at T-101)
+- [x] ADR-013 LLM gateway accepted · [ ] S5 retrieval bake-off
 - [ ] Legal review: Slack API ToS, DPA, sub-processors (S7)
 - [ ] Security baseline policy (SOC 2 controls mapping)
 
