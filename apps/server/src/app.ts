@@ -8,6 +8,7 @@ import type { Config } from "./config.ts";
 import { registerErrorHandling } from "./http/errors.ts";
 import { registerAuth } from "./http/auth.ts";
 import { workspaceRoutes } from "./modules/workspaces/routes.ts";
+import { auditRoutes } from "./modules/audit/routes.ts";
 
 export interface AppDeps {
   config: Pick<Config, "LOG_LEVEL" | "AUTH_DEV_MODE">;
@@ -52,5 +53,6 @@ export async function buildApp({ config, database }: AppDeps): Promise<FastifyIn
   app.get("/v1/openapi.json", { schema: { hide: true } }, async () => app.swagger());
 
   await app.register(workspaceRoutes(database.db));
+  await app.register(auditRoutes(database.db));
   return app;
 }

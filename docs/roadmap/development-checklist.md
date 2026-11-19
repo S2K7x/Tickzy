@@ -22,9 +22,9 @@
 ## Phase 0 foundations
 - [x] Monorepo, lint/format/typecheck (T-001) · [ ] CI verified on GitHub (T-011 written) · [ ] preview envs
 - [ ] IaC for US + EU cells, secrets/KMS, static egress IPs
-- [ ] Auth, workspaces, members, roles, API tokens
+- [x] Workspaces, roles/permissions, audit log API (T-007, T-008, T-104) · [ ] auth, members, API tokens (T-101–T-103)
 - [x] Postgres schema conventions, RLS, migrations, ID scheme (T-002–T-004)
-- [ ] Outbox + domain event bus + job system
+- [x] Outbox + domain event bus + job system (T-009)
 - [x] OpenAPI generation (T-012) · [ ] SDK generation
 - [ ] OpenTelemetry + Sentry + structured logging
 - [ ] Eval harness skeleton (datasets, graders, reports)
