@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Tickzy mobile — Overview</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="{{rootStyle}}">
+  <header style="display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 16px 16px 8px;">
+    <div style="display: flex; align-items: center; gap: 10px;">
+      <svg width="30" height="30" viewBox="0 0 32 32" role="img" aria-label="Tickzy">
+        <rect x="0" y="0" width="32" height="32" rx="9" style="fill: var(--accent);"></rect>
+        <path d="M8 11.5a1.5 1.5 0 0 1 1.5-1.5h13a1.5 1.5 0 0 1 1.5 1.5v2a2.5 2.5 0 0 0 0 5v2a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 8 20.5v-2a2.5 2.5 0 0 0 0-5z" fill="#FFFFFF"></path>
+      </svg>
+      <div style="display: flex; flex-direction: column;">
+        <span style="font-size: 12px; color: var(--muted);">Acme Cloud</span>
+        <h1 style="margin: 0; font-size: 20px; font-weight: 600;">Overview</h1>
+      </div>
+    </div>
+    <div style="display: flex; gap: 8px;">
+      <button type="button" onClick="{{toggle}}" aria-label="Switch theme" style="width: 44px; height: 44px; border-radius: 12px; border: 1px solid var(--border); background: var(--surface); color: var(--text); display: inline-flex; align-items: center; justify-content: center;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"></path></svg>
+      </button>
+      <button type="button" aria-label="Search" style="width: 44px; height: 44px; border-radius: 12px; border: 1px solid var(--border); background: var(--surface); color: var(--text); display: inline-flex; align-items: center; justify-content: center;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+      </button>
+    </div>
+  </header>
+
+  <main style="flex: 1 1 auto; overflow-y: auto; padding: 8px 16px 16px; display: flex; flex-direction: column; gap: 12px;">
+    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px;">
+      <sc-for list="{{kpis}}" as="k" hint-placeholder-count="4">
+        <section style="background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 6px;">
+          <h2 style="margin: 0; font-size: 12px; font-weight: 500; color: var(--muted);">{{k.label}}</h2>
+          <span style="font-size: 24px; font-weight: 600; letter-spacing: -0.02em;">{{k.value}}</span>
+          <span style="{{k.chipStyle}}">{{k.delta}}</span>
+        </section>
+      </sc-for>
+    </div>
+
+    <section style="background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 10px;">
+      <div style="display: flex; align-items: center; justify-content: space-between;">
+        <h2 style="margin: 0; font-size: 15px; font-weight: 600;">SLA at risk</h2>
+        <a href="MobileInbox.dc.html" style="font-size: 13px; font-weight: 600; color: var(--accent-text); text-decoration: none; min-height: 44px; display: inline-flex; align-items: center;">See all</a>
+      </div>
+      <sc-for list="{{risks}}" as="r" hint-placeholder-count="3">
+        <a href="MobileIssue.dc.html" style="display: flex; align-items: center; gap: 10px; padding: 10px 0; border-top: 1px solid var(--border); text-decoration: none; color: var(--text);">
+          <div style="flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px;">
+            <span style="font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{r.title}}</span>
+            <span style="font-size: 12px; color: var(--muted);">{{r.account}} · {{r.channel}}</span>
+          </div>
+          <span style="{{r.dueStyle}}">{{r.due}}</span>
+        </a>
+      </sc-for>
+    </section>
+
+    <section style="background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 12px;">
+      <h2 style="margin: 0; font-size: 15px; font-weight: 600;">Volume by channel · this week</h2>
+      <div style="display: flex; height: 14px; border-radius: 7px; overflow: hidden; gap: 2px;">
+        <div style="width: 46%; background: var(--c1);"></div>
+        <div style="width: 27%; background: var(--c2);"></div>
+        <div style="width: 11%; background: var(--c3);"></div>
+        <div style="width: 10%; background: var(--c4);"></div>
+        <div style="width: 6%; background: var(--c5);"></div>
+      </div>
+      <ul style="list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 12px; font-size: 12px; color: var(--muted);">
+        <li style="display: flex; align-items: center; gap: 6px;"><span style="width: 8px; height: 8px; border-radius: 2px; background: var(--c1);"></span>Slack 46%</li>
+        <li style="display: flex; align-items: center; gap: 6px;"><span style="width: 8px; height: 8px; border-radius: 2px; background: var(--c2);"></span>Email 27%</li>
+        <li style="display: flex; align-items: center; gap: 6px;"><span style="width: 8px; height: 8px; border-radius: 2px; background: var(--c3);"></span>Teams 11%</li>
+        <li style="display: flex; align-items: center; gap: 6px;"><span style="width: 8px; height: 8px; border-radius: 2px; background: var(--c4);"></span>Chat 10%</li>
+      </ul>
+    </section>
+
+    <section style="background: var(--accent-soft); border: 1px solid var(--accent); border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 6px;">
+      <h2 style="margin: 0; font-size: 15px; font-weight: 600; color: var(--accent-text);">AI agent · 38% resolved</h2>
+      <p style="margin: 0; font-size: 13px; color: var(--text);">2 approvals waiting: merge TKZ-4810 into TKZ-4809, close TKZ-4799.</p>
+      <a href="#" style="align-self: flex-start; min-height: 44px; display: inline-flex; align-items: center; font-size: 13px; font-weight: 600; color: var(--accent-text); text-decoration: none;">Review approvals</a>
+    </section>
+  </main>
+
+  <nav aria-label="Primary" style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); border-top: 1px solid var(--border); background: var(--surface); padding: 6px 4px 18px;">
+    <a href="MobileOverview.dc.html" aria-current="page" style="min-height: 52px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; font-size: 11px; font-weight: 600; color: var(--accent-text); text-decoration: none;">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="1.5"></rect><rect x="14" y="3" width="7" height="5" rx="1.5"></rect><rect x="14" y="12" width="7" height="9" rx="1.5"></rect><rect x="3" y="16" width="7" height="5" rx="1.5"></rect></svg>Home</a>
+    <a href="MobileInbox.dc.html" style="min-height: 52px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; font-size: 11px; font-weight: 500; color: var(--muted); text-decoration: none;">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 13h5l2 3h4l2-3h5"></path><path d="M5.5 5h13L21 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-6z"></path></svg>Inbox</a>
+    <a href="#" style="min-height: 52px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; font-size: 11px; font-weight: 500; color: var(--muted); text-decoration: none;">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"></circle><path d="M4 21a8 8 0 0 1 16 0"></path></svg>Mine</a>
+    <a href="#" style="min-height: 52px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; font-size: 11px; font-weight: 500; color: var(--muted); text-decoration: none;">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21V7l6-4 6 4v14"></path><path d="M15 21V11h6v10M3 21h18"></path></svg>Accounts</a>
+    <a href="#" style="min-height: 52px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; font-size: 11px; font-weight: 500; color: var(--muted); text-decoration: none;">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"></path></svg>More</a>
+  </nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  tokens(dark) {
+    var a = dark ? '#6B60EA' : '#5347CE';
+    var t = dark ? { bg: '#0B0D14', surface: '#13161F', 'surface-2': '#1A1E2A', border: '#262B38', text: '#ECEEF5', muted: '#A0A7B8', 'accent-soft': '#25224A', 'accent-text': '#B9B3FF', 'success-bg': '#0F2E2B', success: '#4FD8C6', 'danger-bg': '#3A1720', danger: '#FF8E9C', 'warn-bg': '#3A2A10', warn: '#F5B85A', c1: a, c2: '#9A90FF', c3: '#5AA3FF', c4: '#1FC2C1', c5: '#2E8F8E' }
+      : { bg: '#F3F5F8', surface: '#FFFFFF', 'surface-2': '#F6F7FA', border: '#E5E7ED', text: '#111427', muted: '#5B6273', 'accent-soft': '#EEEDFB', 'accent-text': '#4A3FC0', 'success-bg': '#E2F7F3', success: '#0B7468', 'danger-bg': '#FDECEE', danger: '#B4233A', 'warn-bg': '#FFF3DE', warn: '#8A5300', c1: a, c2: '#887CFD', c3: '#4896FE', c4: '#16C8C7', c5: '#8EE6E5' };
+    var s = '--accent:' + a + ';';
+    for (var k in t) s += '--' + k + ':' + t[k] + ';';
+    return s;
+  }
+  renderVals() {
+    var st = this.state || {};
+    var self = this;
+    var dark = st.dark !== undefined ? st.dark : this.props.theme === 'dark';
+    function chip(tone) {
+      var c = tone === 'danger' ? ['var(--danger-bg)', 'var(--danger)'] : tone === 'warn' ? ['var(--warn-bg)', 'var(--warn)'] : ['var(--success-bg)', 'var(--success)'];
+      return 'align-self:flex-start;display:inline-flex;align-items:center;height:22px;padding:0 7px;border-radius:6px;font-size:12px;font-weight:700;white-space:nowrap;background:' + c[0] + ';color:' + c[1] + ';';
+    }
+    return {
+      rootStyle: this.tokens(dark) + 'width:390px;height:844px;box-sizing:border-box;display:flex;flex-direction:column;background:var(--bg);color:var(--text);font-family:Inter,ui-sans-serif,system-ui,sans-serif;overflow:hidden;',
+      toggle: function () { self.setState({ dark: !dark }); },
+      kpis: [
+        { label: 'Open issues', value: '128', delta: '12% ↑', chipStyle: chip('danger') },
+        { label: 'First response', value: '14m', delta: '31% ↓', chipStyle: chip('ok') },
+        { label: 'SLA met', value: '96.4%', delta: '2.1% ↑', chipStyle: chip('ok') },
+        { label: 'AI resolved', value: '38%', delta: '8.3% ↑', chipStyle: chip('ok') }
+      ],
+      risks: [
+        { title: 'Webhook deliveries failing after key rotation', account: 'Northwind Labs', channel: 'Slack', due: '12m', dueStyle: chip('danger') },
+        { title: 'SSO login loop on EU workspace', account: 'Helios Health', channel: 'Email', due: '28m', dueStyle: chip('danger') },
+        { title: 'Invoice shows duplicate seats', account: 'Brightwave', channel: 'Portal', due: '1h 40m', dueStyle: chip('warn') }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

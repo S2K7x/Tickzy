@@ -13,13 +13,21 @@
     "AgentDark.dc.html": {"x": 3040, "y": 1600, "w": 1440, "h": 1100, "title": "AI Agent — Dark", "expand": "fill", "is_interactive": true},
     "StyleGuide.dc.html": {"x": 0, "y": 3200, "w": 1440, "h": 1040, "title": "Style guide"},
     "Sidebar.dc.html": {"x": 1520, "y": 3200, "w": 248, "h": 960, "title": "Component — Sidebar"},
-    "Topbar.dc.html": {"x": 1848, "y": 3200, "w": 1192, "h": 72, "title": "Component — Top bar"}
+    "Topbar.dc.html": {"x": 1848, "y": 3200, "w": 1192, "h": 72, "title": "Component — Top bar"},
+    "MobileOverview.dc.html": {"x": 0, "y": 4840, "w": 390, "h": 844, "title": "Mobile Overview — Light", "is_interactive": true},
+    "MobileInbox.dc.html": {"x": 470, "y": 4840, "w": 390, "h": 844, "title": "Mobile Inbox — Light", "is_interactive": true},
+    "MobileIssue.dc.html": {"x": 940, "y": 4840, "w": 390, "h": 844, "title": "Mobile Issue — Light", "is_interactive": true},
+    "MobileOverviewDark.dc.html": {"x": 1490, "y": 4840, "w": 390, "h": 844, "title": "Mobile Overview — Dark", "is_interactive": true},
+    "MobileInboxDark.dc.html": {"x": 1960, "y": 4840, "w": 390, "h": 844, "title": "Mobile Inbox — Dark", "is_interactive": true},
+    "MobileIssueDark.dc.html": {"x": 2430, "y": 4840, "w": 390, "h": 844, "title": "Mobile Issue — Dark", "is_interactive": true}
   },
-  "order": ["Main.dc.html", "Inbox.dc.html", "Agent.dc.html", "MainDark.dc.html", "InboxDark.dc.html", "AgentDark.dc.html", "StyleGuide.dc.html", "Sidebar.dc.html", "Topbar.dc.html"],
+  "order": ["Main.dc.html", "Inbox.dc.html", "Agent.dc.html", "MainDark.dc.html", "InboxDark.dc.html", "AgentDark.dc.html", "StyleGuide.dc.html", "Sidebar.dc.html", "Topbar.dc.html", "MobileOverview.dc.html", "MobileInbox.dc.html", "MobileIssue.dc.html", "MobileOverviewDark.dc.html", "MobileInboxDark.dc.html", "MobileIssueDark.dc.html"],
   "notes": {
     "light": {"x": 0, "y": -300, "text": "Light mode", "kind": "title1", "maxW": 4480},
     "dark": {"x": 0, "y": 1300, "text": "Dark mode", "kind": "title1", "maxW": 4480},
-    "system": {"x": 0, "y": 2900, "text": "Design system & components", "kind": "title1", "maxW": 4480}
+    "system": {"x": 0, "y": 2900, "text": "Design system & components", "kind": "title1", "maxW": 4480},
+    "mobile": {"x": 0, "y": 4540, "text": "Mobile (390 px) — light and dark", "kind": "title1", "maxW": 2820},
+    "responsive": {"x": 2900, "y": 4840, "w": 420, "text": "Responsive rules\n• ≥1280: sidebar + 3-pane inbox\n• 1024–1279: sidebar collapses to icon rail; inbox details become a drawer\n• 768–1023: icon rail; inbox list + conversation; details drawer\n• <768: bottom tab bar (Home, Inbox, Mine, Accounts, More); one pane at a time: list → issue → details sheet\n• Touch targets ≥44 px on mobile\n• Composer pinned above the keyboard", "size": "m", "color": "purple"}
   },
   "designSystems": []
 }

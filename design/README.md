@@ -13,5 +13,6 @@ Screens (`canvas/`, Design Component `.dc.html` source):
 - `*Dark.dc.html` — the same screens in dark mode
 - `Sidebar.dc.html`, `Topbar.dc.html` — shared components
 - `StyleGuide.dc.html` — colors, theme tokens, type scale, components
+- `Mobile*.dc.html` — 390 px phone screens (overview, inbox, issue) in light and dark; responsive rules in `docs/ux/ux-spec.md` §2.6
 
 Tokens: see StyleGuide. Font: Inter (stand-in for SF Pro Display, which is not freely licensed for web).

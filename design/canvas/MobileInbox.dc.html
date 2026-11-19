@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Tickzy mobile — Inbox</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="{{rootStyle}}">
+  <header style="padding: 16px 16px 10px; display: flex; flex-direction: column; gap: 12px; background: var(--surface); border-bottom: 1px solid var(--border);">
+    <div style="display: flex; align-items: center; justify-content: space-between;">
+      <h1 style="margin: 0; font-size: 22px; font-weight: 600;">Inbox</h1>
+      <div style="display: flex; gap: 8px;">
+        <button type="button" aria-label="Filter" style="width: 44px; height: 44px; border-radius: 12px; border: 1px solid var(--border); background: var(--surface); color: var(--text); display: inline-flex; align-items: center; justify-content: center;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M7 12h10M10 18h4"></path></svg>
+        </button>
+        <button type="button" aria-label="New issue" style="width: 44px; height: 44px; border-radius: 12px; border: 0; background: var(--accent); color: #FFFFFF; display: inline-flex; align-items: center; justify-content: center;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>
+        </button>
+      </div>
+    </div>
+    <div role="tablist" aria-label="Queue views" style="display: flex; gap: 6px; overflow-x: auto;">
+      <sc-for list="{{tabs}}" as="t" hint-placeholder-count="4">
+        <button type="button" role="tab" aria-selected="{{t.selected}}" onClick="{{t.pick}}" style="{{t.style}}">{{t.label}} {{t.count}}</button>
+      </sc-for>
+    </div>
+  </header>
+
+  <ul style="list-style: none; margin: 0; padding: 0; flex: 1 1 auto; overflow-y: auto; background: var(--surface);">
+    <sc-for list="{{list}}" as="i" hint-placeholder-count="6">
+      <li style="border-bottom: 1px solid var(--border);">
+        <a href="MobileIssue.dc.html" style="display: flex; flex-direction: column; gap: 5px; padding: 14px 16px; text-decoration: none; color: var(--text);">
+          <span style="display: flex; align-items: center; gap: 8px;">
+            <span style="{{i.dot}}"></span>
+            <span style="flex: 1 1 auto; min-width: 0; font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{i.account}}</span>
+            <span style="{{i.slaStyle}}">{{i.sla}}</span>
+          </span>
+          <span style="font-size: 14px; font-weight: 500;">{{i.title}}</span>
+          <span style="font-size: 13px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{i.preview}}</span>
+          <span style="display: flex; gap: 6px; align-items: center; font-size: 12px; color: var(--muted);">
+            <span style="height: 22px; padding: 0 7px; border-radius: 6px; border: 1px solid var(--border); background: var(--surface-2); display: inline-flex; align-items: center; font-weight: 600;">{{i.channel}}</span>
+            <span style="{{i.statusStyle}}">{{i.status}}</span>
+          </span>
+        </a>
+      </li>
+    </sc-for>
+  </ul>
+
+  <nav aria-label="Primary" style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); border-top: 1px solid var(--border); background: var(--surface); padding: 6px 4px 18px;">
+    <a href="MobileOverview.dc.html" style="min-height: 52px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; font-size: 11px; font-weight: 500; color: var(--muted); text-decoration: none;">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="1.5"></rect><rect x="14" y="3" width="7" height="5" rx="1.5"></rect><rect x="14" y="12" width="7" height="9" rx="1.5"></rect><rect x="3" y="16" width="7" height="5" rx="1.5"></rect></svg>Home</a>
+    <a href="MobileInbox.dc.html" aria-current="page" style="min-height: 52px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; font-size: 11px; font-weight: 600; color: var(--accent-text); text-decoration: none;">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 13h5l2 3h4l2-3h5"></path><path d="M5.5 5h13L21 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-6z"></path></svg>Inbox</a>
+    <a href="#" style="min-height: 52px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; font-size: 11px; font-weight: 500; color: var(--muted); text-decoration: none;">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"></circle><path d="M4 21a8 8 0 0 1 16 0"></path></svg>Mine</a>
+    <a href="#" style="min-height: 52px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; font-size: 11px; font-weight: 500; color: var(--muted); text-decoration: none;">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21V7l6-4 6 4v14"></path><path d="M15 21V11h6v10M3 21h18"></path></svg>Accounts</a>
+    <a href="#" style="min-height: 52px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; font-size: 11px; font-weight: 500; color: var(--muted); text-decoration: none;">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"></path></svg>More</a>
+  </nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  tokens(dark) {
+    var a = dark ? '#6B60EA' : '#5347CE';
+    var t = dark ? { bg: '#0B0D14', surface: '#13161F', 'surface-2': '#1A1E2A', border: '#262B38', text: '#ECEEF5', muted: '#A0A7B8', 'accent-soft': '#25224A', 'accent-text': '#B9B3FF', 'success-bg': '#0F2E2B', success: '#4FD8C6', 'danger-bg': '#3A1720', danger: '#FF8E9C', 'warn-bg': '#3A2A10', warn: '#F5B85A' }
+      : { bg: '#F3F5F8', surface: '#FFFFFF', 'surface-2': '#F6F7FA', border: '#E5E7ED', text: '#111427', muted: '#5B6273', 'accent-soft': '#EEEDFB', 'accent-text': '#4A3FC0', 'success-bg': '#E2F7F3', success: '#0B7468', 'danger-bg': '#FDECEE', danger: '#B4233A', 'warn-bg': '#FFF3DE', warn: '#8A5300' };
+    var s = '--accent:' + a + ';';
+    for (var k in t) s += '--' + k + ':' + t[k] + ';';
+    return s;
+  }
+  renderVals() {
+    var st = this.state || {};
+    var self = this;
+    var dark = this.props.theme === 'dark';
+    var tab = st.tab || 'all';
+    function chip(tone) {
+      var m = { danger: ['var(--danger-bg)', 'var(--danger)'], warn: ['var(--warn-bg)', 'var(--warn)'], ok: ['var(--success-bg)', 'var(--success)'], ai: ['var(--accent-soft)', 'var(--accent-text)'], neutral: ['var(--surface-2)', 'var(--muted)'] };
+      var c = m[tone] || m.neutral;
+      return 'display:inline-flex;align-items:center;height:22px;padding:0 7px;border-radius:6px;font-size:12px;font-weight:700;white-space:nowrap;background:' + c[0] + ';color:' + c[1] + ';';
+    }
+    function dot(p) { var c = p === 'Urgent' ? 'var(--danger)' : p === 'High' ? '#E07B12' : 'var(--accent)'; return 'width:8px;height:8px;flex:0 0 8px;border-radius:50%;background:' + c + ';'; }
+    var issues = [
+      { b: 'us', account: 'Northwind Labs', title: 'Webhook deliveries failing after key rotation', preview: 'Since rotating our signing secret this morning…', channel: 'Slack', status: 'Waiting on us', tone: 'danger', sla: '12m', slaTone: 'danger', p: 'Urgent' },
+      { b: 'us', account: 'Helios Health', title: 'SSO login loop on EU workspace', preview: 'Users are redirected back to the login page…', channel: 'Email', status: 'Waiting on us', tone: 'danger', sla: '28m', slaTone: 'danger', p: 'High' },
+      { b: 'ai', account: 'Quanta AI', title: 'How do we export audit logs to Splunk?', preview: 'AI agent is replying…', channel: 'Slack', status: 'AI agent', tone: 'ai', sla: '2h', slaTone: 'neutral', p: 'Normal' },
+      { b: 'customer', account: 'Brightwave', title: 'Invoice shows duplicate seats', preview: 'Our November invoice lists 14 seats twice…', channel: 'Portal', status: 'On customer', tone: 'neutral', sla: '1h 40m', slaTone: 'warn', p: 'Normal' },
+      { b: 'us', account: 'Lumen', title: 'Feature request: per-project API keys', preview: 'Linked to ENG-2291 · planned', channel: 'Slack', status: 'Blocked', tone: 'warn', sla: '—', slaTone: 'neutral', p: 'Low' }
+    ];
+    var counts = { all: issues.length, us: 0, customer: 0, ai: 0 };
+    issues.forEach(function (i) { counts[i.b]++; });
+    var tabs = [['all', 'All'], ['us', 'On us'], ['customer', 'On customer'], ['ai', 'AI']].map(function (t) {
+      var on = t[0] === tab;
+      return { label: t[1], count: counts[t[0]], selected: on ? 'true' : 'false', pick: function () { self.setState({ tab: t[0] }); },
+        style: 'flex:0 0 auto;height:36px;padding:0 12px;border-radius:10px;font:inherit;font-size:13px;font-weight:600;white-space:nowrap;' + (on ? 'border:0;background:var(--text);color:var(--surface);' : 'border:1px solid var(--border);background:var(--surface);color:var(--muted);') };
+    });
+    var list = issues.filter(function (i) { return tab === 'all' || i.b === tab; }).map(function (i) {
+      return Object.assign({}, i, { dot: dot(i.p), slaStyle: chip(i.slaTone), statusStyle: chip(i.tone) });
+    });
+    return {
+      rootStyle: this.tokens(dark) + 'width:390px;height:844px;box-sizing:border-box;display:flex;flex-direction:column;background:var(--bg);color:var(--text);font-family:Inter,ui-sans-serif,system-ui,sans-serif;overflow:hidden;',
+      tabs: tabs, list: list
+    };
+  }
+}
+</script>
+</body>
+</html>
