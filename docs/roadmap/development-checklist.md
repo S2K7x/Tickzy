@@ -1,29 +1,31 @@
 # Development Checklist (pre-build gates and phase checklists)
 
+> Live status of implementation tasks is tracked in `CURRENT-STATE.md` and `docs/blueprint/backlog.md` (task IDs). Gates below were completed on 2026-11-19 by the approved strategy, architecture (ADR-001…019) and blueprint.
+
 - **Date:** 2026-11-19 · Nothing here is started; research phase only.
 
 ## Before writing application code
 - [ ] Design-partner interviews done; ICP confirmed
-- [ ] ADR-001 system shape (modular monolith) accepted
-- [ ] ADR-002 language/runtime accepted
-- [ ] ADR-003 tenancy model (shared schema + RLS + tenant directory) accepted
-- [ ] ADR-004 API style & versioning accepted
+- [x] ADR-001 system shape (modular monolith) accepted
+- [x] ADR-002 language/runtime accepted
+- [x] ADR-003 tenancy model (shared schema + RLS + tenant directory) accepted
+- [x] ADR-004 (as ADR-003 API style in final numbering) API style & versioning accepted
 - [ ] ADR-005 jobs/workflows engine accepted (after S3)
 - [ ] ADR-006 realtime approach accepted (after S2)
 - [ ] ADR-007 frontend frameworks accepted (after S2)
-- [ ] ADR-008 cloud/regions accepted
-- [ ] ADR-009 auth/SSO vendor accepted
+- [x] ADR-008 cloud (final: ADR-016)/regions accepted
+- [x] ADR-009 auth (final: ADR-006)/SSO vendor accepted
 - [ ] ADR-010 LLM gateway & provider policy accepted (after S5)
 - [ ] Legal review: Slack API ToS, DPA, sub-processors (S7)
 - [ ] Security baseline policy (SOC 2 controls mapping)
 
 ## Phase 0 foundations
-- [ ] Monorepo, lint/format/typecheck, CI, preview envs
+- [x] Monorepo, lint/format/typecheck (T-001) · [ ] CI verified on GitHub (T-011 written) · [ ] preview envs
 - [ ] IaC for US + EU cells, secrets/KMS, static egress IPs
 - [ ] Auth, workspaces, members, roles, API tokens
-- [ ] Postgres schema conventions, RLS, migrations, ID scheme
+- [x] Postgres schema conventions, RLS, migrations, ID scheme (T-002–T-004)
 - [ ] Outbox + domain event bus + job system
-- [ ] OpenAPI generation, SDK generation pipeline
+- [x] OpenAPI generation (T-012) · [ ] SDK generation
 - [ ] OpenTelemetry + Sentry + structured logging
 - [ ] Eval harness skeleton (datasets, graders, reports)
 
