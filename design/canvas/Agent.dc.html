@@ -1,0 +1,322 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Tickzy — AI agent</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="{{rootStyle}}">
+  <div style="flex: 1 1 248px; display: flex; min-width: 0;">
+    <dc-import name="Sidebar" active="agent" theme="{{themeName}}" accent="{{accent}}" hint-size="100%,960px"></dc-import>
+  </div>
+  <div style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column;">
+    <dc-import name="Topbar" theme="{{themeName}}" accent="{{accent}}" on-toggle-theme="{{toggleTheme}}" hint-size="100%,72px"></dc-import>
+    <main style="box-sizing: border-box; width: 100%; max-width: 1280px; padding: 28px 32px 40px; display: flex; flex-direction: column; gap: 20px;">
+
+      <div style="display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 12px;">
+        <div style="display: flex; align-items: center; gap: 14px;">
+          <span style="width: 48px; height: 48px; border-radius: 14px; background: var(--accent); color: #FFFFFF; display: inline-flex; align-items: center; justify-content: center;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.8 4.6L18 9l-4.2 1.4L12 15l-1.8-4.6L6 9l4.2-1.4z"></path><path d="M19 15l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z"></path></svg>
+          </span>
+          <div style="display: flex; flex-direction: column; gap: 4px;">
+            <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px;">
+              <h1 style="margin: 0; font-size: 24px; line-height: 32px; font-weight: 600; letter-spacing: -0.01em;">AI agent</h1>
+              <span style="height: 24px; padding: 0 9px; border-radius: 7px; background: var(--success-bg); color: var(--success); font-size: 12px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px;"><span style="width: 6px; height: 6px; border-radius: 50%; background: var(--success);"></span>{{liveCount}} live · {{shadowCount}} shadow</span>
+            </div>
+            <p style="margin: 0; font-size: 14px; color: var(--muted);">Version 14 · answers from your docs and resolved issues, hands off when unsure.</p>
+          </div>
+        </div>
+        <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+          <button type="button" style="display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 14px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface); color: var(--text); font: inherit; font-size: 13px; font-weight: 500;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"></path><path d="M3 3v5h5M12 7v5l3 2"></path></svg>
+            Run backtest
+          </button>
+          <button type="button" style="display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 14px; border-radius: 10px; border: 0; background: var(--accent); color: #FFFFFF; font: inherit; font-size: 13px; font-weight: 600;">Publish v15 draft</button>
+        </div>
+      </div>
+
+      <div role="tablist" aria-label="Agent sections" style="display: flex; flex-wrap: wrap; gap: 4px; border-bottom: 1px solid var(--border);">
+        <sc-for list="{{tabs}}" as="t" hint-placeholder-count="5">
+          <button type="button" role="tab" aria-selected="{{t.selected}}" onClick="{{t.pick}}" style="{{t.style}}">{{t.label}}</button>
+        </sc-for>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px;">
+        <sc-for list="{{kpis}}" as="k" hint-placeholder-count="4">
+          <section style="background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 18px 20px; display: flex; flex-direction: column; gap: 10px;">
+            <h2 style="margin: 0; font-size: 14px; font-weight: 500;">{{k.label}}</h2>
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span style="font-size: 28px; line-height: 34px; font-weight: 600; letter-spacing: -0.02em;">{{k.value}}</span>
+              <span style="{{k.chipStyle}}">{{k.delta}}</span>
+            </div>
+            <p style="margin: 0; font-size: 12px; color: var(--muted);">{{k.note}}</p>
+          </section>
+        </sc-for>
+      </div>
+
+      <div style="display: flex; flex-wrap: wrap; gap: 16px;">
+        <section style="flex: 2 1 560px; min-width: 0; background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 20px 20px 8px; display: flex; flex-direction: column; gap: 12px;">
+          <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px;">
+            <div style="display: flex; flex-direction: column; gap: 4px;">
+              <h2 style="margin: 0; font-size: 15px; font-weight: 600;">Where the agent works</h2>
+              <p style="margin: 0; font-size: 13px; color: var(--muted);">Shadow mode drafts privately on live issues; nothing reaches customers.</p>
+            </div>
+          </div>
+          <div style="overflow-x: auto;">
+            <table style="width: 100%; min-width: 620px; border-collapse: collapse; font-size: 13px;">
+              <thead>
+                <tr style="background: var(--surface-2);">
+                  <th scope="col" style="text-align: left; padding: 10px 12px; font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); border-radius: 8px 0 0 8px;">Queue</th>
+                  <th scope="col" style="text-align: left; padding: 10px 12px; font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted);">Mode</th>
+                  <th scope="col" style="text-align: left; padding: 10px 12px; font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted);">Resolved</th>
+                  <th scope="col" style="text-align: left; padding: 10px 12px; font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted);">Handed off</th>
+                  <th scope="col" style="text-align: right; padding: 10px 12px; font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); border-radius: 0 8px 8px 0;">Live</th>
+                </tr>
+              </thead>
+              <tbody>
+                <sc-for list="{{queues}}" as="q" hint-placeholder-count="5">
+                  <tr style="border-bottom: 1px solid var(--border);">
+                    <td style="padding: 12px;">
+                      <div style="display: flex; flex-direction: column; gap: 3px;">
+                        <span style="font-weight: 600;">{{q.name}}</span>
+                        <span style="font-size: 12px; color: var(--muted);">{{q.scope}}</span>
+                      </div>
+                    </td>
+                    <td style="padding: 12px;"><span style="{{q.modeStyle}}">{{q.mode}}</span></td>
+                    <td style="padding: 12px;">
+                      <div style="display: flex; align-items: center; gap: 8px;">
+                        <div style="width: 72px; height: 6px; border-radius: 3px; background: var(--track);"><div style="{{q.barStyle}}"></div></div>
+                        <span style="font-weight: 600;">{{q.resolved}}</span>
+                      </div>
+                    </td>
+                    <td style="padding: 12px; color: var(--muted);">{{q.handoff}}</td>
+                    <td style="padding: 12px; text-align: right;">
+                      <button type="button" role="switch" aria-checked="{{q.checked}}" aria-label="{{q.switchLabel}}" onClick="{{q.toggle}}" style="{{q.trackStyle}}">
+                        <span style="{{q.knobStyle}}"></span>
+                      </button>
+                    </td>
+                  </tr>
+                </sc-for>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section style="flex: 1 1 320px; min-width: 0; background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 20px; display: flex; flex-direction: column; gap: 14px;">
+          <h2 style="margin: 0; font-size: 15px; font-weight: 600;">Spend &amp; limits</h2>
+          <div style="display: flex; align-items: baseline; gap: 8px;">
+            <span style="font-size: 28px; font-weight: 600; letter-spacing: -0.02em;">$41.20</span>
+            <span style="font-size: 13px; color: var(--muted);">of $200 monthly cap</span>
+          </div>
+          <div style="height: 8px; border-radius: 4px; background: var(--track);"><div style="width: 21%; height: 8px; border-radius: 4px; background: var(--accent);"></div></div>
+          <dl style="margin: 0; display: flex; flex-direction: column; gap: 8px; font-size: 13px;">
+            <div style="display: flex; justify-content: space-between;"><dt style="color: var(--muted);">Cost per resolution</dt><dd style="margin: 0; font-weight: 600;">$0.06</dd></div>
+            <div style="display: flex; justify-content: space-between;"><dt style="color: var(--muted);">When the cap is reached</dt><dd style="margin: 0; font-weight: 600;">Hand off to team</dd></div>
+            <div style="display: flex; justify-content: space-between;"><dt style="color: var(--muted);">Per reply budget</dt><dd style="margin: 0; font-weight: 600;">6 steps · 45s</dd></div>
+          </dl>
+          <div style="display: flex; flex-direction: column; gap: 8px; padding-top: 12px; border-top: 1px solid var(--border);">
+            <span style="font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted);">Model routing</span>
+            <div style="display: flex; justify-content: space-between; font-size: 13px;"><span>Triage &amp; summaries</span><span style="color: var(--muted);">Fast model</span></div>
+            <div style="display: flex; justify-content: space-between; font-size: 13px;"><span>Customer answers</span><span style="color: var(--muted);">Balanced model</span></div>
+            <div style="display: flex; justify-content: space-between; font-size: 13px;"><span>Investigations</span><span style="color: var(--muted);">Advanced model</span></div>
+            <div style="display: flex; justify-content: space-between; font-size: 13px;"><span>Your own API key</span><a href="#" style="color: var(--accent-text); font-weight: 600; text-decoration: none;">Connect</a></div>
+          </div>
+        </section>
+      </div>
+
+      <div style="display: flex; flex-wrap: wrap; gap: 16px;">
+        <section style="flex: 2 1 560px; min-width: 0; background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 20px; display: flex; flex-direction: column; gap: 16px;">
+          <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px;">
+            <div style="display: flex; flex-direction: column; gap: 4px;">
+              <h2 style="margin: 0; font-size: 15px; font-weight: 600;">Backtest · v15 draft vs v14 live</h2>
+              <p style="margin: 0; font-size: 13px; color: var(--muted);">250 past issues replayed · no customer was messaged · graded with your QA rubric</p>
+            </div>
+            <span style="height: 24px; padding: 0 9px; border-radius: 7px; background: var(--success-bg); color: var(--success); font-size: 12px; font-weight: 700; display: inline-flex; align-items: center;">Ready to publish</span>
+          </div>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px;">
+            <sc-for list="{{compare}}" as="cmp" hint-placeholder-count="3">
+              <div style="display: flex; flex-direction: column; gap: 8px;">
+                <span style="font-size: 13px; color: var(--muted);">{{cmp.label}}</span>
+                <div style="display: flex; align-items: center; gap: 8px; font-size: 12px;">
+                  <span style="width: 54px; color: var(--muted);">v15</span>
+                  <div style="flex: 1 1 auto; height: 10px; border-radius: 5px; background: var(--track);"><div style="{{cmp.newBar}}"></div></div>
+                  <span style="width: 40px; text-align: right; font-weight: 700;">{{cmp.newVal}}</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px; font-size: 12px;">
+                  <span style="width: 54px; color: var(--muted);">v14</span>
+                  <div style="flex: 1 1 auto; height: 10px; border-radius: 5px; background: var(--track);"><div style="{{cmp.oldBar}}"></div></div>
+                  <span style="width: 40px; text-align: right; font-weight: 600; color: var(--muted);">{{cmp.oldVal}}</span>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+          <div style="overflow-x: auto;">
+            <table style="width: 100%; min-width: 600px; border-collapse: collapse; font-size: 13px;">
+              <thead>
+                <tr style="border-bottom: 1px solid var(--border);">
+                  <th scope="col" style="text-align: left; padding: 8px 4px; font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted);">Past issue</th>
+                  <th scope="col" style="text-align: left; padding: 8px 4px; font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted);">Agent did</th>
+                  <th scope="col" style="text-align: left; padding: 8px 4px; font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted);">Grade</th>
+                  <th scope="col" style="text-align: right; padding: 8px 4px; font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted);">Review</th>
+                </tr>
+              </thead>
+              <tbody>
+                <sc-for list="{{samples}}" as="smp" hint-placeholder-count="4">
+                  <tr style="border-bottom: 1px solid var(--border);">
+                    <td style="padding: 10px 4px;">
+                      <div style="display: flex; flex-direction: column; gap: 2px;"><span style="font-weight: 500;">{{smp.title}}</span><span style="font-size: 12px; color: var(--muted);">{{smp.meta}}</span></div>
+                    </td>
+                    <td style="padding: 10px 4px;"><span style="{{smp.didStyle}}">{{smp.did}}</span></td>
+                    <td style="padding: 10px 4px;"><span style="{{smp.gradeStyle}}">{{smp.grade}}</span></td>
+                    <td style="padding: 10px 4px; text-align: right;"><a href="#" style="color: var(--accent-text); font-weight: 600; text-decoration: none;">Open</a></td>
+                  </tr>
+                </sc-for>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <div style="flex: 1 1 320px; min-width: 0; display: flex; flex-direction: column; gap: 16px;">
+          <section style="background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 20px; display: flex; flex-direction: column; gap: 12px;">
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+              <h2 style="margin: 0; font-size: 15px; font-weight: 600;">Hand off to a person when</h2>
+              <a href="#" style="font-size: 13px; color: var(--accent-text); font-weight: 600; text-decoration: none;">Edit</a>
+            </div>
+            <ul style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px;">
+              <sc-for list="{{rules}}" as="rule" hint-placeholder-count="6">
+                <li style="display: flex; align-items: flex-start; gap: 10px; font-size: 13px;">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: 0 0 16px; margin-top: 2px; color: var(--success);"><path d="m5 12 5 5L20 7"></path></svg>
+                  <span style="display: flex; flex-direction: column; gap: 2px;"><span style="font-weight: 500;">{{rule.when}}</span><span style="font-size: 12px; color: var(--muted);">{{rule.then}}</span></span>
+                </li>
+              </sc-for>
+            </ul>
+          </section>
+
+          <section style="background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 20px; display: flex; flex-direction: column; gap: 10px;">
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+              <h2 style="margin: 0; font-size: 15px; font-weight: 600;">Knowledge gaps</h2>
+              <span style="height: 22px; padding: 0 8px; border-radius: 6px; background: var(--warn-bg); color: var(--warn); font-size: 12px; font-weight: 700; display: inline-flex; align-items: center;">3 new</span>
+            </div>
+            <sc-for list="{{gaps}}" as="g" hint-placeholder-count="3">
+              <div style="display: flex; align-items: center; gap: 10px; padding: 10px 0; border-top: 1px solid var(--border);">
+                <div style="flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px;">
+                  <span style="font-size: 13px; font-weight: 500;">{{g.q}}</span>
+                  <span style="font-size: 12px; color: var(--muted);">{{g.meta}}</span>
+                </div>
+                <button type="button" style="height: 32px; padding: 0 10px; border-radius: 9px; border: 1px solid var(--border); background: var(--surface-2); color: var(--text); font: inherit; font-size: 12px; font-weight: 600; white-space: nowrap;">Draft article</button>
+              </div>
+            </sc-for>
+          </section>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"accent":{"editor":"color","options":["#5347CE","#4896FE","#16C8C7","#887CFD"],"default":"#5347CE"},"$preview":{"width":1440,"height":1100}}'>
+class Component extends DCLogic {
+  tokens(dark, accent) {
+    var a = accent || '#5347CE';
+    if (dark && a === '#5347CE') a = '#6B60EA';
+    var t = dark ? {
+      bg: '#0B0D14', surface: '#13161F', 'surface-2': '#1A1E2A', border: '#262B38', text: '#ECEEF5', muted: '#A0A7B8',
+      'accent-soft': '#25224A', 'accent-text': '#B9B3FF', track: '#232838', knob: '#ECEEF5',
+      'success-bg': '#0F2E2B', success: '#4FD8C6', 'danger-bg': '#3A1720', danger: '#FF8E9C', 'warn-bg': '#3A2A10', warn: '#F5B85A'
+    } : {
+      bg: '#F3F5F8', surface: '#FFFFFF', 'surface-2': '#F6F7FA', border: '#E5E7ED', text: '#111427', muted: '#5B6273',
+      'accent-soft': '#EEEDFB', 'accent-text': '#4A3FC0', track: '#ECEEF3', knob: '#FFFFFF',
+      'success-bg': '#E2F7F3', success: '#0B7468', 'danger-bg': '#FDECEE', danger: '#B4233A', 'warn-bg': '#FFF3DE', warn: '#8A5300'
+    };
+    var s = '--accent:' + a + ';';
+    for (var k in t) s += '--' + k + ':' + t[k] + ';';
+    return s;
+  }
+  renderVals() {
+    var st = this.state || {};
+    var self = this;
+    var dark = st.dark !== undefined ? st.dark : this.props.theme === 'dark';
+    var accent = this.props.accent || '#5347CE';
+    var tab = st.tab || 'overview';
+    function chip(tone) {
+      var map = { ok: ['var(--success-bg)', 'var(--success)'], warn: ['var(--warn-bg)', 'var(--warn)'], danger: ['var(--danger-bg)', 'var(--danger)'], ai: ['var(--accent-soft)', 'var(--accent-text)'], neutral: ['var(--surface-2)', 'var(--muted)'] };
+      var c = map[tone] || map.neutral;
+      return 'display:inline-flex;align-items:center;height:22px;padding:0 8px;border-radius:6px;font-size:12px;font-weight:700;white-space:nowrap;background:' + c[0] + ';color:' + c[1] + ';';
+    }
+    var tabs = [['overview', 'Overview'], ['behavior', 'Behavior'], ['knowledge', 'Knowledge'], ['actions', 'Actions & approvals'], ['tests', 'Tests']].map(function (t) {
+      var on = t[0] === tab;
+      return { label: t[1], selected: on ? 'true' : 'false', pick: function () { self.setState({ tab: t[0] }); },
+        style: 'height:40px;padding:0 12px;margin-bottom:-1px;border:0;background:transparent;font:inherit;font-size:13px;font-weight:600;' + (on ? 'color:var(--text);box-shadow:inset 0 -2px 0 var(--accent);' : 'color:var(--muted);') };
+    });
+    var kpis = [
+      { label: 'Resolution rate', value: '38%', delta: '8.3% ↑', chipStyle: chip('ok'), note: 'Closed by agent, not reopened in 7 days' },
+      { label: 'Correct handoffs', value: '96.1%', delta: '1.2% ↑', chipStyle: chip('ok'), note: 'Handed off when a person was needed' },
+      { label: 'Grounded answers', value: '97.2%', delta: '0.4% ↑', chipStyle: chip('ok'), note: 'Every claim backed by a cited source' },
+      { label: 'Cost per resolution', value: '$0.06', delta: '$0.01 ↓', chipStyle: chip('ok'), note: 'Model, retrieval and reranking costs' }
+    ];
+    var qdefs = [
+      { id: 'chat', name: 'Chat widget', scope: 'All tiers · app.acme.cloud', live: true, resolved: 52, handoff: '41%' },
+      { id: 'slack-starter', name: 'Slack Connect · Starter & Growth', scope: '61 shared channels', live: true, resolved: 34, handoff: '58%' },
+      { id: 'email', name: 'Email · support@', scope: 'How-to questions only', live: true, resolved: 29, handoff: '63%' },
+      { id: 'slack-ent', name: 'Slack Connect · Enterprise', scope: '25 shared channels', live: false, resolved: 31, handoff: '—' },
+      { id: 'billing', name: 'Billing', scope: 'Portal & email', live: false, resolved: 18, handoff: '—' }
+    ];
+    var modes = st.modes || {};
+    var liveCount = 0, shadowCount = 0;
+    var queues = qdefs.map(function (q) {
+      var live = modes[q.id] !== undefined ? modes[q.id] : q.live;
+      if (live) liveCount++; else shadowCount++;
+      return {
+        name: q.name, scope: q.scope, resolved: q.resolved + '%', handoff: live ? q.handoff : 'Shadow only',
+        mode: live ? 'Live' : 'Shadow', modeStyle: chip(live ? 'ok' : 'ai'),
+        barStyle: 'height:6px;border-radius:3px;width:' + q.resolved + '%;background:var(--accent);',
+        checked: live ? 'true' : 'false', switchLabel: 'Agent replies live in ' + q.name,
+        toggle: function () { var m = Object.assign({}, modes); m[q.id] = !live; self.setState({ modes: m }); },
+        trackStyle: 'position:relative;width:44px;height:26px;border-radius:13px;border:0;padding:0;cursor:pointer;background:' + (live ? 'var(--accent)' : 'var(--track)') + ';',
+        knobStyle: 'position:absolute;top:3px;left:' + (live ? '21px' : '3px') + ';width:20px;height:20px;border-radius:50%;background:var(--knob);box-shadow:0 1px 2px rgba(0,0,0,0.25);'
+      };
+    });
+    var compare = [['QA pass rate', 91, 86, '%'], ['Correct handoffs', 97, 95, '%'], ['Critical fails', 0, 2, '']].map(function (c) {
+      var max = c[3] === '%' ? 100 : 4;
+      return { label: c[0], newVal: c[1] + c[3], oldVal: c[2] + c[3],
+        newBar: 'height:10px;border-radius:5px;width:' + Math.max(2, c[1] / max * 100) + '%;background:var(--accent);',
+        oldBar: 'height:10px;border-radius:5px;width:' + Math.max(2, c[2] / max * 100) + '%;background:var(--muted);opacity:0.45;' };
+    });
+    var samples = [
+      { title: 'How do I rotate a webhook secret?', meta: 'TKZ-4410 · Slack', did: 'Replied', didStyle: chip('ai'), grade: 'Pass', gradeStyle: chip('ok') },
+      { title: 'Our whole dashboard is down', meta: 'TKZ-4388 · Email', did: 'Escalated · Urgent', didStyle: chip('warn'), grade: 'Pass', gradeStyle: chip('ok') },
+      { title: 'Can you refund last month?', meta: 'TKZ-4372 · Portal', did: 'Replied + escalated', didStyle: chip('warn'), grade: 'Pass', gradeStyle: chip('ok') },
+      { title: 'SAML attribute mapping for groups', meta: 'TKZ-4351 · Slack', did: 'Replied', didStyle: chip('ai'), grade: 'Fail · too wordy', gradeStyle: chip('danger') }
+    ];
+    var rules = [
+      { when: 'The customer asks for a person', then: 'Hand off immediately' },
+      { when: 'Your knowledge does not answer it', then: 'Hand off and log a knowledge gap' },
+      { when: 'An outage is reported', then: 'Hand off, set priority Urgent' },
+      { when: 'A security incident is reported', then: 'Hand off, set priority High' },
+      { when: 'Refunds, contracts or pricing', then: 'Hand off to Billing' },
+      { when: 'A teammate has replied', then: 'Agent leaves the issue for good' }
+    ];
+    var gaps = [
+      { q: 'Does audit log streaming include historical events?', meta: 'Asked 4 times this week · Security' },
+      { q: 'How to migrate SSO from US to EU region', meta: 'Asked 3 times · Auth › SSO' },
+      { q: 'Webhook retry schedule after 5xx', meta: 'Asked 2 times · Integrations' }
+    ];
+    return {
+      rootStyle: this.tokens(dark, accent) + 'display:flex;flex-wrap:wrap;min-height:100vh;background:var(--bg);color:var(--text);font-family:Inter,ui-sans-serif,system-ui,sans-serif;-webkit-font-smoothing:antialiased;',
+      themeName: dark ? 'dark' : 'light', accent: accent,
+      toggleTheme: function () { self.setState({ dark: !dark }); },
+      tabs: tabs, kpis: kpis, queues: queues, liveCount: liveCount, shadowCount: shadowCount,
+      compare: compare, samples: samples, rules: rules, gaps: gaps
+    };
+  }
+}
+</script>
+</body>
+</html>

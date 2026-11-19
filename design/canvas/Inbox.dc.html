@@ -1,0 +1,429 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Tickzy — Inbox</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="{{rootStyle}}">
+  <div style="flex: 1 1 248px; display: flex; min-width: 0;">
+    <dc-import name="Sidebar" active="inbox" theme="{{themeName}}" accent="{{accent}}" hint-size="100%,960px"></dc-import>
+  </div>
+  <div style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column;">
+    <dc-import name="Topbar" theme="{{themeName}}" accent="{{accent}}" on-toggle-theme="{{toggleTheme}}" hint-size="100%,72px"></dc-import>
+    <div style="display: flex; flex-wrap: wrap; flex: 1 1 auto; min-height: 0;">
+
+      <section aria-label="Issue queue" style="flex: 1 1 320px; min-width: 0; max-height: 888px; display: flex; flex-direction: column; border-right: 1px solid var(--border); background: var(--surface);">
+        <div style="padding: 18px 16px 12px; display: flex; flex-direction: column; gap: 12px; border-bottom: 1px solid var(--border);">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+            <h1 style="margin: 0; font-size: 18px; font-weight: 600;">Inbox</h1>
+            <div style="display: flex; gap: 6px;">
+              <button type="button" aria-label="Filter" style="width: 34px; height: 34px; border-radius: 9px; border: 1px solid var(--border); background: var(--surface); color: var(--muted); display: inline-flex; align-items: center; justify-content: center;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M7 12h10M10 18h4"></path></svg>
+              </button>
+              <button type="button" aria-label="Sort by SLA due" style="width: 34px; height: 34px; border-radius: 9px; border: 1px solid var(--border); background: var(--surface); color: var(--muted); display: inline-flex; align-items: center; justify-content: center;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 4v16M3 16l4 4 4-4M17 20V4M13 8l4-4 4 4"></path></svg>
+              </button>
+            </div>
+          </div>
+          <div role="tablist" aria-label="Queue views" style="display: flex; flex-wrap: wrap; gap: 6px;">
+            <sc-for list="{{tabs}}" as="t" hint-placeholder-count="4">
+              <button type="button" role="tab" aria-selected="{{t.selected}}" onClick="{{t.pick}}" style="{{t.style}}">{{t.label}} <span style="opacity: 0.8;">{{t.count}}</span></button>
+            </sc-for>
+          </div>
+        </div>
+        <ul style="list-style: none; margin: 0; padding: 8px; display: flex; flex-direction: column; gap: 4px; overflow-y: auto; flex: 1 1 auto;">
+          <sc-for list="{{list}}" as="i" hint-placeholder-count="6">
+            <li>
+              <button type="button" onClick="{{i.pick}}" style="{{i.rowStyle}}">
+                <span style="display: flex; align-items: center; gap: 8px; width: 100%;">
+                  <span style="{{i.prioDot}}"></span>
+                  <span style="flex: 1 1 auto; min-width: 0; font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{i.account}}</span>
+                  <span style="{{i.slaStyle}}">{{i.sla}}</span>
+                </span>
+                <span style="width: 100%; font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{i.title}}</span>
+                <span style="width: 100%; font-size: 12px; color: var(--muted); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 17px;">{{i.preview}}</span>
+                <span style="display: flex; align-items: center; gap: 6px; width: 100%; font-size: 11px; color: var(--muted);">
+                  <span style="height: 20px; padding: 0 6px; border-radius: 6px; background: var(--surface-2); border: 1px solid var(--border); display: inline-flex; align-items: center; font-weight: 600;">{{i.channel}}</span>
+                  <span style="{{i.statusStyle}}">{{i.status}}</span>
+                  <span style="flex: 1 1 auto;"></span>
+                  <span>{{i.when}}</span>
+                </span>
+              </button>
+            </li>
+          </sc-for>
+        </ul>
+      </section>
+
+      <section aria-label="Conversation" style="flex: 999 1 420px; min-width: 0; max-height: 888px; display: flex; flex-direction: column; background: var(--bg);">
+        <div style="padding: 16px 24px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; border-bottom: 1px solid var(--border); background: var(--surface);">
+          <div style="display: flex; flex-direction: column; gap: 4px; min-width: 0;">
+            <div style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted);">
+              <span style="font-weight: 600;">{{cur.id}}</span><span>·</span><span>{{cur.where}}</span>
+            </div>
+            <h2 style="margin: 0; font-size: 17px; font-weight: 600; line-height: 24px;">{{cur.title}}</h2>
+          </div>
+          <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+            <button type="button" style="display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface); color: var(--text); font: inherit; font-size: 13px; font-weight: 500;">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="13" r="8"></circle><path d="M12 9v4l2 2M5 3 2 6M22 6l-3-3"></path></svg>
+              Snooze
+            </button>
+            <button type="button" style="display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface); color: var(--text); font: inherit; font-size: 13px; font-weight: 500;">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 2 20h20z"></path><path d="M12 10v4"></path></svg>
+              Link problem
+            </button>
+            <button type="button" style="display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 14px; border-radius: 10px; border: 0; background: var(--accent); color: #FFFFFF; font: inherit; font-size: 13px; font-weight: 600;">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5L20 7"></path></svg>
+              Resolve
+            </button>
+          </div>
+        </div>
+
+        <ol style="list-style: none; margin: 0; padding: 20px 24px; display: flex; flex-direction: column; gap: 14px; overflow-y: auto; flex: 1 1 auto;">
+          <sc-for list="{{cur.messages}}" as="m" hint-placeholder-count="4">
+            <li>
+              <sc-if value="{{m.isEvent}}" hint-placeholder-val="{{false}}">
+                <div style="display: flex; align-items: center; gap: 10px; font-size: 12px; color: var(--muted);">
+                  <span style="flex: 1 1 24px; height: 1px; background: var(--border);"></span>
+                  <span style="display: inline-flex; align-items: center; gap: 6px; text-align: center;">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.8 4.6L18 9l-4.2 1.4L12 15l-1.8-4.6L6 9l4.2-1.4z"></path></svg>
+                    {{m.text}}
+                  </span>
+                  <span style="flex: 1 1 24px; height: 1px; background: var(--border);"></span>
+                </div>
+              </sc-if>
+              <sc-if value="{{m.isBubble}}" hint-placeholder-val="{{true}}">
+                <div style="display: flex; gap: 12px; align-items: flex-start;">
+                  <span style="{{m.avatarStyle}}">{{m.initials}}</span>
+                  <div style="{{m.bubbleStyle}}">
+                    <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 12px;">
+                      <span style="font-weight: 600; font-size: 13px;">{{m.author}}</span>
+                      <span style="color: var(--muted);">{{m.org}}</span>
+                      <sc-if value="{{m.isNote}}" hint-placeholder-val="{{false}}">
+                        <span style="height: 20px; padding: 0 7px; border-radius: 6px; background: var(--warn-bg); color: var(--warn); font-size: 11px; font-weight: 700; display: inline-flex; align-items: center;">Internal · synced to #support-escalations</span>
+                      </sc-if>
+                      <span style="flex: 1 1 auto;"></span>
+                      <span style="color: var(--muted);">{{m.time}}</span>
+                    </div>
+                    <p style="margin: 0; font-size: 14px; line-height: 21px; white-space: pre-line;">{{m.text}}</p>
+                  </div>
+                </div>
+              </sc-if>
+            </li>
+          </sc-for>
+        </ol>
+
+        <div style="padding: 0 24px 20px; display: flex; flex-direction: column; gap: 12px;">
+          <sc-if value="{{showDraft}}" hint-placeholder-val="{{true}}">
+            <section aria-label="Suggested reply" style="border-radius: 14px; border: 1px solid var(--accent); background: var(--accent-soft); padding: 14px 16px; display: flex; flex-direction: column; gap: 10px;">
+              <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color: var(--accent-text);"><path d="M12 3l1.8 4.6L18 9l-4.2 1.4L12 15l-1.8-4.6L6 9l4.2-1.4z"></path></svg>
+                <span style="font-size: 13px; font-weight: 600; color: var(--accent-text);">Suggested reply</span>
+                <span style="height: 20px; padding: 0 7px; border-radius: 6px; background: var(--success-bg); color: var(--success); font-size: 11px; font-weight: 700; display: inline-flex; align-items: center;">High confidence · 2 sources</span>
+              </div>
+              <p style="margin: 0; font-size: 14px; line-height: 21px; color: var(--text); white-space: pre-line;">{{cur.draft}}</p>
+              <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px;">
+                <sc-for list="{{cur.sources}}" as="src" hint-placeholder-count="2">
+                  <a href="#" style="display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 9px; border-radius: 7px; background: var(--surface); border: 1px solid var(--border); color: var(--text); font-size: 12px; font-weight: 500; text-decoration: none;">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 14a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1M14 10a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"></path></svg>
+                    {{src}}
+                  </a>
+                </sc-for>
+                <span style="flex: 1 1 auto;"></span>
+                <button type="button" style="height: 32px; padding: 0 12px; border-radius: 9px; border: 1px solid var(--border); background: var(--surface); color: var(--text); font: inherit; font-size: 13px; font-weight: 500;">Regenerate</button>
+                <button type="button" onClick="{{useDraft}}" style="height: 32px; padding: 0 12px; border-radius: 9px; border: 0; background: var(--accent); color: #FFFFFF; font: inherit; font-size: 13px; font-weight: 600;">Use draft</button>
+              </div>
+            </section>
+          </sc-if>
+
+          <div style="{{composerStyle}}">
+            <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 4px; padding: 6px 6px 0;">
+              <button type="button" onClick="{{setReply}}" style="{{replyTabStyle}}">Reply</button>
+              <button type="button" onClick="{{setNote}}" style="{{noteTabStyle}}">Internal note</button>
+              <span style="flex: 1 1 auto;"></span>
+              <span style="font-size: 12px; color: var(--muted); padding-right: 8px;">{{composerHint}}</span>
+            </div>
+            <label style="display: block; padding: 0 14px;">
+              <span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);">Message</span>
+              <textarea rows="3" placeholder="{{placeholder}}" value="{{composerText}}" onChange="{{onType}}" style="width: 100%; box-sizing: border-box; resize: none; border: 0; outline: none; background: transparent; color: var(--text); font: inherit; font-size: 14px; line-height: 21px; padding: 8px 0;"></textarea>
+            </label>
+            <div style="display: flex; align-items: center; gap: 4px; padding: 0 8px 8px;">
+              <button type="button" aria-label="Attach file" style="width: 34px; height: 34px; border-radius: 9px; border: 0; background: transparent; color: var(--muted); display: inline-flex; align-items: center; justify-content: center;">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21 11-8.5 8.5a5 5 0 0 1-7-7L14 4a3.5 3.5 0 0 1 5 5l-8.5 8.5a2 2 0 0 1-3-3L15 7"></path></svg>
+              </button>
+              <button type="button" aria-label="Insert snippet" style="width: 34px; height: 34px; border-radius: 9px; border: 0; background: transparent; color: var(--muted); display: inline-flex; align-items: center; justify-content: center;">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6 2 12l6 6M16 6l6 6-6 6"></path></svg>
+              </button>
+              <button type="button" aria-label="Rewrite with AI" style="width: 34px; height: 34px; border-radius: 9px; border: 0; background: transparent; color: var(--accent-text); display: inline-flex; align-items: center; justify-content: center;">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.8 4.6L18 9l-4.2 1.4L12 15l-1.8-4.6L6 9l4.2-1.4z"></path></svg>
+              </button>
+              <span style="flex: 1 1 auto;"></span>
+              <span style="font-size: 12px; color: var(--muted);">⌘↵ to send</span>
+              <button type="button" style="display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 14px; border-radius: 10px; border: 0; background: var(--accent); color: #FFFFFF; font: inherit; font-size: 13px; font-weight: 600;">
+                Send
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <aside aria-label="Issue details" style="flex: 1 1 280px; min-width: 0; max-height: 888px; overflow-y: auto; box-sizing: border-box; padding: 18px; display: flex; flex-direction: column; gap: 16px; border-left: 1px solid var(--border); background: var(--surface);">
+        <section style="display: flex; flex-direction: column; gap: 12px; padding: 14px; border-radius: 14px; border: 1px solid var(--border); background: var(--surface-2);">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="{{cur.logoStyle}}">{{cur.logo}}</span>
+            <div style="display: flex; flex-direction: column; gap: 2px; min-width: 0;">
+              <span style="font-size: 14px; font-weight: 600;">{{cur.account}}</span>
+              <span style="font-size: 12px; color: var(--muted);">{{cur.requester}}</span>
+            </div>
+          </div>
+          <dl style="margin: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; font-size: 12px;">
+            <div style="display: flex; flex-direction: column; gap: 2px;"><dt style="color: var(--muted);">Tier</dt><dd style="margin: 0; font-weight: 600;">{{cur.tier}}</dd></div>
+            <div style="display: flex; flex-direction: column; gap: 2px;"><dt style="color: var(--muted);">ARR</dt><dd style="margin: 0; font-weight: 600;">{{cur.arr}}</dd></div>
+            <div style="display: flex; flex-direction: column; gap: 2px;"><dt style="color: var(--muted);">Owner</dt><dd style="margin: 0; font-weight: 600;">{{cur.owner}}</dd></div>
+            <div style="display: flex; flex-direction: column; gap: 2px;"><dt style="color: var(--muted);">Open issues</dt><dd style="margin: 0; font-weight: 600;">{{cur.openCount}}</dd></div>
+          </dl>
+          <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+            <span style="height: 22px; padding: 0 8px; border-radius: 6px; background: var(--surface); border: 1px solid var(--border); font-size: 11px; font-weight: 600; display: inline-flex; align-items: center;">Plan: {{cur.plan}}</span>
+            <span style="height: 22px; padding: 0 8px; border-radius: 6px; background: var(--surface); border: 1px solid var(--border); font-size: 11px; font-weight: 600; display: inline-flex; align-items: center;">Region: {{cur.region}}</span>
+          </div>
+        </section>
+
+        <section style="display: flex; flex-direction: column; gap: 10px;">
+          <h3 style="margin: 0; font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted);">SLA</h3>
+          <sc-for list="{{cur.slas}}" as="s" hint-placeholder-count="2">
+            <div style="display: flex; flex-direction: column; gap: 6px;">
+              <div style="display: flex; justify-content: space-between; font-size: 13px;"><span>{{s.name}}</span><span style="{{s.valueStyle}}">{{s.value}}</span></div>
+              <div style="height: 6px; border-radius: 3px; background: var(--track);"><div style="{{s.barStyle}}"></div></div>
+            </div>
+          </sc-for>
+        </section>
+
+        <section style="display: flex; flex-direction: column; gap: 10px;">
+          <h3 style="margin: 0; font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted);">Properties</h3>
+          <dl style="margin: 0; display: flex; flex-direction: column; gap: 4px; font-size: 13px;">
+            <div style="display: flex; align-items: center; justify-content: space-between; min-height: 32px;"><dt style="color: var(--muted);">Status</dt><dd style="margin: 0;"><span style="{{cur.statusStyle}}">{{cur.status}}</span></dd></div>
+            <div style="display: flex; align-items: center; justify-content: space-between; min-height: 32px;"><dt style="color: var(--muted);">Priority</dt><dd style="margin: 0; display: inline-flex; align-items: center; gap: 6px; font-weight: 500;"><span style="{{cur.prioDot}}"></span>{{cur.priority}}</dd></div>
+            <div style="display: flex; align-items: center; justify-content: space-between; min-height: 32px;"><dt style="color: var(--muted);">Assignee</dt><dd style="margin: 0; font-weight: 500;">{{cur.assignee}}</dd></div>
+            <div style="display: flex; align-items: center; justify-content: space-between; min-height: 32px;"><dt style="color: var(--muted);">Team</dt><dd style="margin: 0; font-weight: 500;">{{cur.team}}</dd></div>
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 32px;"><dt style="color: var(--muted);">Product area</dt><dd style="margin: 0; display: inline-flex; align-items: center; gap: 4px; height: 22px; padding: 0 7px; border-radius: 6px; background: var(--accent-soft); color: var(--accent-text); font-size: 12px; font-weight: 600;">{{cur.area}}</dd></div>
+          </dl>
+        </section>
+
+        <section style="display: flex; flex-direction: column; gap: 10px;">
+          <h3 style="margin: 0; font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted);">Engineering</h3>
+          <sc-if value="{{cur.hasLink}}" hint-placeholder-val="{{true}}">
+            <a href="#" style="display: flex; flex-direction: column; gap: 6px; padding: 12px; border-radius: 12px; border: 1px solid var(--border); text-decoration: none; color: var(--text);">
+              <span style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted);">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M8 12h8"></path></svg>
+                Linear · {{cur.linkId}}
+                <span style="margin-left: auto; height: 20px; padding: 0 7px; border-radius: 6px; background: var(--warn-bg); color: var(--warn); font-size: 11px; font-weight: 700; display: inline-flex; align-items: center;">{{cur.linkStatus}}</span>
+              </span>
+              <span style="font-size: 13px; font-weight: 500;">{{cur.linkTitle}}</span>
+              <span style="font-size: 12px; color: var(--muted);">Customer is notified automatically when this ships.</span>
+            </a>
+          </sc-if>
+          <button type="button" style="height: 36px; border-radius: 10px; border: 1px dashed var(--border); background: transparent; color: var(--muted); font: inherit; font-size: 13px; font-weight: 500;">+ Create Linear or Jira issue</button>
+        </section>
+
+        <section style="display: flex; flex-direction: column; gap: 8px;">
+          <h3 style="margin: 0; font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted);">Similar issues</h3>
+          <sc-for list="{{cur.similar}}" as="sim" hint-placeholder-count="2">
+            <a href="#" style="display: flex; flex-direction: column; gap: 2px; padding: 8px 0; border-top: 1px solid var(--border); text-decoration: none; color: var(--text);">
+              <span style="font-size: 13px; font-weight: 500;">{{sim.title}}</span>
+              <span style="font-size: 12px; color: var(--muted);">{{sim.meta}}</span>
+            </a>
+          </sc-for>
+        </section>
+      </aside>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"accent":{"editor":"color","options":["#5347CE","#4896FE","#16C8C7","#887CFD"],"default":"#5347CE"},"$preview":{"width":1440,"height":960}}'>
+class Component extends DCLogic {
+  tokens(dark, accent) {
+    var a = accent || '#5347CE';
+    if (dark && a === '#5347CE') a = '#6B60EA';
+    var t = dark ? {
+      bg: '#0B0D14', surface: '#13161F', 'surface-2': '#1A1E2A', border: '#262B38', text: '#ECEEF5', muted: '#A0A7B8',
+      'accent-soft': '#25224A', 'accent-text': '#B9B3FF', track: '#232838', note: '#2E2410',
+      'success-bg': '#0F2E2B', success: '#4FD8C6', 'danger-bg': '#3A1720', danger: '#FF8E9C', 'warn-bg': '#3A2A10', warn: '#F5B85A'
+    } : {
+      bg: '#F3F5F8', surface: '#FFFFFF', 'surface-2': '#F6F7FA', border: '#E5E7ED', text: '#111427', muted: '#5B6273',
+      'accent-soft': '#EEEDFB', 'accent-text': '#4A3FC0', track: '#ECEEF3', note: '#FFF8E8',
+      'success-bg': '#E2F7F3', success: '#0B7468', 'danger-bg': '#FDECEE', danger: '#B4233A', 'warn-bg': '#FFF3DE', warn: '#8A5300'
+    };
+    var s = '--accent:' + a + ';';
+    for (var k in t) s += '--' + k + ':' + t[k] + ';';
+    return s;
+  }
+  renderVals() {
+    var st = this.state || {};
+    var self = this;
+    var dark = st.dark !== undefined ? st.dark : this.props.theme === 'dark';
+    var accent = this.props.accent || '#5347CE';
+    var sel = st.sel || 'TKZ-4821';
+    var tab = st.tab || 'all';
+    var mode = st.mode || 'reply';
+
+    function chip(tone) {
+      var map = {
+        danger: ['var(--danger-bg)', 'var(--danger)'], warn: ['var(--warn-bg)', 'var(--warn)'],
+        ok: ['var(--success-bg)', 'var(--success)'], ai: ['var(--accent-soft)', 'var(--accent-text)'], neutral: ['var(--surface-2)', 'var(--muted)']
+      };
+      var c = map[tone] || map.neutral;
+      return 'display:inline-flex;align-items:center;height:20px;padding:0 7px;border-radius:6px;font-size:11px;font-weight:700;white-space:nowrap;background:' + c[0] + ';color:' + c[1] + ';';
+    }
+    function dot(p) {
+      var c = p === 'Urgent' ? 'var(--danger)' : p === 'High' ? '#E07B12' : p === 'Normal' ? 'var(--accent)' : 'var(--muted)';
+      return 'width:8px;height:8px;flex:0 0 8px;border-radius:50%;background:' + c + ';';
+    }
+    function logo(c) { return 'width:40px;height:40px;flex:0 0 40px;border-radius:12px;display:inline-flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;background:' + c + ';'; }
+    function cust(author, org, initials, time, text) { return { kind: 'customer', author: author, org: org, initials: initials, time: time, text: text }; }
+    function agent(author, initials, time, text) { return { kind: 'agent', author: author, org: 'Acme Cloud', initials: initials, time: time, text: text }; }
+    function note(author, initials, time, text) { return { kind: 'note', author: author, org: '', initials: initials, time: time, text: text }; }
+    function ev(text) { return { kind: 'event', text: text }; }
+    function sla(name, value, pct, tone) {
+      var c = tone === 'danger' ? 'var(--danger)' : tone === 'warn' ? 'var(--warn)' : 'var(--success)';
+      return { name: name, value: value, valueStyle: 'font-weight:600;color:' + c + ';', barStyle: 'height:6px;border-radius:3px;width:' + pct + '%;background:' + c + ';' };
+    }
+
+    var issues = [
+      { id: 'TKZ-4821', bucket: 'us', account: 'Northwind Labs', logo: 'NL', logoColor: '#5347CE', requester: 'Jonas Weber · Platform lead', title: 'Webhook deliveries failing after key rotation', preview: 'Since rotating our signing secret this morning every delivery returns 401 on our side…', channel: 'Slack', where: 'Slack Connect · #northwind-support', priority: 'Urgent', status: 'Waiting on us', tone: 'danger', sla: '12m', slaTone: 'danger', when: '9:41', tier: 'Enterprise', arr: '$184k', owner: 'Ana Lima', openCount: '3', plan: 'Enterprise', region: 'EU', assignee: 'Maya Chen', team: 'Integrations', area: 'Integrations › Webhooks', hasLink: true, linkId: 'ENG-2304', linkStatus: 'In progress', linkTitle: 'Signature cache not invalidated after secret rotation',
+        slas: [sla('Next response', '12m left', 82, 'danger'), sla('Resolution', '5h 10m left', 35, 'ok')],
+        messages: [
+          cust('Jonas Weber', 'Northwind Labs', 'JW', '9:12', 'Since rotating our signing secret this morning every webhook delivery fails signature checks on our side (401). Rolled back once, same result. This is blocking order sync for all EU customers.'),
+          ev('Tickzy AI set priority Urgent and product area Integrations › Webhooks · matched 2 similar issues'),
+          agent('Maya Chen', 'MC', '9:20', 'Thanks Jonas, looking into this right now. Can you confirm the rotation time and whether you are verifying with the new secret only?'),
+          cust('Jonas Weber', 'Northwind Labs', 'JW', '9:31', 'Rotated at 08:55 CET. We switched verification to the new secret immediately.'),
+          note('Ana Lima', 'AL', '9:38', 'Looks like ENG-2304. Old secret is still cached for up to 30 min after rotation. @Maya we can force-flush for their workspace.'),
+          ev('Linked to Linear ENG-2304 · status moved to Waiting on us')
+        ],
+        draft: 'Hi Jonas, we found the cause: after a secret rotation our delivery service can keep signing with the previous secret for up to 30 minutes. I have flushed the cache for your workspace, so new deliveries now use the new secret.\n\nFailed deliveries from 08:55 onward can be replayed from Settings › Webhooks › Delivery log. Engineering is shipping a permanent fix (ENG-2304), and we will update this thread when it is live.',
+        sources: ['Docs: Rotating webhook secrets', 'TKZ-4410 · resolved'],
+        similar: [{ title: 'Webhooks 401 after secret change', meta: 'TKZ-4410 · Quanta AI · resolved 3 weeks ago' }, { title: 'Delivery log replay missing events', meta: 'TKZ-4377 · Brightwave · resolved' }] },
+      { id: 'TKZ-4817', bucket: 'us', account: 'Helios Health', logo: 'HH', logoColor: '#2F7FE0', requester: 'Dr. Lena Park · IT admin', title: 'SSO login loop on EU workspace', preview: 'Users are redirected back to the login page after Okta auth, only on eu.app…', channel: 'Email', where: 'Email · support@acme.cloud', priority: 'High', status: 'Waiting on us', tone: 'danger', sla: '28m', slaTone: 'danger', when: '9:20', tier: 'Enterprise', arr: '$126k', owner: 'Sam Ortiz', openCount: '2', plan: 'Enterprise', region: 'EU', assignee: 'Unassigned', team: 'Identity', area: 'Auth › SSO', hasLink: false, linkId: '', linkStatus: '', linkTitle: '',
+        slas: [sla('First response', '28m left', 60, 'danger'), sla('Resolution', '1d 4h left', 10, 'ok')],
+        messages: [
+          cust('Lena Park', 'Helios Health', 'LP', '9:02', 'Since yesterday our users are redirected back to the login page after authenticating with Okta. Only happens on eu.app.acme.cloud. Screenshot attached.'),
+          ev('Tickzy AI set priority High · product area Auth › SSO · routed to Identity team')
+        ],
+        draft: 'Hi Lena, thanks for the details. A redirect loop after Okta usually means the ACS URL still points at the US region. Could you check that the Single sign-on URL in Okta is https://eu.app.acme.cloud/sso/saml? If it already is, please send a HAR file of one login attempt and we will take it from there.',
+        sources: ['Docs: SAML setup for EU', 'TKZ-4205 · resolved'],
+        similar: [{ title: 'Okta redirect loop after region move', meta: 'TKZ-4205 · Oakridge · resolved' }] },
+      { id: 'TKZ-4815', bucket: 'ai', account: 'Quanta AI', logo: 'QA', logoColor: '#6E61F0', requester: 'Ravi Menon · Security', title: 'How do we export audit logs to Splunk?', preview: 'We need audit events in Splunk for our SOC 2 audit. Is there a native integration?', channel: 'Slack', where: 'Slack Connect · #quanta-acme', priority: 'Normal', status: 'AI agent replying', tone: 'ai', sla: '2h', slaTone: 'neutral', when: '9:05', tier: 'Growth', arr: '$52k', owner: 'Priya Rao', openCount: '5', plan: 'Growth', region: 'US', assignee: 'Tickzy AI agent', team: 'Tier 1', area: 'Security › Audit logs', hasLink: false, linkId: '', linkStatus: '', linkTitle: '',
+        slas: [sla('First response', 'Met in 40s', 100, 'ok')],
+        messages: [
+          cust('Ravi Menon', 'Quanta AI', 'RM', '9:04', 'We need our audit events in Splunk for an upcoming SOC 2 audit. Is there a native integration, or do we pull from the API?'),
+          agent('Tickzy AI agent', 'AI', '9:04', 'Yes. Audit logs can be streamed to Splunk via the HTTP Event Collector: Settings › Security › Audit log streaming, then choose Splunk and paste your HEC URL and token. Events arrive within a minute. Docs: Audit log streaming.'),
+          cust('Ravi Menon', 'Quanta AI', 'RM', '9:05', 'Perfect, does it include historical events?')
+        ],
+        draft: 'Streaming starts from the moment you enable it. For historical events, use the Audit Log export (CSV or JSON, up to 13 months) from the same settings page and load it into Splunk once.',
+        sources: ['Docs: Audit log streaming', 'Docs: Audit log export'],
+        similar: [{ title: 'Audit logs to Datadog', meta: 'TKZ-4120 · Lumen · resolved by AI' }] },
+      { id: 'TKZ-4809', bucket: 'customer', account: 'Brightwave', logo: 'BW', logoColor: '#0E8F8E', requester: 'Chris Doyle · Finance', title: 'Invoice shows duplicate seats', preview: 'Our November invoice lists 14 seats twice. We only have 14 users…', channel: 'Portal', where: 'Customer portal', priority: 'Normal', status: 'Waiting on customer', tone: 'neutral', sla: '1h 40m', slaTone: 'warn', when: 'Yesterday', tier: 'Growth', arr: '$38k', owner: 'Sam Ortiz', openCount: '1', plan: 'Growth', region: 'US', assignee: 'Sam Ortiz', team: 'Billing', area: 'Billing › Invoices', hasLink: false, linkId: '', linkStatus: '', linkTitle: '',
+        slas: [sla('Resolution', '1h 40m left', 70, 'warn')],
+        messages: [
+          cust('Chris Doyle', 'Brightwave', 'CD', 'Yesterday', 'Our November invoice lists 14 seats twice. We only have 14 users in the workspace.'),
+          agent('Sam Ortiz', 'SO', 'Yesterday', 'Thanks Chris. I can see a seat change on Nov 2 that created a proration line. Could you confirm whether you added and removed users that day?')
+        ],
+        draft: '',
+        sources: [],
+        similar: [{ title: 'Proration line looks like double billing', meta: 'TKZ-3988 · resolved' }] },
+      { id: 'TKZ-4803', bucket: 'us', account: 'Lumen', logo: 'LU', logoColor: '#C2410C', requester: 'Mei Tanaka · CTO', title: 'Feature request: per-project API keys', preview: 'We want to scope keys per project so contractors only see their own data.', channel: 'Slack', where: 'Slack Connect · #lumen-acme', priority: 'Low', status: 'Blocked · engineering', tone: 'warn', sla: '—', slaTone: 'neutral', when: 'Mon', tier: 'Growth', arr: '$44k', owner: 'Ana Lima', openCount: '2', plan: 'Growth', region: 'US', assignee: 'Ana Lima', team: 'Product feedback', area: 'API › Keys', hasLink: true, linkId: 'ENG-2291', linkStatus: 'Planned', linkTitle: 'Project-scoped API keys',
+        slas: [sla('Follow-up update', '2d left', 20, 'ok')],
+        messages: [
+          cust('Mei Tanaka', 'Lumen', 'MT', 'Mon', 'We want to scope API keys per project so contractors only see their own data. Is this on the roadmap?'),
+          ev('Feature request captured · linked to ENG-2291 · 6 other accounts asked for this')
+        ],
+        draft: '',
+        sources: [],
+        similar: [{ title: 'Scoped API tokens for agencies', meta: 'TKZ-4011 · Northwind Labs' }] },
+      { id: 'TKZ-4799', bucket: 'ai', account: 'Oakridge', logo: 'OR', logoColor: '#15803D', requester: 'Tom Hale · Ops', title: 'Cannot invite teammates from Google Workspace', preview: 'Invite button is greyed out after connecting Google Workspace directory sync.', channel: 'Chat', where: 'Chat widget · app.acme.cloud', priority: 'Normal', status: 'Resolved by AI', tone: 'ok', sla: 'Met', slaTone: 'ok', when: 'Mon', tier: 'Starter', arr: '$9k', owner: 'Priya Rao', openCount: '0', plan: 'Starter', region: 'US', assignee: 'Tickzy AI agent', team: 'Tier 1', area: 'Onboarding › Invites', hasLink: false, linkId: '', linkStatus: '', linkTitle: '',
+        slas: [sla('Resolution', 'Met in 3m', 100, 'ok')],
+        messages: [
+          cust('Tom Hale', 'Oakridge', 'TH', 'Mon', 'The invite button is greyed out after we connected Google Workspace directory sync.'),
+          agent('Tickzy AI agent', 'AI', 'Mon', 'With directory sync on, people are added from Google Workspace automatically, so manual invites are turned off. Add the user to the synced Google group and they will appear within 10 minutes.'),
+          cust('Tom Hale', 'Oakridge', 'TH', 'Mon', 'That worked, thanks!'),
+          ev('Resolved by Tickzy AI agent · customer confirmed · CSAT 5/5')
+        ],
+        draft: '',
+        sources: [],
+        similar: [] }
+    ];
+
+    var counts = { all: issues.length, us: 0, customer: 0, ai: 0 };
+    issues.forEach(function (i) { counts[i.bucket] += 1; });
+    var tabDefs = [['all', 'All'], ['us', 'Waiting on us'], ['customer', 'On customer'], ['ai', 'AI agent']];
+    var tabs = tabDefs.map(function (t) {
+      var on = t[0] === tab;
+      return {
+        label: t[1], count: counts[t[0]], selected: on ? 'true' : 'false',
+        pick: function () { self.setState({ tab: t[0] }); },
+        style: 'height:30px;padding:0 10px;border-radius:8px;font:inherit;font-size:12px;font-weight:600;' + (on ? 'border:0;background:var(--text);color:var(--surface);' : 'border:1px solid var(--border);background:var(--surface);color:var(--muted);')
+      };
+    });
+
+    var list = issues.filter(function (i) { return tab === 'all' || i.bucket === tab; }).map(function (i) {
+      var on = i.id === sel;
+      return {
+        account: i.account, title: i.title, preview: i.preview, channel: i.channel, status: i.status, when: i.when, sla: i.sla,
+        prioDot: dot(i.priority), statusStyle: chip(i.tone), slaStyle: chip(i.slaTone),
+        pick: function () { self.setState({ sel: i.id, draftUsed: false, text: '' }); },
+        rowStyle: 'width:100%;display:flex;flex-direction:column;align-items:flex-start;gap:6px;padding:12px;border-radius:12px;font:inherit;text-align:left;color:var(--text);cursor:pointer;' + (on ? 'background:var(--accent-soft);border:1px solid var(--accent);' : 'background:transparent;border:1px solid transparent;')
+      };
+    });
+
+    var c = issues.filter(function (i) { return i.id === sel; })[0] || issues[0];
+    var cur = Object.assign({}, c, {
+      logoStyle: logo(c.logoColor), statusStyle: chip(c.tone), prioDot: dot(c.priority),
+      messages: c.messages.map(function (m) {
+        var isEvent = m.kind === 'event';
+        var isAI = m.initials === 'AI';
+        var bubbleBg = m.kind === 'note' ? 'var(--note)' : m.kind === 'agent' ? 'var(--surface)' : 'var(--surface)';
+        var border = m.kind === 'note' ? 'var(--warn)' : 'var(--border)';
+        return Object.assign({}, m, {
+          isEvent: isEvent, isBubble: !isEvent, isNote: m.kind === 'note',
+          avatarStyle: 'width:34px;height:34px;flex:0 0 34px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;' +
+            (m.kind === 'customer' ? 'background:var(--surface-2);border:1px solid var(--border);color:var(--text);' : isAI ? 'background:var(--accent);color:#FFFFFF;' : 'background:var(--accent-soft);color:var(--accent-text);'),
+          bubbleStyle: 'flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:6px;padding:12px 14px;border-radius:14px;background:' + bubbleBg + ';border:1px solid ' + border + ';'
+        });
+      })
+    });
+
+    var draftUsed = !!st.draftUsed;
+    var text = st.text !== undefined && st.text !== '' ? st.text : (draftUsed ? c.draft : '');
+    var tabStyle = function (on) { return 'height:30px;padding:0 10px;border-radius:8px;border:0;font:inherit;font-size:13px;font-weight:600;' + (on ? 'background:var(--surface-2);color:var(--text);' : 'background:transparent;color:var(--muted);'); };
+
+    return {
+      rootStyle: this.tokens(dark, accent) + 'display:flex;flex-wrap:wrap;min-height:100vh;background:var(--bg);color:var(--text);font-family:Inter,ui-sans-serif,system-ui,sans-serif;-webkit-font-smoothing:antialiased;',
+      themeName: dark ? 'dark' : 'light',
+      accent: accent,
+      toggleTheme: function () { self.setState({ dark: !dark }); },
+      tabs: tabs, list: list, cur: cur,
+      showDraft: !!c.draft && !draftUsed && mode === 'reply',
+      useDraft: function () { self.setState({ draftUsed: true, text: '' }); },
+      composerText: text,
+      onType: function (e) { self.setState({ text: e.target.value }); },
+      setReply: function () { self.setState({ mode: 'reply' }); },
+      setNote: function () { self.setState({ mode: 'note' }); },
+      replyTabStyle: tabStyle(mode === 'reply'),
+      noteTabStyle: tabStyle(mode === 'note'),
+      composerHint: mode === 'reply' ? 'Replies in ' + c.where + ' as Maya Chen' : 'Only your team sees this · posts to #support-escalations',
+      placeholder: mode === 'reply' ? 'Write a reply…' : 'Add an internal note, @mention a teammate…',
+      composerStyle: 'border-radius:14px;display:flex;flex-direction:column;' + (mode === 'reply' ? 'border:1px solid var(--border);background:var(--surface);' : 'border:1px solid var(--warn);background:var(--note);')
+    };
+  }
+}
+</script>
+</body>
+</html>

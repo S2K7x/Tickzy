@@ -1,0 +1,379 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Tickzy — Overview</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="{{rootStyle}}">
+  <div style="flex: 1 1 248px; display: flex; min-width: 0;">
+    <dc-import name="Sidebar" active="overview" theme="{{themeName}}" accent="{{accent}}" hint-size="100%,960px"></dc-import>
+  </div>
+  <div style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column;">
+    <dc-import name="Topbar" theme="{{themeName}}" accent="{{accent}}" on-toggle-theme="{{toggleTheme}}" hint-size="100%,72px"></dc-import>
+    <main style="box-sizing: border-box; width: 100%; max-width: 1280px; padding: 28px 32px 40px; display: flex; flex-direction: column; gap: 20px;">
+
+      <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px;">
+        <div style="display: flex; flex-direction: column; gap: 4px;">
+          <h1 style="margin: 0; font-size: 24px; line-height: 32px; font-weight: 600; letter-spacing: -0.01em;">Overview</h1>
+          <p style="margin: 0; font-size: 14px; color: var(--muted);">How your support team and AI agent are doing across every channel.</p>
+        </div>
+        <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+          <button type="button" style="display: inline-flex; align-items: center; gap: 8px; height: 38px; padding: 0 14px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface); color: var(--text); font: inherit; font-size: 13px; font-weight: 500;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M16 3v4M8 3v4M3 10h18"></path></svg>
+            Oct 20 – Nov 18
+          </button>
+          <button type="button" style="display: inline-flex; align-items: center; gap: 8px; height: 38px; padding: 0 14px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface); color: var(--text); font: inherit; font-size: 13px; font-weight: 500;">
+            All channels
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg>
+          </button>
+          <button type="button" style="display: inline-flex; align-items: center; gap: 8px; height: 38px; padding: 0 14px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface); color: var(--text); font: inherit; font-size: 13px; font-weight: 500;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"></path></svg>
+            Export
+          </button>
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 16px;">
+        <section style="background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 18px 20px; display: flex; flex-direction: column; gap: 12px;">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="width: 32px; height: 32px; border-radius: 10px; background: var(--surface-2); border: 1px solid var(--border); display: inline-flex; align-items: center; justify-content: center; color: var(--muted);">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16v10H4z"></path><path d="M4 12h4l2 2h4l2-2h4"></path></svg>
+            </span>
+            <h2 style="margin: 0; font-size: 14px; font-weight: 500;">Open issues</h2>
+          </div>
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="font-size: 30px; line-height: 36px; font-weight: 600; letter-spacing: -0.02em;">128</span>
+            <span style="display: inline-flex; align-items: center; gap: 2px; height: 22px; padding: 0 7px; border-radius: 6px; background: var(--danger-bg); color: var(--danger); font-size: 12px; font-weight: 600;">12.4% ↑</span>
+          </div>
+          <p style="margin: 0; font-size: 12px; color: var(--muted);">41 waiting on your team</p>
+        </section>
+        <section style="background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 18px 20px; display: flex; flex-direction: column; gap: 12px;">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="width: 32px; height: 32px; border-radius: 10px; background: var(--surface-2); border: 1px solid var(--border); display: inline-flex; align-items: center; justify-content: center; color: var(--muted);">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>
+            </span>
+            <h2 style="margin: 0; font-size: 14px; font-weight: 500;">Median first response</h2>
+          </div>
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="font-size: 30px; line-height: 36px; font-weight: 600; letter-spacing: -0.02em;">14m</span>
+            <span style="display: inline-flex; align-items: center; gap: 2px; height: 22px; padding: 0 7px; border-radius: 6px; background: var(--success-bg); color: var(--success); font-size: 12px; font-weight: 600;">31% ↓</span>
+          </div>
+          <p style="margin: 0; font-size: 12px; color: var(--muted);">Business hours, all tiers</p>
+        </section>
+        <section style="background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 18px 20px; display: flex; flex-direction: column; gap: 12px;">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="width: 32px; height: 32px; border-radius: 10px; background: var(--surface-2); border: 1px solid var(--border); display: inline-flex; align-items: center; justify-content: center; color: var(--muted);">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6z"></path><path d="m9 12 2 2 4-4"></path></svg>
+            </span>
+            <h2 style="margin: 0; font-size: 14px; font-weight: 500;">SLA compliance</h2>
+          </div>
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="font-size: 30px; line-height: 36px; font-weight: 600; letter-spacing: -0.02em;">96.4%</span>
+            <span style="display: inline-flex; align-items: center; gap: 2px; height: 22px; padding: 0 7px; border-radius: 6px; background: var(--success-bg); color: var(--success); font-size: 12px; font-weight: 600;">2.1% ↑</span>
+          </div>
+          <p style="margin: 0; font-size: 12px; color: var(--muted);">4 breaches this period</p>
+        </section>
+        <section style="background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 18px 20px; display: flex; flex-direction: column; gap: 12px;">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="width: 32px; height: 32px; border-radius: 10px; background: var(--accent-soft); display: inline-flex; align-items: center; justify-content: center; color: var(--accent-text);">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.8 4.6L18 9l-4.2 1.4L12 15l-1.8-4.6L6 9l4.2-1.4z"></path><path d="M19 15l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z"></path></svg>
+            </span>
+            <h2 style="margin: 0; font-size: 14px; font-weight: 500;">Resolved by AI agent</h2>
+          </div>
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="font-size: 30px; line-height: 36px; font-weight: 600; letter-spacing: -0.02em;">38%</span>
+            <span style="display: inline-flex; align-items: center; gap: 2px; height: 22px; padding: 0 7px; border-radius: 6px; background: var(--success-bg); color: var(--success); font-size: 12px; font-weight: 600;">8.3% ↑</span>
+          </div>
+          <p style="margin: 0; font-size: 12px; color: var(--muted);">Not reopened within 7 days</p>
+        </section>
+      </div>
+
+      <div style="display: flex; flex-wrap: wrap; gap: 16px;">
+        <section style="flex: 2 1 560px; min-width: 0; background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 20px; display: flex; flex-direction: column; gap: 16px;">
+          <div style="display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 12px;">
+            <div style="display: flex; flex-direction: column; gap: 6px;">
+              <h2 style="margin: 0; font-size: 15px; font-weight: 600;">Inbound volume by channel</h2>
+              <div style="display: flex; align-items: baseline; gap: 10px;">
+                <span style="font-size: 26px; font-weight: 600; letter-spacing: -0.02em;">2,165</span>
+                <span style="font-size: 13px; color: var(--muted);">conversations · 6 weeks</span>
+              </div>
+            </div>
+            <div style="display: flex; gap: 8px;">
+              <button type="button" style="height: 34px; padding: 0 12px; border-radius: 9px; border: 1px solid var(--border); background: var(--surface); color: var(--text); font: inherit; font-size: 13px;">Weekly</button>
+              <button type="button" aria-label="More options" style="width: 34px; height: 34px; border-radius: 9px; border: 1px solid var(--border); background: var(--surface); color: var(--muted); display: inline-flex; align-items: center; justify-content: center;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="1.6"></circle><circle cx="12" cy="12" r="1.6"></circle><circle cx="19" cy="12" r="1.6"></circle></svg>
+              </button>
+            </div>
+          </div>
+          <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; height: 260px; padding: 0 8px; border-bottom: 1px solid var(--border);">
+            <sc-for list="{{weeks}}" as="w" hint-placeholder-count="6">
+              <div style="flex: 1 1 0; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 6px; height: 100%;">
+                <span style="font-size: 12px; font-weight: 600;">{{w.total}}</span>
+                <div style="width: 100%; max-width: 64px; display: flex; flex-direction: column-reverse; gap: 3px;">
+                  <sc-for list="{{w.segs}}" as="seg" hint-placeholder-count="5">
+                    <div style="{{seg.style}}"></div>
+                  </sc-for>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+          <div style="display: flex; justify-content: space-between; gap: 12px; padding: 0 8px; margin-top: -8px;">
+            <sc-for list="{{weeks}}" as="w" hint-placeholder-count="6">
+              <span style="flex: 1 1 0; text-align: center; font-size: 12px; color: var(--muted);">{{w.label}}</span>
+            </sc-for>
+          </div>
+          <ul style="list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px 18px; justify-content: center;">
+            <li style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted);"><span style="width: 10px; height: 10px; border-radius: 3px; background: var(--c1);"></span>Slack Connect</li>
+            <li style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted);"><span style="width: 10px; height: 10px; border-radius: 3px; background: var(--c2);"></span>Email</li>
+            <li style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted);"><span style="width: 10px; height: 10px; border-radius: 3px; background: var(--c3);"></span>Microsoft Teams</li>
+            <li style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted);"><span style="width: 10px; height: 10px; border-radius: 3px; background: var(--c4);"></span>Chat widget</li>
+            <li style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted);"><span style="width: 10px; height: 10px; border-radius: 3px; background: var(--c5);"></span>Portal</li>
+          </ul>
+        </section>
+
+        <section style="flex: 1 1 340px; min-width: 0; background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 20px; display: flex; flex-direction: column; gap: 16px;">
+          <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;">
+            <div style="display: flex; flex-direction: column; gap: 6px;">
+              <h2 style="margin: 0; font-size: 15px; font-weight: 600;">First response time</h2>
+              <div style="display: flex; align-items: baseline; gap: 10px;">
+                <span style="font-size: 26px; font-weight: 600; letter-spacing: -0.02em;">12m</span>
+                <span style="font-size: 13px; color: var(--muted);">fastest day · Tuesday</span>
+              </div>
+            </div>
+            <button type="button" style="height: 34px; padding: 0 12px; border-radius: 9px; border: 1px solid var(--border); background: var(--surface); color: var(--text); font: inherit; font-size: 13px;">This week</button>
+          </div>
+          <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 10px; height: 236px;">
+            <sc-for list="{{days}}" as="d" hint-placeholder-count="7">
+              <div style="flex: 1 1 0; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 8px; height: 100%;">
+                <span style="{{d.labelStyle}}">{{d.value}}</span>
+                <div style="{{d.barStyle}}"></div>
+                <span style="{{d.dayStyle}}">{{d.day}}</span>
+              </div>
+            </sc-for>
+          </div>
+        </section>
+      </div>
+
+      <div style="display: flex; flex-wrap: wrap; gap: 16px;">
+        <section style="flex: 2 1 560px; min-width: 0; background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 20px 20px 8px; display: flex; flex-direction: column; gap: 12px;">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <h2 style="margin: 0; font-size: 15px; font-weight: 600;">SLA at risk</h2>
+              <span style="height: 22px; padding: 0 8px; border-radius: 6px; background: var(--danger-bg); color: var(--danger); font-size: 12px; font-weight: 600; display: inline-flex; align-items: center;">4 due within 4h</span>
+            </div>
+            <a href="Inbox.dc.html" style="font-size: 13px; font-weight: 500; color: var(--accent-text); text-decoration: none;">Open in inbox</a>
+          </div>
+          <div style="overflow-x: auto;">
+            <table style="width: 100%; min-width: 640px; border-collapse: collapse; font-size: 13px;">
+              <thead>
+                <tr style="background: var(--surface-2);">
+                  <th scope="col" style="text-align: left; padding: 10px 12px; font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); border-radius: 8px 0 0 8px;">Issue</th>
+                  <th scope="col" style="text-align: left; padding: 10px 12px; font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted);">Account</th>
+                  <th scope="col" style="text-align: left; padding: 10px 12px; font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted);">Target</th>
+                  <th scope="col" style="text-align: left; padding: 10px 12px; font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted);">Due in</th>
+                  <th scope="col" style="text-align: left; padding: 10px 12px; font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); border-radius: 0 8px 8px 0;">Owner</th>
+                </tr>
+              </thead>
+              <tbody>
+                <sc-for list="{{risks}}" as="r" hint-placeholder-count="4">
+                  <tr style="border-bottom: 1px solid var(--border);">
+                    <td style="padding: 12px; vertical-align: middle;">
+                      <div style="display: flex; flex-direction: column; gap: 3px;">
+                        <span style="font-weight: 500;">{{r.title}}</span>
+                        <span style="font-size: 12px; color: var(--muted);">{{r.id}} · {{r.channel}}</span>
+                      </div>
+                    </td>
+                    <td style="padding: 12px;">
+                      <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="font-weight: 500;">{{r.account}}</span>
+                        <span style="height: 20px; padding: 0 7px; border-radius: 6px; background: var(--accent-soft); color: var(--accent-text); font-size: 11px; font-weight: 600; display: inline-flex; align-items: center;">{{r.tier}}</span>
+                      </div>
+                    </td>
+                    <td style="padding: 12px; color: var(--muted);">{{r.target}}</td>
+                    <td style="padding: 12px;"><span style="{{r.dueStyle}}">{{r.due}}</span></td>
+                    <td style="padding: 12px;">
+                      <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="width: 26px; height: 26px; border-radius: 50%; background: var(--surface-2); border: 1px solid var(--border); font-size: 11px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center;">{{r.initials}}</span>
+                        <span>{{r.owner}}</span>
+                      </div>
+                    </td>
+                  </tr>
+                </sc-for>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section style="flex: 1 1 340px; min-width: 0; background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 20px; display: flex; flex-direction: column; gap: 14px;">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+            <h2 style="margin: 0; font-size: 15px; font-weight: 600;">AI agent outcomes</h2>
+            <span style="height: 22px; padding: 0 8px; border-radius: 6px; background: var(--accent-soft); color: var(--accent-text); font-size: 12px; font-weight: 600; display: inline-flex; align-items: center;">Live on 3 queues</span>
+          </div>
+          <div style="position: relative; width: 240px; height: 132px; align-self: center;">
+            <svg width="240" height="132" viewBox="0 0 240 132" role="img" aria-label="Outcomes: 38% resolved, 41% handed off to a person, 21% shadow mode only">
+              <path d="M 24 120 A 96 96 0 0 1 216 120" fill="none" style="stroke: var(--track);" stroke-width="22" stroke-linecap="butt"></path>
+              <path d="M 24 120 A 96 96 0 0 1 216 120" fill="none" style="stroke: var(--c1);" stroke-width="22" stroke-dasharray="113 400"></path>
+              <path d="M 24 120 A 96 96 0 0 1 216 120" fill="none" style="stroke: var(--c4);" stroke-width="22" stroke-dasharray="122 400" stroke-dashoffset="-116"></path>
+            </svg>
+            <div style="position: absolute; left: 0; right: 0; bottom: 4px; display: flex; flex-direction: column; align-items: center;">
+              <span style="font-size: 26px; font-weight: 600; letter-spacing: -0.02em;">38%</span>
+              <span style="font-size: 12px; color: var(--muted);">resolved end-to-end</span>
+            </div>
+          </div>
+          <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px;">
+            <div style="display: flex; flex-direction: column; gap: 4px; padding-left: 10px; border-left: 3px solid var(--c1);">
+              <span style="font-size: 12px; color: var(--muted);">Resolved</span><span style="font-size: 15px; font-weight: 600;">612</span>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 4px; padding-left: 10px; border-left: 3px solid var(--c4);">
+              <span style="font-size: 12px; color: var(--muted);">Handed off</span><span style="font-size: 15px; font-weight: 600;">660</span>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 4px; padding-left: 10px; border-left: 3px solid var(--track);">
+              <span style="font-size: 12px; color: var(--muted);">Shadow</span><span style="font-size: 15px; font-weight: 600;">338</span>
+            </div>
+          </div>
+          <dl style="margin: 0; display: flex; flex-direction: column; gap: 8px; padding-top: 12px; border-top: 1px solid var(--border); font-size: 13px;">
+            <div style="display: flex; justify-content: space-between;"><dt style="color: var(--muted);">Grounded answers</dt><dd style="margin: 0; font-weight: 600;">97.2%</dd></div>
+            <div style="display: flex; justify-content: space-between;"><dt style="color: var(--muted);">Reopen rate</dt><dd style="margin: 0; font-weight: 600;">1.4%</dd></div>
+            <div style="display: flex; justify-content: space-between;"><dt style="color: var(--muted);">Spend this month</dt><dd style="margin: 0; font-weight: 600;">$41.20 of $200 cap</dd></div>
+          </dl>
+          <a href="Agent.dc.html" style="display: inline-flex; align-items: center; justify-content: center; height: 40px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface-2); color: var(--text); font-size: 13px; font-weight: 600; text-decoration: none;">Review agent performance</a>
+        </section>
+      </div>
+
+      <div style="display: flex; flex-wrap: wrap; gap: 16px;">
+        <section style="flex: 2 1 560px; min-width: 0; background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 20px; display: flex; flex-direction: column; gap: 6px;">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-bottom: 6px;">
+            <h2 style="margin: 0; font-size: 15px; font-weight: 600;">Accounts needing attention</h2>
+            <a href="#" style="font-size: 13px; font-weight: 500; color: var(--accent-text); text-decoration: none;">All accounts</a>
+          </div>
+          <sc-for list="{{accounts}}" as="a" hint-placeholder-count="4">
+            <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid var(--border);">
+              <span style="{{a.logoStyle}}">{{a.initials}}</span>
+              <div style="flex: 1 1 200px; min-width: 0; display: flex; flex-direction: column; gap: 3px;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <span style="font-size: 14px; font-weight: 600;">{{a.name}}</span>
+                  <span style="height: 20px; padding: 0 7px; border-radius: 6px; background: var(--surface-2); border: 1px solid var(--border); color: var(--muted); font-size: 11px; font-weight: 600; display: inline-flex; align-items: center;">{{a.tier}} · {{a.arr}}</span>
+                </div>
+                <span style="font-size: 13px; color: var(--muted);">{{a.signal}}</span>
+              </div>
+              <span style="{{a.badgeStyle}}">{{a.badge}}</span>
+              <button type="button" style="height: 34px; padding: 0 12px; border-radius: 9px; border: 1px solid var(--border); background: var(--surface); color: var(--text); font: inherit; font-size: 13px; font-weight: 500;">View account</button>
+            </div>
+          </sc-for>
+        </section>
+
+        <section style="flex: 1 1 340px; min-width: 0; background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 20px; display: flex; flex-direction: column; gap: 14px;">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+            <h2 style="margin: 0; font-size: 15px; font-weight: 600;">Top product areas</h2>
+            <span style="font-size: 12px; color: var(--muted);">AI taxonomy</span>
+          </div>
+          <sc-for list="{{areas}}" as="p" hint-placeholder-count="5">
+            <div style="display: flex; flex-direction: column; gap: 6px;">
+              <div style="display: flex; justify-content: space-between; font-size: 13px;">
+                <span>{{p.name}}</span><span style="font-weight: 600;">{{p.pct}}</span>
+              </div>
+              <div style="height: 8px; border-radius: 4px; background: var(--track);">
+                <div style="{{p.barStyle}}"></div>
+              </div>
+            </div>
+          </sc-for>
+        </section>
+      </div>
+    </main>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"accent":{"editor":"color","options":["#5347CE","#4896FE","#16C8C7","#887CFD"],"default":"#5347CE"},"$preview":{"width":1440,"height":1180}}'>
+class Component extends DCLogic {
+  tokens(dark, accent) {
+    var a = accent || '#5347CE';
+    if (dark && a === '#5347CE') a = '#6B60EA';
+    var t = dark ? {
+      bg: '#0B0D14', surface: '#13161F', 'surface-2': '#1A1E2A', border: '#262B38', text: '#ECEEF5', muted: '#A0A7B8',
+      'accent-soft': '#25224A', 'accent-text': '#B9B3FF', track: '#232838',
+      'success-bg': '#0F2E2B', success: '#4FD8C6', 'danger-bg': '#3A1720', danger: '#FF8E9C', 'warn-bg': '#3A2A10', warn: '#F5B85A',
+      c1: a, c2: '#9A90FF', c3: '#5AA3FF', c4: '#1FC2C1', c5: '#2E8F8E'
+    } : {
+      bg: '#F3F5F8', surface: '#FFFFFF', 'surface-2': '#F6F7FA', border: '#E5E7ED', text: '#111427', muted: '#5B6273',
+      'accent-soft': '#EEEDFB', 'accent-text': '#4A3FC0', track: '#ECEEF3',
+      'success-bg': '#E2F7F3', success: '#0B7468', 'danger-bg': '#FDECEE', danger: '#B4233A', 'warn-bg': '#FFF3DE', warn: '#8A5300',
+      c1: a, c2: '#887CFD', c3: '#4896FE', c4: '#16C8C7', c5: '#8EE6E5'
+    };
+    var s = '--accent:' + a + ';';
+    for (var k in t) s += '--' + k + ':' + t[k] + ';';
+    return s;
+  }
+  renderVals() {
+    var st = this.state || {};
+    var dark = st.dark !== undefined ? st.dark : this.props.theme === 'dark';
+    var accent = this.props.accent || '#5347CE';
+    var self = this;
+    var mix = [0.46, 0.27, 0.11, 0.10, 0.06];
+    var weekData = [['Oct 20', 312], ['Oct 27', 348], ['Nov 3', 296], ['Nov 10', 402], ['Nov 17', 371], ['This wk', 436]];
+    var weeks = weekData.map(function (w) {
+      return {
+        label: w[0], total: w[1],
+        segs: mix.map(function (m, i) {
+          var h = Math.max(6, Math.round(w[1] * m * 0.46));
+          return { style: 'height:' + h + 'px;border-radius:6px;background:var(--c' + (i + 1) + ');' };
+        })
+      };
+    });
+    var dayData = [['Mon', 18], ['Tue', 12], ['Wed', 22], ['Thu', 14], ['Fri', 16], ['Sat', 31], ['Sun', 27]];
+    var days = dayData.map(function (d) {
+      var best = d[0] === 'Tue';
+      return {
+        day: d[0], value: d[1] + 'm',
+        labelStyle: 'font-size:12px;font-weight:600;' + (best ? 'color:var(--text);' : 'color:var(--muted);'),
+        barStyle: 'width:100%;max-width:40px;height:' + Math.round(d[1] * 5.2) + 'px;border-radius:10px;' + (best ? 'background:var(--accent);' : 'background:var(--track);'),
+        dayStyle: 'font-size:12px;' + (best ? 'font-weight:600;color:var(--text);' : 'color:var(--muted);')
+      };
+    });
+    function due(tone) {
+      var bg = tone === 'danger' ? 'var(--danger-bg)' : tone === 'warn' ? 'var(--warn-bg)' : 'var(--surface-2)';
+      var fg = tone === 'danger' ? 'var(--danger)' : tone === 'warn' ? 'var(--warn)' : 'var(--muted)';
+      return 'display:inline-flex;align-items:center;height:22px;padding:0 8px;border-radius:6px;font-size:12px;font-weight:600;background:' + bg + ';color:' + fg + ';';
+    }
+    var risks = [
+      { id: 'TKZ-4821', title: 'Webhook deliveries failing after key rotation', channel: 'Slack Connect', account: 'Northwind Labs', tier: 'Enterprise', target: 'Next response', due: '12m', dueStyle: due('danger'), owner: 'Ana Lima', initials: 'AL' },
+      { id: 'TKZ-4817', title: 'SSO login loop on EU workspace', channel: 'Email', account: 'Helios Health', tier: 'Enterprise', target: 'First response', due: '28m', dueStyle: due('danger'), owner: 'Unassigned', initials: '—' },
+      { id: 'TKZ-4809', title: 'Invoice shows duplicate seats', channel: 'Portal', account: 'Brightwave', tier: 'Growth', target: 'Resolution', due: '1h 40m', dueStyle: due('warn'), owner: 'Sam Ortiz', initials: 'SO' },
+      { id: 'TKZ-4802', title: 'HTTP 429 during bulk import', channel: 'Slack Connect', account: 'Quanta AI', tier: 'Growth', target: 'Follow-up update', due: '3h 05m', dueStyle: due('neutral'), owner: 'Priya Rao', initials: 'PR' }
+    ];
+    var logo = function (c) { return 'width:40px;height:40px;flex:0 0 40px;border-radius:12px;display:inline-flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;background:' + c + ';'; };
+    var badge = function (tone) {
+      var bg = tone === 'danger' ? 'var(--danger-bg)' : 'var(--warn-bg)';
+      var fg = tone === 'danger' ? 'var(--danger)' : 'var(--warn)';
+      return 'display:inline-flex;align-items:center;height:24px;padding:0 9px;border-radius:7px;font-size:12px;font-weight:600;background:' + bg + ';color:' + fg + ';';
+    };
+    var accounts = [
+      { initials: 'NL', name: 'Northwind Labs', tier: 'Enterprise', arr: '$184k ARR', signal: 'Champion left #northwind-support · 3 urgent issues open', badge: 'At risk', badgeStyle: badge('danger'), logoStyle: logo('#5347CE') },
+      { initials: 'HH', name: 'Helios Health', tier: 'Enterprise', arr: '$126k ARR', signal: 'Sentiment trending down for 3 weeks', badge: 'Watch', badgeStyle: badge('warn'), logoStyle: logo('#2F7FE0') },
+      { initials: 'BW', name: 'Brightwave', tier: 'Growth', arr: '$38k ARR', signal: 'Renewal in 21 days · billing issue unresolved', badge: 'Watch', badgeStyle: badge('warn'), logoStyle: logo('#0E8F8E') },
+      { initials: 'QA', name: 'Quanta AI', tier: 'Growth', arr: '$52k ARR', signal: 'Ticket volume up 3× after API v2 launch', badge: 'Spike', badgeStyle: badge('warn'), logoStyle: logo('#6E61F0') }
+    ];
+    var areaData = [['Integrations › Webhooks', 22], ['Auth › SSO', 17], ['Billing › Invoices', 14], ['API › Rate limits', 11], ['Onboarding › Setup', 9]];
+    var areas = areaData.map(function (p, i) {
+      return { name: p[0], pct: p[1] + '%', barStyle: 'height:8px;border-radius:4px;width:' + Math.round(p[1] / 22 * 100) + '%;background:var(--c' + ((i % 4) + 1) + ');' };
+    });
+    return {
+      rootStyle: this.tokens(dark, accent) + 'display:flex;flex-wrap:wrap;min-height:100vh;background:var(--bg);color:var(--text);font-family:Inter,ui-sans-serif,system-ui,sans-serif;-webkit-font-smoothing:antialiased;',
+      themeName: dark ? 'dark' : 'light',
+      accent: accent,
+      toggleTheme: function () { self.setState({ dark: !dark }); },
+      weeks: weeks, days: days, risks: risks, accounts: accounts, areas: areas
+    };
+  }
+}
+</script>
+</body>
+</html>

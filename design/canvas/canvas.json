@@ -1,0 +1,25 @@
+{
+  "v": 3,
+  "createdOnFiles": {"v": 1, "at": "2026-11-19T12:00:00Z"},
+  "title": "Tickzy UI Design",
+  "launch": {"view": "canvas"},
+  "pages": [],
+  "boards": {
+    "Main.dc.html": {"x": 0, "y": 0, "w": 1440, "h": 1180, "title": "Overview — Light", "expand": "fill", "is_interactive": true},
+    "Inbox.dc.html": {"x": 1520, "y": 0, "w": 1440, "h": 960, "title": "Inbox — Light", "expand": "fill", "is_interactive": true},
+    "Agent.dc.html": {"x": 3040, "y": 0, "w": 1440, "h": 1100, "title": "AI Agent — Light", "expand": "fill", "is_interactive": true},
+    "MainDark.dc.html": {"x": 0, "y": 1600, "w": 1440, "h": 1180, "title": "Overview — Dark", "expand": "fill", "is_interactive": true},
+    "InboxDark.dc.html": {"x": 1520, "y": 1600, "w": 1440, "h": 960, "title": "Inbox — Dark", "expand": "fill", "is_interactive": true},
+    "AgentDark.dc.html": {"x": 3040, "y": 1600, "w": 1440, "h": 1100, "title": "AI Agent — Dark", "expand": "fill", "is_interactive": true},
+    "StyleGuide.dc.html": {"x": 0, "y": 3200, "w": 1440, "h": 1040, "title": "Style guide"},
+    "Sidebar.dc.html": {"x": 1520, "y": 3200, "w": 248, "h": 960, "title": "Component — Sidebar"},
+    "Topbar.dc.html": {"x": 1848, "y": 3200, "w": 1192, "h": 72, "title": "Component — Top bar"}
+  },
+  "order": ["Main.dc.html", "Inbox.dc.html", "Agent.dc.html", "MainDark.dc.html", "InboxDark.dc.html", "AgentDark.dc.html", "StyleGuide.dc.html", "Sidebar.dc.html", "Topbar.dc.html"],
+  "notes": {
+    "light": {"x": 0, "y": -300, "text": "Light mode", "kind": "title1", "maxW": 4480},
+    "dark": {"x": 0, "y": 1300, "text": "Dark mode", "kind": "title1", "maxW": 4480},
+    "system": {"x": 0, "y": 2900, "text": "Design system & components", "kind": "title1", "maxW": 4480}
+  },
+  "designSystems": []
+}

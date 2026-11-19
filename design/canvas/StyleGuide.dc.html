@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Tickzy — Style guide</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#4A3FC0}a:hover{color:#352C9A}
+</style>
+</helmet>
+<div style="width: 1440px; height: 1040px; box-sizing: border-box; padding: 64px 72px; background: #F3F5F8; color: #111427; font-family: Inter, ui-sans-serif, system-ui, sans-serif; display: flex; flex-direction: column; gap: 44px;">
+  <div style="display: flex; align-items: center; justify-content: space-between;">
+    <div style="display: flex; flex-direction: column; gap: 8px;">
+      <h1 style="margin: 0; font-size: 44px; line-height: 52px; font-weight: 700; letter-spacing: -0.03em;">Tickzy style guide</h1>
+      <p style="margin: 0; font-size: 16px; color: #5B6273;">Calm, dense, keyboard-first. One indigo accent, three supporting data colors, light and dark themes.</p>
+    </div>
+    <div style="display: flex; align-items: center; gap: 12px;">
+      <svg width="44" height="44" viewBox="0 0 32 32" role="img" aria-label="Tickzy logo">
+        <rect x="0" y="0" width="32" height="32" rx="9" fill="#5347CE"></rect>
+        <path d="M8 11.5a1.5 1.5 0 0 1 1.5-1.5h13a1.5 1.5 0 0 1 1.5 1.5v2a2.5 2.5 0 0 0 0 5v2a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 8 20.5v-2a2.5 2.5 0 0 0 0-5z" fill="#FFFFFF"></path>
+        <path d="M18.5 10v12" stroke="#5347CE" stroke-width="1.6" stroke-dasharray="1.6 1.8"></path>
+      </svg>
+      <span style="font-size: 32px; font-weight: 700; letter-spacing: -0.03em; color: #5347CE;">Tickzy</span>
+    </div>
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 32px;">
+    <section style="display: flex; flex-direction: column; gap: 16px;">
+      <h2 style="margin: 0; font-size: 18px; font-weight: 600; color: #4A3FC0;">Brand &amp; data colors</h2>
+      <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px;">
+        <div style="border-radius: 14px; overflow: hidden; background: #FFFFFF; box-shadow: 0 1px 2px rgba(17,20,39,0.06);"><div style="height: 72px; background: #5347CE;"></div><div style="padding: 10px 12px; font-size: 13px;"><strong style="font-weight: 600;">Indigo</strong><br><span style="color: #5B6273;">#5347CE · accent, Slack</span></div></div>
+        <div style="border-radius: 14px; overflow: hidden; background: #FFFFFF; box-shadow: 0 1px 2px rgba(17,20,39,0.06);"><div style="height: 72px; background: #887CFD;"></div><div style="padding: 10px 12px; font-size: 13px;"><strong style="font-weight: 600;">Violet</strong><br><span style="color: #5B6273;">#887CFD · email</span></div></div>
+        <div style="border-radius: 14px; overflow: hidden; background: #FFFFFF; box-shadow: 0 1px 2px rgba(17,20,39,0.06);"><div style="height: 72px; background: #4896FE;"></div><div style="padding: 10px 12px; font-size: 13px;"><strong style="font-weight: 600;">Blue</strong><br><span style="color: #5B6273;">#4896FE · Teams</span></div></div>
+        <div style="border-radius: 14px; overflow: hidden; background: #FFFFFF; box-shadow: 0 1px 2px rgba(17,20,39,0.06);"><div style="height: 72px; background: #16C8C7;"></div><div style="padding: 10px 12px; font-size: 13px;"><strong style="font-weight: 600;">Teal</strong><br><span style="color: #5B6273;">#16C8C7 · chat</span></div></div>
+      </div>
+      <h3 style="margin: 8px 0 0; font-size: 14px; font-weight: 600;">Status</h3>
+      <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+        <span style="display: inline-flex; align-items: center; height: 26px; padding: 0 10px; border-radius: 7px; background: #E2F7F3; color: #0B7468; font-size: 12px; font-weight: 700;">Success · Met</span>
+        <span style="display: inline-flex; align-items: center; height: 26px; padding: 0 10px; border-radius: 7px; background: #FFF3DE; color: #8A5300; font-size: 12px; font-weight: 700;">Warning · 1h 40m</span>
+        <span style="display: inline-flex; align-items: center; height: 26px; padding: 0 10px; border-radius: 7px; background: #FDECEE; color: #B4233A; font-size: 12px; font-weight: 700;">Danger · 12m</span>
+        <span style="display: inline-flex; align-items: center; height: 26px; padding: 0 10px; border-radius: 7px; background: #EEEDFB; color: #4A3FC0; font-size: 12px; font-weight: 700;">AI · Shadow</span>
+      </div>
+    </section>
+
+    <section style="display: flex; flex-direction: column; gap: 16px;">
+      <h2 style="margin: 0; font-size: 18px; font-weight: 600; color: #4A3FC0;">Theme tokens</h2>
+      <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px;">
+        <div style="border-radius: 16px; padding: 16px; background: #FFFFFF; border: 1px solid #E5E7ED; display: flex; flex-direction: column; gap: 10px;">
+          <span style="font-size: 13px; font-weight: 600;">Light</span>
+          <div style="display: flex; align-items: center; gap: 8px; font-size: 12px;"><span style="width: 20px; height: 20px; border-radius: 6px; background: #F3F5F8; border: 1px solid #E5E7ED;"></span>bg #F3F5F8</div>
+          <div style="display: flex; align-items: center; gap: 8px; font-size: 12px;"><span style="width: 20px; height: 20px; border-radius: 6px; background: #FFFFFF; border: 1px solid #E5E7ED;"></span>surface #FFFFFF</div>
+          <div style="display: flex; align-items: center; gap: 8px; font-size: 12px;"><span style="width: 20px; height: 20px; border-radius: 6px; background: #E5E7ED;"></span>border #E5E7ED</div>
+          <div style="display: flex; align-items: center; gap: 8px; font-size: 12px;"><span style="width: 20px; height: 20px; border-radius: 6px; background: #111427;"></span>text #111427</div>
+          <div style="display: flex; align-items: center; gap: 8px; font-size: 12px;"><span style="width: 20px; height: 20px; border-radius: 6px; background: #5B6273;"></span>muted #5B6273</div>
+        </div>
+        <div style="border-radius: 16px; padding: 16px; background: #13161F; border: 1px solid #262B38; color: #ECEEF5; display: flex; flex-direction: column; gap: 10px;">
+          <span style="font-size: 13px; font-weight: 600;">Dark</span>
+          <div style="display: flex; align-items: center; gap: 8px; font-size: 12px;"><span style="width: 20px; height: 20px; border-radius: 6px; background: #0B0D14; border: 1px solid #262B38;"></span>bg #0B0D14</div>
+          <div style="display: flex; align-items: center; gap: 8px; font-size: 12px;"><span style="width: 20px; height: 20px; border-radius: 6px; background: #1A1E2A; border: 1px solid #262B38;"></span>surface #13161F</div>
+          <div style="display: flex; align-items: center; gap: 8px; font-size: 12px;"><span style="width: 20px; height: 20px; border-radius: 6px; background: #262B38;"></span>border #262B38</div>
+          <div style="display: flex; align-items: center; gap: 8px; font-size: 12px;"><span style="width: 20px; height: 20px; border-radius: 6px; background: #ECEEF5;"></span>text #ECEEF5</div>
+          <div style="display: flex; align-items: center; gap: 8px; font-size: 12px;"><span style="width: 20px; height: 20px; border-radius: 6px; background: #A0A7B8;"></span>muted #A0A7B8</div>
+        </div>
+      </div>
+      <p style="margin: 0; font-size: 13px; line-height: 20px; color: #5B6273;">Dark mode lifts the accent to #6B60EA so white text on buttons keeps 4.5:1 contrast. Every text pair in both themes meets WCAG AA.</p>
+    </section>
+
+    <section style="display: flex; flex-direction: column; gap: 16px;">
+      <h2 style="margin: 0; font-size: 18px; font-weight: 600; color: #4A3FC0;">Typography · Inter</h2>
+      <div style="display: flex; flex-direction: column; gap: 12px; padding: 18px; border-radius: 16px; background: #FFFFFF; border: 1px solid #E5E7ED;">
+        <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px;"><span style="font-size: 30px; font-weight: 600; letter-spacing: -0.02em;">96.4%</span><span style="font-size: 12px; color: #5B6273;">Metric · 30/600</span></div>
+        <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px;"><span style="font-size: 24px; font-weight: 600; letter-spacing: -0.01em;">Page title</span><span style="font-size: 12px; color: #5B6273;">24/600</span></div>
+        <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px;"><span style="font-size: 15px; font-weight: 600;">Card title</span><span style="font-size: 12px; color: #5B6273;">15/600</span></div>
+        <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px;"><span style="font-size: 14px;">Body and messages</span><span style="font-size: 12px; color: #5B6273;">14/400</span></div>
+        <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px;"><span style="font-size: 13px; color: #5B6273;">Secondary text</span><span style="font-size: 12px; color: #5B6273;">13/400</span></div>
+        <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px;"><span style="font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #5B6273;">Section label</span><span style="font-size: 12px; color: #5B6273;">11/600 caps</span></div>
+      </div>
+    </section>
+  </div>
+
+  <section style="display: flex; flex-direction: column; gap: 16px;">
+    <h2 style="margin: 0; font-size: 18px; font-weight: 600; color: #4A3FC0;">Components</h2>
+    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px;">
+      <div style="display: flex; flex-direction: column; gap: 18px; padding: 24px; border-radius: 16px; background: #FFFFFF; border: 1px solid #E5E7ED;">
+        <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px;">
+          <button type="button" style="height: 40px; padding: 0 16px; border-radius: 10px; border: 0; background: #5347CE; color: #FFFFFF; font: inherit; font-size: 13px; font-weight: 600;">Primary</button>
+          <button type="button" style="height: 40px; padding: 0 16px; border-radius: 10px; border: 1px solid #E5E7ED; background: #FFFFFF; color: #111427; font: inherit; font-size: 13px; font-weight: 500;">Secondary</button>
+          <button type="button" style="height: 40px; padding: 0 16px; border-radius: 10px; border: 0; background: transparent; color: #4A3FC0; font: inherit; font-size: 13px; font-weight: 600;">Ghost link</button>
+          <button type="button" aria-label="More options" style="width: 40px; height: 40px; border-radius: 10px; border: 1px solid #E5E7ED; background: #FFFFFF; color: #5B6273; display: inline-flex; align-items: center; justify-content: center;"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="1.6"></circle><circle cx="12" cy="12" r="1.6"></circle><circle cx="19" cy="12" r="1.6"></circle></svg></button>
+          <span role="switch" aria-checked="true" aria-label="Example switch" style="position: relative; display: inline-block; width: 44px; height: 26px; border-radius: 13px; background: #5347CE;"><span style="position: absolute; top: 3px; left: 21px; width: 20px; height: 20px; border-radius: 50%; background: #FFFFFF;"></span></span>
+        </div>
+        <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 500;">
+          Subject
+          <input type="text" value="Webhook deliveries failing after key rotation" style="height: 40px; padding: 0 12px; border-radius: 10px; border: 1px solid #E5E7ED; background: #F6F7FA; color: #111427; font: inherit; font-size: 14px;">
+        </label>
+        <p style="margin: 0; font-size: 13px; line-height: 20px; color: #5B6273;">Radii: 16 cards · 10–12 controls · 6–7 chips. Spacing on a 4 px grid; cards use 20 px padding and 16 px gaps. Borders over shadows.</p>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 12px; padding: 24px; border-radius: 16px; background: #FFFFFF; border: 1px solid #E5E7ED;">
+        <div style="display: flex; gap: 12px; align-items: flex-start;">
+          <span style="width: 34px; height: 34px; flex: 0 0 34px; border-radius: 50%; background: #F6F7FA; border: 1px solid #E5E7ED; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700;">JW</span>
+          <div style="flex: 1 1 auto; padding: 12px 14px; border-radius: 14px; border: 1px solid #E5E7ED; display: flex; flex-direction: column; gap: 4px;"><span style="font-size: 13px; font-weight: 600;">Customer message</span><span style="font-size: 14px; color: #111427;">Bordered card, neutral surface.</span></div>
+        </div>
+        <div style="display: flex; gap: 12px; align-items: flex-start;">
+          <span style="width: 34px; height: 34px; flex: 0 0 34px; border-radius: 50%; background: #EEEDFB; color: #4A3FC0; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700;">AL</span>
+          <div style="flex: 1 1 auto; padding: 12px 14px; border-radius: 14px; border: 1px solid #8A5300; background: #FFF8E8; display: flex; flex-direction: column; gap: 4px;"><span style="font-size: 13px; font-weight: 600;">Internal note</span><span style="font-size: 14px; color: #111427;">Amber tint so private content is never mistaken for a reply.</span></div>
+        </div>
+        <div style="padding: 12px 14px; border-radius: 14px; border: 1px solid #5347CE; background: #EEEDFB; display: flex; flex-direction: column; gap: 4px;"><span style="font-size: 13px; font-weight: 600; color: #4A3FC0;">AI suggestion</span><span style="font-size: 14px; color: #111427;">Indigo tint, always with sources and a confidence label.</span></div>
+      </div>
+    </div>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1040}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>
