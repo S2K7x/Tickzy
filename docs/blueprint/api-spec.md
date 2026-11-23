@@ -7,7 +7,7 @@
 ```json
 { "error": { "code": "validation_failed", "message": "…", "details": [{"path":"title","issue":"too_long"}], "request_id": "req_…" } }
 ```
-Codes: `unauthenticated` 401, `forbidden` 403, `not_found` 404, `validation_failed` 422, `conflict` 409, `rate_limited` 429, `internal` 500. Rate limit headers `RateLimit-Limit/Remaining/Reset`; default 600 req/min per token.
+Codes: `unauthenticated` 401, `forbidden` 403, `not_found` 404, `validation_failed` 422, `conflict` 409, `rate_limited` 429, `internal` 500. Rate limit headers `RateLimit-Limit/Remaining/Reset` on every response; 429 adds `Retry-After`. Defaults (ADR-023): 600 req/min per API token or user, 1200 req/min per client IP, 20 req/min per IP on sign-in and invitation endpoints.
 
 ## 1. Endpoints
 | Method & path | Purpose | Permission | Milestone |

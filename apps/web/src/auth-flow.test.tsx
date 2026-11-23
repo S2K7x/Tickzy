@@ -57,6 +57,19 @@ describe("sign-in (FR-1.2)", () => {
   });
 });
 
+describe("rate limits (T-106)", () => {
+  it("shows the server's 429 message on sign-in instead of failing silently", async () => {
+    mockApi({
+      "GET /v1/auth/session": UNAUTH,
+      "POST /v1/auth/magic-link": { status: 429, body: { error: { code: "rate_limited", message: "Too many attempts. Wait a minute and try again.", request_id: "r" } } },
+    });
+    await renderAt("/sign-in");
+    await userEvent.type(await screen.findByLabelText("Work email"), "maya@acme.test");
+    await userEvent.click(screen.getByRole("button", { name: "Email me a sign-in link" }));
+    expect((await screen.findByRole("alert")).textContent).toBe("Too many attempts. Wait a minute and try again.");
+  });
+});
+
 describe("link verification", () => {
   it("POSTs the token from the URL fragment once, removes it from the URL and lands in the app", async () => {
     let signedIn = false;

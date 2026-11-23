@@ -111,3 +111,12 @@ Recorded so no architectural change is silent:
   - Hash, scopes and workspace are immutable (column-level UPDATE grant on `revoked_at`, `name` only). `last_used_at` is written at most once a minute.
 - **Cross-tenant SECURITY DEFINER registry (runtime role):** `my_memberships()`, `upsert_user()` (0001) · `claim_outbox()` (0002) · `auth_*` (0003) · `invitation_preview(token_id, hash)`, `accept_invitation(token_id, hash, …)` (0004 — token is the capability; accept requires the signed-in user's email to match) · `api_token_lookup(token_id)`, `api_token_touch(id)` (0005). Each has integration tests; any addition updates this list.
 - **Consequences:** integrations work today against every existing endpoint; issue/account scopes take effect as those APIs ship. Rate limiting per token arrives with T-106.
+
+## ADR-023 Rate limiting and client-IP trust (T-106, SEC-9) — 2026-11-23
+- **Context:** api-spec promises `RateLimit-*` headers and 600 req/min per token; sign-in and invitation endpoints send email or look up secrets without authentication. Architecture keeps Redis optional until M5. The server also had `trustProxy: true` hard-coded, which lets any client choose its IP via `X-Forwarded-For` — fatal for per-IP limits.
+- **Decision:**
+  - Three fixed one-minute layers: **per IP** on every request *before* authentication (1200/min; throttles floods and token guessing), **per IP on sensitive public endpoints** (`POST /v1/auth/magic-link`, `/verify`, `/v1/invitations/preview`, `/accept`: 20/min; on top of the per-email magic-link limit), **per principal** after authentication (API token or user, 600/min). `/healthz` and `/readyz` are exempt. All limits are config (`RATE_LIMIT_*`).
+  - Responses carry `RateLimit-Limit/Remaining/Reset` (most specific layer reached); 429 uses the standard error envelope (`rate_limited`) plus `Retry-After`.
+  - **In-memory store per process** behind a `RateLimitStore` interface (bounded: expired windows are swept). With N API nodes the effective limit is up to N×; acceptable for the solo/single-node stage. Move to a shared store (Postgres or Redis per ADR-0xx at M5) before running more than one API node.
+  - **Client IP:** `TRUST_PROXY` config — `false` (default, socket address), a hop count, or proxy addresses/CIDRs. `true` is refused at startup.
+- **Consequences:** predictable limits with no new infrastructure; local browser suites run behind the Vite preview proxy (all traffic is 127.0.0.1), so they raise `RATE_LIMIT_AUTH_PER_MIN`.

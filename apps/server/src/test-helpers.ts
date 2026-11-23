@@ -7,7 +7,11 @@ import { buildApp } from "./app.ts";
 import { MemoryEmailTransport } from "./lib/email.ts";
 
 export const TEST_ORIGIN = "http://localhost:5173";
-export const testConfig = { LOG_LEVEL: "silent" as const, AUTH_DEV_MODE: true, APP_ORIGIN: TEST_ORIGIN, ALLOWED_ORIGINS: "", COOKIE_SECURE: true };
+// Rate limits are high here so functional suites never trip them; rate-limit.test.ts uses small ones.
+export const testConfig = {
+  LOG_LEVEL: "silent" as const, AUTH_DEV_MODE: true, APP_ORIGIN: TEST_ORIGIN, ALLOWED_ORIGINS: "", COOKIE_SECURE: true,
+  TRUST_PROXY: "false", RATE_LIMIT_PER_MIN: 100_000, RATE_LIMIT_IP_PER_MIN: 100_000, RATE_LIMIT_AUTH_PER_MIN: 100_000,
+};
 
 export async function setupTestApp() {
   const { app: database, owner } = await resetTestDatabase();

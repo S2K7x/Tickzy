@@ -19,6 +19,14 @@ const ConfigSchema = z
       .default("true")
       .transform((v) => v === "true"),
     EMAIL_TRANSPORT: z.enum(["console"]).default("console"),
+    /**
+     * Which proxies may set X-Forwarded-For (client IP drives rate limits). "false" (default) = use the socket
+     * address; a number = trust that many hops; otherwise a comma-separated list of proxy addresses/CIDRs.
+     */
+    TRUST_PROXY: z.string().default("false"),
+    RATE_LIMIT_PER_MIN: z.coerce.number().int().min(1).default(600),
+    RATE_LIMIT_IP_PER_MIN: z.coerce.number().int().min(1).default(1200),
+    RATE_LIMIT_AUTH_PER_MIN: z.coerce.number().int().min(1).default(20),
   })
   .superRefine((c, ctx) => {
     if (c.NODE_ENV === "production" && c.AUTH_DEV_MODE) {
@@ -39,11 +47,24 @@ export function allowedOrigins(c: Pick<Config, "APP_ORIGIN" | "ALLOWED_ORIGINS">
   return [...new Set([new URL(c.APP_ORIGIN).origin, ...extra.map((o) => new URL(o).origin)])];
 }
 
+/** Fastify `trustProxy` value from TRUST_PROXY. Never `true` (that would let any client pick its IP). */
+export function trustProxySetting(value: string): false | string[] | ((address: string, hop: number) => boolean) {
+  const v = value.trim();
+  if (v === "" || v === "false") return false;
+  if (/^\d+$/.test(v)) {
+    const hops = Number(v);
+    return (_address, hop) => hop < hops; // trust exactly `hops` proxies in front of us
+  }
+  if (v === "true") throw new Error("TRUST_PROXY=true would trust spoofed X-Forwarded-For; set a hop count or proxy addresses");
+  return v.split(",").map((s) => s.trim()).filter(Boolean);
+}
+
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
   const parsed = ConfigSchema.safeParse(env);
   if (!parsed.success) {
     const issues = parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; ");
     throw new Error(`Invalid configuration: ${issues}`);
   }
+  trustProxySetting(parsed.data.TRUST_PROXY); // fail fast on an unsafe value
   return parsed.data;
 }
