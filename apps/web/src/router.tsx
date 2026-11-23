@@ -1,12 +1,56 @@
-import { createRootRoute, createRoute, createRouter, createMemoryHistory, type RouterHistory } from "@tanstack/react-router";
+import { createRootRoute, createRoute, createRouter, createMemoryHistory, Navigate, Outlet, useRouterState, type RouterHistory } from "@tanstack/react-router";
 import { AppShell } from "./components/AppShell.tsx";
 import { Overview } from "./pages/Overview.tsx";
 import { Placeholder } from "./pages/Placeholder.tsx";
+import { SignIn } from "./pages/SignIn.tsx";
+import { VerifyLink } from "./pages/VerifyLink.tsx";
+import { Onboarding } from "./pages/Onboarding.tsx";
+import { useCurrentWorkspace, useSession, useSignOut } from "./lib/session.ts";
 import { useTheme } from "./theme.ts";
 
+const PUBLIC_PATHS = new Set(["/sign-in", "/auth/verify"]);
+
+function FullScreenMessage({ title, children }: { title: string; children?: React.ReactNode }) {
+  return (
+    <div className="flex min-h-screen flex-col items-center justify-center gap-3 bg-bg px-4 text-center text-fg">
+      <p role="status" className="m-0 text-sm text-muted">{title}</p>
+      {children}
+    </div>
+  );
+}
+
+/** Route guard (T-105): signed-out → sign-in; signed-in without a workspace → onboarding; else the app shell. */
 function Root() {
   const { theme, toggle } = useTheme();
-  return <AppShell theme={theme} onToggleTheme={toggle} />;
+  const session = useSession();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const workspace = useCurrentWorkspace(session.data);
+  const signOut = useSignOut();
+
+  if (session.isPending) return <FullScreenMessage title="Loading Tickzy…" />;
+  if (session.isError) {
+    return (
+      <FullScreenMessage title="Tickzy is unreachable right now.">
+        <button type="button" className="rounded-[10px] border border-line bg-surface px-4 py-2 text-sm font-semibold" onClick={() => void session.refetch()}>Try again</button>
+      </FullScreenMessage>
+    );
+  }
+  const data = session.data;
+  const isPublic = PUBLIC_PATHS.has(pathname);
+  if (!data) return isPublic ? <Outlet /> : <Navigate to="/sign-in" replace />;
+  if (pathname === "/sign-in") return <Navigate to="/" replace />;
+  if (pathname === "/auth/verify") return <Outlet />;
+  if (data.workspaces.length === 0) return pathname === "/onboarding" ? <Outlet /> : <Navigate to="/onboarding" replace />;
+  if (pathname === "/onboarding") return <Outlet />; // creating an additional workspace
+  return (
+    <AppShell
+      theme={theme}
+      onToggleTheme={toggle}
+      user={data.user}
+      workspaceName={workspace.current?.name ?? ""}
+      onSignOut={() => void signOut()}
+    />
+  );
 }
 
 const rootRoute = createRootRoute({ component: Root });
@@ -22,6 +66,9 @@ const routeTree = rootRoute.addChildren([
   page("/knowledge", () => <Placeholder title="Knowledge" milestone="M5" description="Docs and resolved issues the AI answers from." />),
   page("/analytics", () => <Placeholder title="Analytics" milestone="M4" description="Volume, response times, SLA compliance and AI outcomes." />),
   page("/settings", () => <Placeholder title="Settings" milestone="M1" description="Members, roles, channels, business hours and integrations." />),
+  page("/sign-in", SignIn),
+  page("/auth/verify", VerifyLink),
+  page("/onboarding", Onboarding),
   page("/more", () => <Placeholder title="More" milestone="M2" description="AI agent, knowledge, analytics and settings on phones." />),
 ]);
 

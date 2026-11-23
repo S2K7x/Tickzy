@@ -3,7 +3,7 @@
 _Last updated: 2026-11-23 (session 3)._ Read this first, then `docs/blueprint/backlog.md`. Process: `docs/process/development-pipeline.md` (we are in **Stage 5 · Build**; status per stage in `docs/process/pipeline-checklist.md`).
 
 ## Phase
-Implementation: **M0 · Foundations complete** (except CI verification on GitHub); **M1 · Identity & access** in progress (T-104, T-101 done). Planning docs are complete and approved:
+Implementation: **M0 · Foundations complete** (except CI verification on GitHub); **M1 · Identity & access** in progress (T-104, T-101, T-105 done). Planning docs are complete and approved:
 strategy `docs/strategy/product-strategy.md` · architecture `docs/architecture/` · UX `docs/ux/ux-spec.md` + design canvas (https://claude.ai/artifact/BvvyCE24er29B2iYNqLVxg, source `design/canvas/`) · blueprint `docs/blueprint/`.
 
 ## Done (verified by tests)
@@ -24,21 +24,32 @@ strategy `docs/strategy/product-strategy.md` · architecture `docs/architecture/
 
 | T-101 | Auth core per **ADR-021** (in-house, replaces Better Auth): migration `0003_auth.sql` (sessions + login_tokens reachable only via `auth_*` SECURITY DEFINER functions), magic-link sign-in (single-use, 15 min, URL-fragment token, no enumeration, 5 per email per 15 min), sessions (`id.secret`, SHA-256 stored, constant-time compare, httpOnly/Secure/SameSite=Lax cookie, 30-day sliding), sign-out / sign-out-everywhere, CSRF Origin allow-list, `EmailTransport` (console dev / memory tests), config guards (no console email or insecure cookies in production) | 4 token tests + 18 auth integration tests (flow, single use, expiry, tampering, rate limit, enumeration, sliding renewal, forged secret, revocation, CSRF incl. login CSRF, no direct table access) + real-process smoke (link → verify → session) |
 
-Total: **81 tests passing** locally (`pnpm test`): shared 4 · db 13 · server 58 · web 6.
+| T-105 | Web sign-in & onboarding: API client (error envelope), session query, route guard (signed-out → /sign-in, no workspace → /onboarding, API down → retry screen), sign-in page (no enumeration), verify page (token from URL fragment, POSTed once even across remounts, removed from URL), create-workspace page (slug/prefix derived, field errors), user/workspace in top bar, sign-out; "New issue" disabled until M2 | 13 new jsdom tests (19 web) + **real-stack E2E** `apps/web/scripts/e2e-auth.cjs`: 18/18 (redirect, link from server email, token stripped, httpOnly/Lax cookie unreadable from JS, onboarding, reload, dark mode, sign-out kills server session, axe on every page, 390 & 1280) + `verify-responsive.cjs` now signed in: 8/8 (390/768/1024/1280 × light/dark) |
+
+Bugs found by verification and fixed in this task: verify page re-POSTed an empty token on remount; top bar overflowed at 768 px once the user block existed; onboarding showed prefix "XX" before typing.
+
+Total: **94 tests passing** locally (`pnpm test`): shared 4 · db 13 · server 58 · web 19 — plus the two real-browser scripts above.
 
 ## Written but NOT yet verified
 - T-011 CI workflow `.github/workflows/ci.yml` (Postgres 17 service). Not run on GitHub yet — first push/PR will tell.
 
 ## Not started (next, in order)
-1. **T-105** web sign-in & onboarding (uses T-101; makes the app usable end to end).
-2. **T-103** API tokens · **T-102** invitations & members · **T-106** rate limiting · **T-101b** Google/Microsoft sign-in.
+1. **T-102** invitations & members (API + Settings › Members UI) — unlocks onboarding step "Invite your team".
+2. **T-103** API tokens · **T-106** rate limiting · **T-101b** Google/Microsoft sign-in → completes M1.
 3. Founder review required for T-101 (auth code — engineering-workflow §5).
 3. Then M2 (accounts, issues, inbox).
 
 ## Notes for the next session
-- Run the web checks: `pnpm --filter @tickzy/web build && (cd apps/web && npx vite preview --port 4173 &) && node apps/web/scripts/verify-responsive.cjs apps/web /tmp/shots`.
+- Real-stack browser checks (need dev DB migrated):
+  ```bash
+  pnpm --filter @tickzy/web build
+  (cd apps/server && DATABASE_URL=postgres://tickzy_app:tickzy_app@localhost:5432/tickzy_dev COOKIE_SECURE=false APP_ORIGIN=http://localhost:4173 node src/main.ts --role=all > /tmp/server.log 2>&1 &)
+  (cd apps/web && npx vite preview --port 4173 &)
+  node apps/web/scripts/e2e-auth.cjs /tmp/server.log /tmp/shots
+  node apps/web/scripts/verify-responsive.cjs apps/web /tmp/shots /tmp/server.log
+  ```
 - Run the full stack: migrate dev DB, then `cd apps/server && DATABASE_URL=… AUTH_DEV_MODE=true node src/main.ts --role=all` and `pnpm --filter @tickzy/web dev` (proxies `/v1` to :3000).
-- The web shell does not call the API yet (T-105). In dev the sign-in link is printed by the server (console email transport).
+- In dev the sign-in link is printed by the server (console email transport). The browser scripts are not in CI yet (need Playwright in CI — add with E2E work in M3).
 
 ## How to run locally
 ```bash

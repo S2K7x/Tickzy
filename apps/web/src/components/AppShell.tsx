@@ -3,6 +3,19 @@ import { Link, Outlet } from "@tanstack/react-router";
 import { NAV, type NavItem } from "./nav.ts";
 import { Logo, MenuIcon, MoonIcon, PlusIcon, SearchIcon, SunIcon } from "./icons.tsx";
 import type { Theme } from "../theme.ts";
+import type { SessionUser } from "../lib/api.ts";
+
+export interface ShellUser {
+  user: SessionUser;
+  workspaceName: string;
+  onSignOut: () => void;
+}
+
+function initials(u: SessionUser): string {
+  const source = u.name.trim() || u.email.split("@")[0] || "?";
+  const parts = source.split(/[\s._-]+/).filter(Boolean);
+  return ((parts[0]?.[0] ?? "") + (parts[1]?.[0] ?? "")).toUpperCase() || "?";
+}
 
 const GROUP_LABEL: Record<NavItem["group"], string> = { support: "Support", ai: "AI & insights", system: "Workspace" };
 
@@ -76,42 +89,53 @@ function BottomTabs() {
   );
 }
 
-function TopBar({ theme, onToggleTheme }: { theme: Theme; onToggleTheme: () => void }) {
+function TopBar({ theme, onToggleTheme, user, workspaceName, onSignOut }: { theme: Theme; onToggleTheme: () => void } & ShellUser) {
   const iconBtn = "inline-flex h-10 w-10 items-center justify-center rounded-[11px] border border-line bg-surface text-fg";
   return (
     <header className="sticky top-0 z-10 flex min-h-[64px] items-center justify-between gap-3 border-b border-line bg-surface px-4 py-3 md:px-8">
       <div className="flex items-center gap-2 md:hidden">
         <Logo size={28} />
       </div>
-      <label className="hidden h-10 max-w-[420px] flex-1 items-center gap-2.5 rounded-[11px] border border-line bg-surface-2 px-3 text-muted sm:flex">
+      <label className="hidden h-10 min-w-0 max-w-[420px] flex-1 items-center gap-2.5 rounded-[11px] border border-line bg-surface-2 px-3 text-muted sm:flex">
         <SearchIcon size={16} />
         <span className="sr-only">Search</span>
         <input type="search" placeholder="Search issues, accounts, messages" className="min-w-0 flex-1 border-0 bg-transparent text-[13px] text-fg outline-none" />
         <kbd className="rounded-md border border-line bg-surface px-1.5 py-0.5 text-[11px] font-semibold text-muted">⌘K</kbd>
       </label>
-      <div className="flex items-center gap-2">
+      <div className="flex shrink-0 items-center gap-2">
         <button type="button" aria-label="Search" className={`${iconBtn} sm:hidden`}>
           <SearchIcon size={18} />
         </button>
-        <button type="button" className="hidden h-10 items-center gap-2 rounded-[11px] bg-accent px-3.5 text-[13px] font-semibold text-white sm:inline-flex">
+        <button type="button" disabled title="Creating issues arrives in M2" className="hidden h-10 cursor-not-allowed items-center gap-2 whitespace-nowrap rounded-[11px] bg-accent px-3.5 text-[13px] font-semibold text-white opacity-60 lg:inline-flex">
           <PlusIcon size={16} />
           New issue
         </button>
         <button type="button" onClick={onToggleTheme} aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"} className={iconBtn}>
           {theme === "dark" ? <SunIcon /> : <MoonIcon />}
         </button>
+        <span className="mx-1 hidden h-7 w-px bg-line sm:block" aria-hidden="true" />
+        <div className="hidden items-center gap-2.5 sm:flex">
+          <span aria-hidden="true" title={`${user.email} · ${workspaceName}`} className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent-soft text-[13px] font-bold text-accent-fg">{initials(user)}</span>
+          <span className="hidden flex-col leading-tight lg:flex">
+            <span className="max-w-[180px] truncate text-[13px] font-semibold" title={user.email}>{user.name || user.email}</span>
+            <span className="max-w-[180px] truncate text-xs text-muted">{workspaceName}</span>
+          </span>
+        </div>
+        <button type="button" onClick={onSignOut} className="inline-flex h-10 shrink-0 items-center whitespace-nowrap rounded-[11px] border border-line bg-surface px-3 text-[13px] font-medium text-fg">
+          Sign out
+        </button>
       </div>
     </header>
   );
 }
 
-export function AppShell({ theme, onToggleTheme, children }: { theme: Theme; onToggleTheme: () => void; children?: ReactNode }) {
+export function AppShell({ theme, onToggleTheme, children, ...shellUser }: { theme: Theme; onToggleTheme: () => void; children?: ReactNode } & ShellUser) {
   return (
     <div className="flex min-h-screen bg-bg text-fg">
       <Sidebar compact={false} />
       <Sidebar compact />
       <div className="flex min-w-0 flex-1 flex-col">
-        <TopBar theme={theme} onToggleTheme={onToggleTheme} />
+        <TopBar theme={theme} onToggleTheme={onToggleTheme} {...shellUser} />
         <main id="main" className="mx-auto w-full max-w-[1280px] flex-1 px-4 pb-28 pt-6 md:px-8 md:pb-10">
           {children ?? <Outlet />}
         </main>
