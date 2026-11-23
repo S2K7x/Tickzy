@@ -1,9 +1,9 @@
 # CURRENT STATE — Tickzy
 
-_Last updated: 2026-11-19 (session 2)._ Read this first, then `docs/blueprint/backlog.md`. Process: `docs/process/development-pipeline.md` (we are in **Stage 5 · Build**; status per stage in `docs/process/pipeline-checklist.md`).
+_Last updated: 2026-11-23 (session 3)._ Read this first, then `docs/blueprint/backlog.md`. Process: `docs/process/development-pipeline.md` (we are in **Stage 5 · Build**; status per stage in `docs/process/pipeline-checklist.md`).
 
 ## Phase
-Implementation: **M0 · Foundations complete** (except CI verification on GitHub); **M1 · Identity & access** started (T-104 done). Planning docs are complete and approved:
+Implementation: **M0 · Foundations complete** (except CI verification on GitHub); **M1 · Identity & access** in progress (T-104, T-101 done). Planning docs are complete and approved:
 strategy `docs/strategy/product-strategy.md` · architecture `docs/architecture/` · UX `docs/ux/ux-spec.md` + design canvas (https://claude.ai/artifact/BvvyCE24er29B2iYNqLVxg, source `design/canvas/`) · blueprint `docs/blueprint/`.
 
 ## Done (verified by tests)
@@ -22,20 +22,23 @@ strategy `docs/strategy/product-strategy.md` · architecture `docs/architecture/
 | T-010 | `@tickzy/web`: Vite 8 + React 19 + TanStack Router/Query + Tailwind v4 with UX-spec tokens; responsive shell (sidebar ≥1280, icon rail 768–1279, bottom tabs <768), persisted light/dark theme with no flash, honest placeholders (no fake data), onboarding checklist on Overview | 6 jsdom tests (nav variants, aria-current, theme toggle/persist, axe) + **real Chromium check** `apps/web/scripts/verify-responsive.cjs`: 6/6 (390/768/1280 × light/dark: correct nav, no horizontal overflow, 0 axe violations incl. contrast) |
 | T-104 | `GET /v1/audit-log` (admin-only; filter actor/action/date; exact keyset paging on ULID id) | 6 integration tests (31 entries paged exactly once incl. same-timestamp rows, filters, 403 for agents, tenant isolation, tampered cursor 422) |
 
-Total: **59 tests passing** locally (`pnpm test`): shared 4 · db 13 · server 36 · web 6.
+| T-101 | Auth core per **ADR-021** (in-house, replaces Better Auth): migration `0003_auth.sql` (sessions + login_tokens reachable only via `auth_*` SECURITY DEFINER functions), magic-link sign-in (single-use, 15 min, URL-fragment token, no enumeration, 5 per email per 15 min), sessions (`id.secret`, SHA-256 stored, constant-time compare, httpOnly/Secure/SameSite=Lax cookie, 30-day sliding), sign-out / sign-out-everywhere, CSRF Origin allow-list, `EmailTransport` (console dev / memory tests), config guards (no console email or insecure cookies in production) | 4 token tests + 18 auth integration tests (flow, single use, expiry, tampering, rate limit, enumeration, sliding renewal, forged secret, revocation, CSRF incl. login CSRF, no direct table access) + real-process smoke (link → verify → session) |
+
+Total: **81 tests passing** locally (`pnpm test`): shared 4 · db 13 · server 58 · web 6.
 
 ## Written but NOT yet verified
 - T-011 CI workflow `.github/workflows/ci.yml` (Postgres 17 service). Not run on GitHub yet — first push/PR will tell.
 
 ## Not started (next, in order)
-1. **T-101** real authentication (magic link + Google/Microsoft OAuth). First re-confirm ADR-006 (Better Auth ownership change reported) — compare Better Auth vs a small in-house session module; record the decision.
-2. **T-103** API tokens · **T-102** invitations & members · **T-106** rate limiting · **T-105** web sign-in/onboarding.
+1. **T-105** web sign-in & onboarding (uses T-101; makes the app usable end to end).
+2. **T-103** API tokens · **T-102** invitations & members · **T-106** rate limiting · **T-101b** Google/Microsoft sign-in.
+3. Founder review required for T-101 (auth code — engineering-workflow §5).
 3. Then M2 (accounts, issues, inbox).
 
 ## Notes for the next session
 - Run the web checks: `pnpm --filter @tickzy/web build && (cd apps/web && npx vite preview --port 4173 &) && node apps/web/scripts/verify-responsive.cjs apps/web /tmp/shots`.
 - Run the full stack: migrate dev DB, then `cd apps/server && DATABASE_URL=… AUTH_DEV_MODE=true node src/main.ts --role=all` and `pnpm --filter @tickzy/web dev` (proxies `/v1` to :3000).
-- The web shell does not call the API yet (needs T-101/T-105 for real sessions).
+- The web shell does not call the API yet (T-105). In dev the sign-in link is printed by the server (console email transport).
 
 ## How to run locally
 ```bash

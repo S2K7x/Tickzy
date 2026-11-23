@@ -1,6 +1,6 @@
 # Pipeline Checklist — Tickzy (live status)
 
-- **Last updated:** 2026-11-23. Legend: ✅ done · 🟡 in progress / partial · ⬜ not started. Each item links to its evidence.
+- **Last updated:** 2026-11-23 (T-101). Legend: ✅ done · 🟡 in progress / partial · ⬜ not started. Each item links to its evidence.
 - Rules: update this file whenever an item changes status; an item is ✅ only with linked evidence (document, test, or deployment).
 - Process definition: [`development-pipeline.md`](development-pipeline.md).
 
@@ -40,14 +40,14 @@
 
 ## 05 · Build (3/6)
 - ✅ Repository and project setup — monorepo, CI file (`CURRENT-STATE.md`)
-- 🟡 Implement frontend and backend — M0 done; M1 started (T-104 ✅)
+- 🟡 Implement frontend and backend — M0 done; M1 in progress (T-101 auth core ✅, T-104 ✅)
 - 🟡 Implement database and integrations — migrations 0001–0002 with RLS ✅; integrations from M3
 - 🟡 Code reviews — automated gates + self-review in place; **CI not yet observed green on GitHub**
 - ✅ Documentation kept current — `CURRENT-STATE.md`, ADRs, checklists
 - ✅ Feature flags / trunk-based workflow defined — `engineering-workflow.md` (flags implemented when first needed)
 
 ## 06 · QA & security (1/7)
-- ✅ Unit and integration tests — 59 tests incl. RLS isolation suite
+- ✅ Unit and integration tests — 81 tests incl. RLS isolation and auth security suites
 - ⬜ End-to-end testing (Playwright journeys) — from M3
 - 🟡 Accessibility & responsive checks — shell verified in Chromium (`apps/web/scripts/verify-responsive.cjs`); repeat per screen
 - ⬜ AI evaluation sets & regression gates — from M5

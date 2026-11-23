@@ -4,7 +4,7 @@ Every strategy commitment must map to at least one requirement and task. ⬜ not
 
 | Strategy item (`product-strategy.md`) | Requirements | Tasks | Status |
 |---|---|---|---|
-| Module 1 Workspace & identity | FR-1.1–1.7 | T-002–T-008 ✅, T-104 ✅, T-101–T-103, T-105, T-106 ⬜ | 🟡 |
+| Module 1 Workspace & identity | FR-1.1–1.7 | T-002–T-008 ✅, T-101 ✅, T-104 ✅, T-101b, T-102, T-103, T-105, T-106 ⬜ | 🟡 |
 | Tenant isolation (ADR-005) | FR-1.5, SEC-3 | T-003, T-004, T-201 | 🟡 |
 | Module 2 Channels: Slack (modes, reply as user, internal threads) | FR-2.1–2.5 | T-301, T-304–T-307, T-310 | ⬜ |
 | Module 2 Channels: email first-class | FR-2.7 | T-302, T-303 | ⬜ |

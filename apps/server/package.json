@@ -10,6 +10,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@fastify/cookie": "^11.1.5",
     "@fastify/swagger": "^9.5.0",
     "@tickzy/db": "workspace:*",
     "@tickzy/shared": "workspace:*",

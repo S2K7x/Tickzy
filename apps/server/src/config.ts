@@ -11,14 +11,33 @@ const ConfigSchema = z
       .enum(["true", "false"])
       .default("false")
       .transform((v) => v === "true"),
+    /** Web app origin: used in sign-in links and as the CSRF Origin allow-list (comma-separate extra origins in ALLOWED_ORIGINS). */
+    APP_ORIGIN: z.url().default("http://localhost:5173"),
+    ALLOWED_ORIGINS: z.string().default(""),
+    COOKIE_SECURE: z
+      .enum(["true", "false"])
+      .default("true")
+      .transform((v) => v === "true"),
+    EMAIL_TRANSPORT: z.enum(["console"]).default("console"),
   })
   .superRefine((c, ctx) => {
     if (c.NODE_ENV === "production" && c.AUTH_DEV_MODE) {
       ctx.addIssue({ code: "custom", path: ["AUTH_DEV_MODE"], message: "AUTH_DEV_MODE must never be enabled in production" });
     }
+    if (c.NODE_ENV === "production" && c.EMAIL_TRANSPORT === "console") {
+      ctx.addIssue({ code: "custom", path: ["EMAIL_TRANSPORT"], message: "console email transport is for development only (Postmark arrives with T-303)" });
+    }
+    if (c.NODE_ENV === "production" && !c.COOKIE_SECURE) {
+      ctx.addIssue({ code: "custom", path: ["COOKIE_SECURE"], message: "cookies must be Secure in production" });
+    }
   });
 
 export type Config = z.infer<typeof ConfigSchema>;
+
+export function allowedOrigins(c: Pick<Config, "APP_ORIGIN" | "ALLOWED_ORIGINS">): string[] {
+  const extra = c.ALLOWED_ORIGINS.split(",").map((o) => o.trim()).filter(Boolean);
+  return [...new Set([new URL(c.APP_ORIGIN).origin, ...extra.map((o) => new URL(o).origin)])];
+}
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
   const parsed = ConfigSchema.safeParse(env);

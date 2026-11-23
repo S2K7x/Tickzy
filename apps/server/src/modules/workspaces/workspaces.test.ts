@@ -91,7 +91,8 @@ describe("workspaces API (FR-1.1)", () => {
 
   it("rejects dev tokens when dev auth is disabled", async () => {
     const { buildApp } = await import("../../app.ts");
-    const prod = await buildApp({ config: { LOG_LEVEL: "silent", AUTH_DEV_MODE: false }, database: t.database });
+    const { testConfig } = await import("../../test-helpers.ts");
+    const prod = await buildApp({ config: { ...testConfig, AUTH_DEV_MODE: false }, database: t.database, email: t.email });
     const res = await prod.inject({ url: "/v1/me/workspaces", headers: auth(alice) });
     expect(res.statusCode).toBe(401);
     await prod.close();

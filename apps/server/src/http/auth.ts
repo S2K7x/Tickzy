@@ -3,11 +3,17 @@ import { and, eq } from "drizzle-orm";
 import { AppError, isId } from "@tickzy/shared";
 import { schema, withWorkspace, type Db, type Role } from "@tickzy/db";
 import { can, type Permission } from "../permissions.ts";
+import type { AuthService } from "../modules/auth/service.ts";
 
 export interface Principal {
   type: "user";
   userId: string;
+  /** Present when authenticated by session cookie (absent for dev/bearer auth). */
+  sessionId?: string;
 }
+
+export const SESSION_COOKIE = "tz_session";
+const SAFE_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
 
 export interface MemberContext {
   workspaceId: string;
@@ -21,22 +27,59 @@ declare module "fastify" {
   }
 }
 
+export interface AuthOptions {
+  devMode: boolean;
+  sessions: Pick<AuthService, "validateSession">;
+  cookieSecure: boolean;
+  allowedOrigins: string[];
+}
+
+export function sessionCookieOptions(secure: boolean, expires: Date) {
+  return { httpOnly: true, secure, sameSite: "lax" as const, path: "/", expires };
+}
+
 /**
- * Authentication. M0 ships only the development shim (`Authorization: Bearer dev_<userId>`), enabled solely
- * when AUTH_DEV_MODE=true (refused in production by config). T-101 replaces it with Better Auth sessions
- * and T-103 adds API tokens — both will populate the same `request.principal`.
+ * Authentication (ADR-021). Resolves `request.principal` from, in order:
+ *  1. the development shim `Authorization: Bearer dev_<userId>` (AUTH_DEV_MODE only; refused in production);
+ *  2. the `tz_session` cookie (sliding renewal re-issues the cookie).
+ * API tokens (T-103) will populate the same principal.
+ *
+ * CSRF (SEC-2): a mutating request whose Origin is present but not allow-listed is rejected, and a
+ * cookie-authenticated mutating request must carry an allow-listed Origin. SameSite=Lax is a second layer.
  */
-export function registerAuth(app: FastifyInstance, opts: { devMode: boolean }): void {
+export function registerAuth(app: FastifyInstance, opts: AuthOptions): void {
+  const allowed = new Set(opts.allowedOrigins);
   app.decorateRequest("principal", null);
-  app.addHook("onRequest", async (req) => {
+  app.addHook("onRequest", async (req, reply) => {
     req.principal = null;
-    const header = req.headers.authorization;
-    if (!header?.startsWith("Bearer ")) return;
-    const token = header.slice("Bearer ".length).trim();
-    if (opts.devMode && token.startsWith("dev_")) {
-      const userId = token.slice("dev_".length);
-      if (isId(userId, "user")) req.principal = { type: "user", userId };
+    const origin = req.headers.origin;
+    const mutating = !SAFE_METHODS.has(req.method);
+    if (mutating && origin !== undefined && !allowed.has(origin)) {
+      throw new AppError("forbidden", "Cross-origin request rejected");
     }
+
+    const header = req.headers.authorization;
+    if (header?.startsWith("Bearer ")) {
+      const token = header.slice("Bearer ".length).trim();
+      if (opts.devMode && token.startsWith("dev_")) {
+        const userId = token.slice("dev_".length);
+        if (isId(userId, "user")) req.principal = { type: "user", userId };
+      }
+      return; // bearer requests never fall back to cookies
+    }
+
+    const cookie = req.cookies[SESSION_COOKIE];
+    if (!cookie) return;
+    const session = await opts.sessions.validateSession(cookie);
+    if (!session) {
+      void reply.clearCookie(SESSION_COOKIE, { path: "/" });
+      return;
+    }
+    if (mutating && (origin === undefined || !allowed.has(origin))) {
+      throw new AppError("forbidden", "Missing or invalid Origin for a cookie-authenticated request");
+    }
+    req.principal = { type: "user", userId: session.userId, sessionId: session.sessionId };
+    if (session.renewed) void reply.setCookie(SESSION_COOKIE, cookie, sessionCookieOptions(opts.cookieSecure, session.expiresAt));
   });
 }
 

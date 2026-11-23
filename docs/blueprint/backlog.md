@@ -22,7 +22,8 @@
 | T-012 | P0 | S | T-005 | OpenAPI generation at `/v1/openapi.json` from route schemas | document validates as OpenAPI 3.1 | test: endpoints present |
 
 ### M1 · Identity & access (Epic E1)
-| T-101 | P0 | L | T-007 | Better Auth integration: magic link (Postmark transport, console in dev), Google & Microsoft OAuth, sessions in Postgres | FR-1.2 AC | integration with fake email transport |
+| T-101 | P0 | L | T-007 | Auth core (ADR-021): sessions (hashed tokens, sliding expiry, revocation), magic links (single-use, 15 min, no enumeration, per-email limit), CSRF Origin checks; email transport interface (console in dev, Postmark at T-303) | FR-1.2 AC | integration with memory email transport ✅ done 2026-11-23 |
+| T-101b | P0 | M | T-101 | Google & Microsoft sign-in via a certified OIDC client library (PKCE, state, nonce); account linking by verified email | FR-1.2 AC | integration with mocked IdP |
 | T-102 | P0 | M | T-101,T-008 | Invitations & membership management API + UI | FR-1.3 | integration + UI tests |
 | T-103 | P0 | M | T-008 | API tokens (hash, prefix, scopes, revoke) + bearer auth | FR-1.6 | integration |
 | T-104 | P0 | S | T-007 | Audit log API `GET /v1/audit-log` with filters | FR-1.7 | integration |
