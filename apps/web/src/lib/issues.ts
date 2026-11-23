@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient, useInfiniteQuery } from "@tanstack/react-query";
 import type { Priority, StatusCategory } from "@tickzy/shared/lifecycle";
 import { api } from "./api.ts";
+import { pollUnlessLive } from "./realtime.ts";
 
 /** Issues API client (api-spec §1, T-204/T-205). */
 export interface Issue {
@@ -53,7 +54,7 @@ export const STATUS_LABEL: Record<StatusCategory, string> = {
 export const PRIORITY_LABEL: Record<Priority, string> = { urgent: "Urgent", high: "High", normal: "Normal", low: "Low" };
 
 const issuesKey = (ws: string | null) => ["issues", ws] as const;
-const REFRESH_MS = 15_000; // until realtime (T-208)
+const REFRESH_MS = 15_000; // polling fallback while the realtime socket is down (T-208)
 
 /** Query string for a view plus optional text search and priority filter. */
 export function listQuery(view: ViewId, sort: SortId, extra: { q?: string | undefined; priority?: string | undefined } = {}): string {
@@ -69,7 +70,7 @@ export function useIssueList(ws: string | null, view: ViewId, sort: SortId, extr
     initialPageParam: null as string | null,
     getNextPageParam: (last) => last.next_cursor,
     enabled: !!ws,
-    refetchInterval: REFRESH_MS,
+    refetchInterval: pollUnlessLive(REFRESH_MS),
   });
 }
 
@@ -87,7 +88,7 @@ export function useIssueStats(ws: string | null) {
     queryKey: [...issuesKey(ws), "stats"],
     queryFn: () => api<IssueStats>("/v1/issues/stats", { workspaceId: ws }),
     enabled: !!ws,
-    refetchInterval: 30_000,
+    refetchInterval: pollUnlessLive(30_000),
   });
 }
 /** Count shown on a view tab, from stats. */
@@ -111,7 +112,7 @@ export function useIssue(ws: string | null, ref: string | null) {
     queryKey: [...issuesKey(ws), "one", ref],
     queryFn: () => api<Issue>(`/v1/issues/${encodeURIComponent(ref!)}`, { workspaceId: ws }),
     enabled: !!ws && !!ref,
-    refetchInterval: REFRESH_MS,
+    refetchInterval: pollUnlessLive(REFRESH_MS),
   });
 }
 
@@ -120,7 +121,7 @@ export function useTimeline(ws: string | null, ref: string | null) {
     queryKey: [...issuesKey(ws), "timeline", ref],
     queryFn: () => api<{ data: TimelineItem[]; truncated: boolean }>(`/v1/issues/${encodeURIComponent(ref!)}/timeline`, { workspaceId: ws }),
     enabled: !!ws && !!ref,
-    refetchInterval: REFRESH_MS,
+    refetchInterval: pollUnlessLive(REFRESH_MS),
   });
 }
 

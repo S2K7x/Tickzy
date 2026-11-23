@@ -9,6 +9,7 @@ import {
 } from "../lib/issues.ts";
 import { Avatar, ChannelBadge, PriorityDot, StatusChip } from "../components/issue-ui.tsx";
 import { btn, segmented } from "../components/ui.ts";
+import { useIssuePresence, type Viewer } from "../lib/realtime.ts";
 
 export interface InboxSearch { view?: ViewId; sort?: SortId; issue?: string; q?: string }
 
@@ -161,6 +162,8 @@ function IssueView({ ws, issueRef, onBack, composerRef, resolveRef }: {
   const timeline = useTimeline(ws, issueRef);
   const members = useMembers(ws);
   const update = useUpdateIssue(ws, issueRef);
+  const session = useSession();
+  const presence = useIssuePresence(issue.data?.id ?? null, session.data?.user.id);
   const memberName = (id: string) => {
     const m = members.data?.data.find((x) => x.id === id);
     return m ? m.name || m.email : null;
@@ -184,8 +187,9 @@ function IssueView({ ws, issueRef, onBack, composerRef, resolveRef }: {
         <header className="flex flex-col gap-1 border-b border-line px-4 py-3 md:px-6">
           <div className="flex items-center gap-2 text-[12px] text-muted">
             <button type="button" onClick={onBack} className="mr-1 text-sm font-semibold text-accent-fg md:hidden" aria-label="Back to the queue">←</button>
-            <span className="font-semibold">{i.key}</span><span>·</span><ChannelBadge channel={i.channel} />
-            <span className="ml-auto flex gap-2">
+            <span className="shrink-0 whitespace-nowrap font-semibold">{i.key}</span><span>·</span><ChannelBadge channel={i.channel} />
+            <span className="ml-auto flex min-w-0 items-center gap-2">
+              <PresenceNote viewers={presence.others} />
               {canTransition(i.status.category, "resolved") && (
                 <button type="button" onClick={() => update.mutate({ status: "resolved" })} title="Resolve (e)" className={`${btn.primary} ${btn.sm}`}>Resolve</button>
               )}
@@ -199,12 +203,28 @@ function IssueView({ ws, issueRef, onBack, composerRef, resolveRef }: {
           {timeline.data?.data.map((item) => <TimelineRow key={`${item.kind}-${item.id}`} item={item} memberName={memberName} />)}
           {timeline.data?.truncated && <li className="text-xs text-muted">Older activity is not shown.</li>}
         </ol>
-        <Composer ref={composerRef} ws={ws} issue={i} />
+        <Composer ref={composerRef} ws={ws} issue={i} onTyping={presence.onTyping} />
       </section>
       <aside aria-label="Issue details" className="hidden w-[300px] shrink-0 overflow-y-auto border-l border-line xl:block">
         <Details issue={i} ws={ws} update={update} memberName={memberName} />
       </aside>
     </div>
+  );
+}
+
+/** "Ben is viewing" / "Ben is typing…" — other teammates on this issue right now (FR-3.9 collision avoidance). */
+function PresenceNote({ viewers }: { viewers: Viewer[] }) {
+  if (viewers.length === 0) return null;
+  const typing = viewers.filter((v) => v.state === "typing");
+  const shown = typing.length > 0 ? typing : viewers;
+  const short = (n: string) => (n.includes("@") ? n.slice(0, n.indexOf("@")) : n); // users without a name show their email
+  const names = shown.length > 2 ? `${short(shown[0]!.name)} and ${shown.length - 1} others` : shown.map((v) => short(v.name)).join(" and ");
+  const verb = typing.length > 0 ? (shown.length === 1 ? "is typing…" : "are typing…") : (shown.length === 1 ? "is viewing" : "are viewing");
+  return (
+    <span role="status" title={`${names} ${verb}`} className="flex min-w-0 max-w-[min(260px,45vw)] items-center gap-1.5 rounded-full border border-line px-2 py-0.5 text-[12px] text-muted">
+      <span className="flex shrink-0 -space-x-1.5" aria-hidden="true">{viewers.slice(0, 3).map((v) => <Avatar key={v.user_id} name={v.name} size={20} />)}</span>
+      <span className="truncate">{names} {verb}</span>
+    </span>
   );
 }
 
@@ -292,7 +312,7 @@ function Details({ issue: i, ws, update, memberName, collapsible }: {
   );
 }
 
-const Composer = ({ ref, ws, issue }: { ref: React.Ref<ComposerHandle>; ws: string | null; issue: Issue }) => {
+const Composer = ({ ref, ws, issue, onTyping }: { ref: React.Ref<ComposerHandle>; ws: string | null; issue: Issue; onTyping?: () => void }) => {
   const [mode, setMode] = useState<"public" | "internal">("public");
   const [body, setBody] = useState("");
   const area = useRef<HTMLTextAreaElement>(null);
@@ -323,7 +343,7 @@ const Composer = ({ ref, ws, issue }: { ref: React.Ref<ComposerHandle>; ws: stri
         ))}
       </div>
       <label className="sr-only" htmlFor="composer-body">{internal ? "Internal note" : "Reply to the customer"}</label>
-      <textarea id="composer-body" ref={area} value={body} onChange={(e) => setBody(e.target.value)} onKeyDown={onKey} rows={3}
+      <textarea id="composer-body" ref={area} value={body} onChange={(e) => { setBody(e.target.value); onTyping?.(); }} onKeyDown={onKey} rows={3}
         placeholder={internal ? "Only your team sees internal notes" : "Write a reply…"}
         className="w-full resize-y rounded-xl border border-line bg-surface-2 px-3 py-2 text-sm text-fg outline-none focus:border-accent" />
       {post.isError && <p role="alert" className="m-0 text-[13px] text-danger">{(post.error as Error).message}</p>}

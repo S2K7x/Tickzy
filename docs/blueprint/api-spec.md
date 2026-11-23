@@ -44,7 +44,7 @@ Codes: `unauthenticated` 401, `forbidden` 403, `not_found` 404, `validation_fail
 | GET/POST `/v1/knowledge/sources` · POST `/{id}/sync` · GET `/v1/knowledge/search` | knowledge | `knowledge:manage` | M5 |
 | POST `/v1/issues/{id}/links` (create or link Linear/Jira) · DELETE | engineering links | `issues:write` | M6 |
 | GET/POST/PATCH/DELETE `/v1/webhooks` · GET `/v1/webhooks/{id}/deliveries` · POST `/deliveries/{id}/replay` | webhooks | `developers:manage` | M6 |
-| WS `/v1/realtime` | subscribe `{op:'sub', topic}` | per-topic auth | M2 |
+| WS `/v1/realtime` ✅ | signed-in users (session cookie, Origin allow-list). Client → `{op:'sub'\|'unsub', topic}` (`workspace:{id}:inbox`, `issue:{id}`), `{op:'presence', issue_id, state:'viewing'\|'typing'\|'left'}` (after `subscribed`), `{op:'ping'}`. Server → `ready`, `subscribed`, `error {error}`, `event {topic, type, issue_id, message_id}` (ids only — refetch via REST), `presence {issue_id, viewers[]}`, `pong`. Messages handled in order; limits 50 subs, 4 KB/msg, 20 msg/s | per-topic auth (active member; issue visible under RLS) | M2 |
 
 ## 2. Permission matrix
 | Permission | admin | agent | collaborator | viewer | integration token |

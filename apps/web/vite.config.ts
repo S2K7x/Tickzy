@@ -5,6 +5,7 @@ import tailwindcss from "@tailwindcss/vite";
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
-  server: { port: 5173, proxy: { "/v1": "http://localhost:3000" } },
+  // ws: true forwards the realtime WebSocket (/v1/realtime); `vite preview` reuses this proxy.
+  server: { port: 5173, proxy: { "/v1": { target: "http://localhost:3000", ws: true } } },
   test: { environment: "jsdom", setupFiles: ["./src/test-setup.ts"], css: false },
 });

@@ -1,6 +1,7 @@
 import Fastify, { type FastifyInstance } from "fastify";
 import swagger from "@fastify/swagger";
 import cookie from "@fastify/cookie";
+import websocket from "@fastify/websocket";
 import { jsonSchemaTransform, serializerCompiler, validatorCompiler } from "fastify-type-provider-zod";
 import { sql } from "drizzle-orm";
 import { newId } from "@tickzy/shared";
@@ -21,6 +22,7 @@ import { apiTokenRoutes } from "./modules/api-tokens/routes.ts";
 import { customerRoutes } from "./modules/customers/routes.ts";
 import { issueRoutes } from "./modules/issues/routes.ts";
 import { searchRoutes } from "./modules/search/routes.ts";
+import { realtimeGateway } from "./modules/realtime/gateway.ts";
 import { messageRoutes } from "./modules/messages/routes.ts";
 import { createDeliveryRegistry, type DeliveryRegistry } from "./modules/messages/delivery.ts";
 import { createApiTokenService } from "./modules/api-tokens/service.ts";
@@ -33,10 +35,12 @@ export interface AppDeps {
   rateLimitStore?: RateLimitStore;
   /** Outbound channel adapters (ADR-012); none until the first channel ships (M3). */
   channels?: DeliveryRegistry;
+  /** Realtime revalidation interval (tests use a short one). */
+  realtimeSweepMs?: number;
   now?: () => number;
 }
 
-export async function buildApp({ config, database, email, rateLimitStore = new MemoryRateLimitStore(), now, channels = createDeliveryRegistry() }: AppDeps): Promise<FastifyInstance> {
+export async function buildApp({ config, database, email, rateLimitStore = new MemoryRateLimitStore(), now, channels = createDeliveryRegistry(), realtimeSweepMs }: AppDeps): Promise<FastifyInstance> {
   const app = Fastify({
     logger: config.LOG_LEVEL === "silent" ? false : { level: config.LOG_LEVEL, redact: ["req.headers.authorization", "req.headers.cookie"] },
     genReqId: () => newId("request"),
@@ -61,6 +65,7 @@ export async function buildApp({ config, database, email, rateLimitStore = new M
 
   registerErrorHandling(app);
   await app.register(cookie);
+  await app.register(websocket, { options: { maxPayload: 8192 } });
   const auth = createAuthService({ db: database.db, email, appOrigin: new URL(config.APP_ORIGIN).origin });
   const limits = { perPrincipal: config.RATE_LIMIT_PER_MIN, perIp: config.RATE_LIMIT_IP_PER_MIN, authPerIp: config.RATE_LIMIT_AUTH_PER_MIN };
   registerRateLimitBeforeAuth(app, limits, rateLimitStore, now);
@@ -95,6 +100,12 @@ export async function buildApp({ config, database, email, rateLimitStore = new M
   await app.register(customerRoutes(database.db));
   await app.register(issueRoutes(database.db));
   await app.register(searchRoutes(database.db));
+  const realtime = realtimeGateway({
+    db: database.db, pool: database.pool, sessions: auth, allowedOrigins: allowedOrigins(config),
+    log: (msg, err) => app.log.error({ err }, msg), ...(realtimeSweepMs ? { sweepMs: realtimeSweepMs } : {}),
+  });
+  await realtime.register(app);
+  app.decorate("realtime", realtime);
   await app.register(messageRoutes(database.db, channels));
   return app;
 }

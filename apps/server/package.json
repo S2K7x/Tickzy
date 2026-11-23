@@ -12,6 +12,7 @@
   "dependencies": {
     "@fastify/cookie": "^11.1.5",
     "@fastify/swagger": "^9.5.0",
+    "@fastify/websocket": "11.3.6",
     "@tickzy/db": "workspace:*",
     "@tickzy/shared": "workspace:*",
     "drizzle-orm": "^0.45.4",
@@ -24,7 +25,9 @@
   },
   "devDependencies": {
     "@types/pg": "^8.15.0",
+    "@types/ws": "8.18.1",
     "jose": "6.2.16",
-    "pg": "^8.23.1"
+    "pg": "^8.23.1",
+    "ws": "8.18.3"
   }
 }

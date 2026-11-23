@@ -5,6 +5,7 @@ import { ChevronDownIcon, KeyboardIcon, Logo, LogoutIcon, MenuIcon, MoonIcon, Pa
 import type { Theme } from "../theme.ts";
 import type { SessionUser, WorkspaceMembership } from "../lib/api.ts";
 import { useIssueStats } from "../lib/issues.ts";
+import { RealtimeProvider } from "../lib/realtime.ts";
 import { NewIssueDialog } from "./NewIssueDialog.tsx";
 import { ShortcutsDialog } from "./ShortcutsDialog.tsx";
 import { Avatar } from "./issue-ui.tsx";
@@ -275,6 +276,7 @@ export function AppShell({ theme, onToggleTheme, children, workspaceId, workspac
 
   const sidebarProps = { collapsed, onToggle: toggleSidebar, onSearch: focusSearch, onShortcuts: () => setShortcuts(true), user: shellUser.user, workspaceName: shellUser.workspaceName, counts };
   return (
+    <RealtimeProvider workspaceId={workspaceId}>
     <ShellContext.Provider value={{ openNewIssue: () => setCreating(true) }}>
       <div className="flex min-h-screen bg-bg text-fg">
         <Sidebar compact={false} {...sidebarProps} />
@@ -293,5 +295,6 @@ export function AppShell({ theme, onToggleTheme, children, workspaceId, workspac
         {shortcuts && <ShortcutsDialog onClose={() => setShortcuts(false)} />}
       </div>
     </ShellContext.Provider>
+    </RealtimeProvider>
   );
 }
