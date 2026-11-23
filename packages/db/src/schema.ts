@@ -1,3 +1,4 @@
+import { PRIORITIES, STATUS_CATEGORIES } from "@tickzy/shared";
 import { bigserial, bigint, boolean, customType, inet, integer, jsonb, pgTable, primaryKey, text, timestamp } from "drizzle-orm/pg-core";
 
 const customBytea = customType<{ data: Buffer }>({ dataType: () => "bytea" });
@@ -157,8 +158,7 @@ export const teamMembers = pgTable("team_members", {
   createdAt: ts("created_at").notNull().defaultNow(),
 }, (t) => [primaryKey({ columns: [t.teamId, t.membershipId] })]);
 
-export const STATUS_CATEGORIES = ["triage", "waiting_on_us", "waiting_on_customer", "blocked", "resolved", "closed", "ignored"] as const;
-export type StatusCategory = (typeof STATUS_CATEGORIES)[number];
+export { STATUS_CATEGORIES, type StatusCategory } from "@tickzy/shared";
 export const statuses = pgTable("statuses", {
   id: text("id").primaryKey(),
   workspaceId: text("workspace_id").notNull(),
@@ -196,4 +196,92 @@ export const customFieldDefs = pgTable("custom_field_defs", {
   position: integer("position").notNull().default(0),
   createdAt: ts("created_at").notNull().defaultNow(),
   archivedAt: ts("archived_at"),
+});
+
+// --- Issues & messages (migration 0008, T-202) -------------------------------------------------
+export const CHANNEL_KINDS = ["slack", "email", "widget", "api", "ui"] as const;
+export type ChannelKind = (typeof CHANNEL_KINDS)[number];
+
+export const conversations = pgTable("conversations", {
+  id: text("id").primaryKey(),
+  workspaceId: text("workspace_id").notNull(),
+  channelKind: text("channel_kind", { enum: CHANNEL_KINDS }).notNull(),
+  endpointId: text("endpoint_id"),
+  externalThreadKey: text("external_thread_key"),
+  lastMessageAt: ts("last_message_at"),
+  createdAt: ts("created_at").notNull().defaultNow(),
+});
+
+export const issues = pgTable("issues", {
+  id: text("id").primaryKey(),
+  workspaceId: text("workspace_id").notNull(),
+  number: integer("number").notNull(),
+  title: text("title").notNull(),
+  statusCategory: text("status_category", { enum: STATUS_CATEGORIES }).notNull(),
+  statusId: text("status_id").notNull(),
+  priority: text("priority", { enum: PRIORITIES }).notNull().default("normal"),
+  assigneeMembershipId: text("assignee_membership_id"),
+  teamId: text("team_id"),
+  accountId: text("account_id"),
+  requesterContactId: text("requester_contact_id"),
+  channelKind: text("channel_kind", { enum: CHANNEL_KINDS }).notNull(),
+  productArea: text("product_area"),
+  custom: jsonb("custom").$type<Record<string, unknown>>().notNull().default({}),
+  firstResponseAt: ts("first_response_at"),
+  resolvedAt: ts("resolved_at"),
+  closedAt: ts("closed_at"),
+  lastCustomerMessageAt: ts("last_customer_message_at"),
+  lastTeamMessageAt: ts("last_team_message_at"),
+  createdAt: ts("created_at").notNull().defaultNow(),
+  updatedAt: ts("updated_at").notNull().defaultNow(),
+  version: integer("version").notNull().default(1),
+});
+
+export const issueLabels = pgTable("issue_labels", {
+  workspaceId: text("workspace_id").notNull(),
+  issueId: text("issue_id").notNull(),
+  labelId: text("label_id").notNull(),
+  createdAt: ts("created_at").notNull().defaultNow(),
+}, (t) => [primaryKey({ columns: [t.issueId, t.labelId] })]);
+
+export const messages = pgTable("messages", {
+  id: text("id").primaryKey(),
+  workspaceId: text("workspace_id").notNull(),
+  conversationId: text("conversation_id").notNull(),
+  issueId: text("issue_id"),
+  direction: text("direction", { enum: ["in", "out"] }).notNull(),
+  visibility: text("visibility", { enum: ["public", "internal"] }).notNull(),
+  authorType: text("author_type", { enum: ["contact", "member", "ai", "system"] }).notNull(),
+  authorId: text("author_id"),
+  bodyText: text("body_text").notNull().default(""),
+  bodyAst: jsonb("body_ast"),
+  source: text("source", { enum: CHANNEL_KINDS }).notNull(),
+  externalId: text("external_id"),
+  deliveryState: text("delivery_state", { enum: ["pending", "sent", "failed", "received"] }),
+  createdAt: ts("created_at").notNull().defaultNow(),
+  editedAt: ts("edited_at"),
+  deletedAt: ts("deleted_at"),
+});
+
+export const attachments = pgTable("attachments", {
+  id: text("id").primaryKey(),
+  workspaceId: text("workspace_id").notNull(),
+  messageId: text("message_id").notNull(),
+  objectKey: text("object_key").notNull(),
+  filename: text("filename").notNull(),
+  mime: text("mime").notNull(),
+  size: bigint("size", { mode: "number" }).notNull(),
+  scanState: text("scan_state", { enum: ["pending", "clean", "infected", "error"] }).notNull().default("pending"),
+  createdAt: ts("created_at").notNull().defaultNow(),
+});
+
+export const issueEvents = pgTable("issue_events", {
+  id: bigserial("id", { mode: "number" }).primaryKey(),
+  workspaceId: text("workspace_id").notNull(),
+  issueId: text("issue_id").notNull(),
+  type: text("type").notNull(),
+  actorType: text("actor_type", { enum: ["user", "api_token", "system", "ai", "contact"] }).notNull(),
+  actorId: text("actor_id"),
+  data: jsonb("data").$type<Record<string, unknown>>().notNull().default({}),
+  createdAt: ts("created_at").notNull().defaultNow(),
 });

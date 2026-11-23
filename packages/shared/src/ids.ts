@@ -21,6 +21,7 @@ export const ID_PREFIXES = {
   contact: "con",
   issue: "iss",
   message: "msg",
+  attachment: "att",
   conversation: "cnv",
   event: "evt",
   request: "req",

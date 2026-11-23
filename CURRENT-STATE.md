@@ -3,7 +3,7 @@
 _Last updated: 2026-11-23 (session 5)._ Read this first, then `docs/blueprint/backlog.md`. Process: `docs/process/development-pipeline.md` (we are in **Stage 5 · Build**; status per stage in `docs/process/pipeline-checklist.md`).
 
 ## Phase
-Implementation: **M0 · Foundations complete** (CI green on GitHub since 2026-11-23); **M1 · Identity & access complete** (T-101, T-101b, T-102, T-103, T-104, T-105, T-106). **M2 · Core inbox** in progress (T-201 done). Planning docs are complete and approved:
+Implementation: **M0 · Foundations complete** (CI green on GitHub since 2026-11-23); **M1 · Identity & access complete** (T-101, T-101b, T-102, T-103, T-104, T-105, T-106). **M2 · Core inbox** in progress (T-201, T-202 done). Planning docs are complete and approved:
 strategy `docs/strategy/product-strategy.md` · architecture `docs/architecture/` · UX `docs/ux/ux-spec.md` + design canvas (https://claude.ai/artifact/BvvyCE24er29B2iYNqLVxg, source `design/canvas/`) · blueprint `docs/blueprint/`.
 
 ## Done (verified by tests)
@@ -36,9 +36,11 @@ strategy `docs/strategy/product-strategy.md` · architecture `docs/architecture/
 
 | T-201 | M2 schema per **ADR-025** — migration `0007_customers_and_taxonomy.sql`: accounts (+ `account_domains`, one account per domain), contacts, contact_identities (email/slack/teams/widget; emails lowercase), teams + team_members, statuses (7 categories; one default each), labels (hierarchical, `ai_enabled`), custom_field_defs; all tenant RLS-forced with **composite foreign keys** (no cross-workspace references); `gen_ulid()` for SQL-made ids; `seed_workspace_defaults()` called on workspace creation + backfill for existing workspaces; Drizzle schema. **Deployment fix found while verifying:** migrations failed for a non-superuser owner (0002 needs SET ROLE tickzy_app on PG16+) → runner grants the owner membership or names the GRANT a DBA must run | 11 db tests (isolation per table, cross-workspace composite FKs, domain/identity uniqueness, lowercase email keys, account delete semantics, label/custom-field constraints, default statuses with valid ULIDs, idempotent seeding, one default per category, `gen_ulid` format/time) + migration test **as a non-superuser owner** incl. the backfill (proven to fail without the fix) + workspace creation seeds statuses; real dev DB backfill: 34/34 existing workspaces got 7 default statuses |
 
+| T-202 | Issue core — migration `0008_issues_and_messages.sql`: conversations, issues (status ↔ category consistency enforced by a composite FK; `version` for optimistic concurrency), issue_labels, messages (DB CHECKs: inbound ⇔ contact, inbound public + received, **internal notes can never enter delivery**; provider-id dedupe; generated full-text vector + GIN), attachments, issue_events (append-only), `next_issue_number()` (row-locked, gap-free). **Lifecycle as pure functions** in `@tickzy/shared/lifecycle.ts` (`onMessage`, `canTransition`, `applyMessage`, `timestampsForTransition`, `countsInMetrics`/`notifies`/`isOpen`; status categories now defined there once). Server domain `modules/issues/domain.ts`: `createIssue` (number, default status, timeline + outbox), `changeStatus` (manual: custom statuses, closed is terminal, timestamps, version check) | 30 shared tests (full 7×3 state-machine table, manual-transition matrix, metrics/notify rules, timestamps) + 12 integration tests (numbering incl. 25 concurrent creations and rollback, per-workspace numbering, status/category and cross-workspace FKs, resolve/reopen/custom status/events, closed terminal, stale version 409, append-only timeline, internal-note delivery impossible, inbound rules, dedupe, full-text search, isolation) + real-process smoke on the migrated dev DB |
+
 Bugs found by verification and fixed in T-105: verify page re-POSTed an empty token on remount; top bar overflowed at 768 px once the user block existed; onboarding showed prefix "XX" before typing.
 
-Total: **178 tests passing** locally (`pnpm test`): shared 4 · db 25 · server 110 · web 39 — plus five real-browser scripts (last run green after T-101b; shared helpers in `apps/web/scripts/e2e-lib.cjs`). CI (lint, typecheck, tests with Postgres) green on GitHub.
+Total: **220 tests passing** locally (`pnpm test`): shared 34 · db 25 · server 122 · web 39 — plus five real-browser scripts (last run green after T-101b; shared helpers in `apps/web/scripts/e2e-lib.cjs`). CI (lint, typecheck, tests with Postgres) green on GitHub.
 
 ## Written but NOT yet verified
 - Google/Microsoft sign-in against the **real** providers: needs OAuth apps registered by the founder (`docs/operations/sign-in-providers.md`); `xms_edov` availability on the Entra app is an open item.
@@ -46,7 +48,7 @@ Total: **178 tests passing** locally (`pnpm test`): shared 4 · db 25 · server 
 T-011 CI is now verified: first GitHub Actions run (push to `main`, run #1) green on 2026-11-23.
 
 ## Not started (next, in order)
-1. **T-202** (schema + domain: conversations, messages, issues, issue_events, attachments, issue labels; issue number allocation; FR-3.1 lifecycle rules as pure functions with a state-machine test table), then T-203 (accounts & contacts API + identity resolution) and T-204 (issues API).
+1. **T-203** (accounts & contacts API + identity resolution: email-domain → account, identity graph, audited manual override), then **T-204** (issues API: list with filters/sort/keyset, get by key, patch, timeline), T-205 (messages API: reply/note), T-206 (whose-turn automation wiring `applyMessage` into message creation).
 2. Founder actions: review the auth / access-control / abuse-protection code (T-101, T-101b, T-102, T-103, T-106 — engineering-workflow §5); register Google/Microsoft OAuth apps (`docs/operations/sign-in-providers.md`).
 3. Discovery track (Stage 1 gate still open): interview guide and design-partner conversations.
 

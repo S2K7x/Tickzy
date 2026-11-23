@@ -9,7 +9,7 @@ Every strategy commitment must map to at least one requirement and task. ⬜ not
 | Module 2 Channels: Slack (modes, reply as user, internal threads) | FR-2.1–2.5 | T-301, T-304–T-307, T-310 | ⬜ |
 | Module 2 Channels: email first-class | FR-2.7 | T-302, T-303 | ⬜ |
 | Module 2 Channels: widget | FR-2.8 | T-308 | ⬜ |
-| Module 3 Inbox: one Issue object, status categories, whose-turn, ignored | FR-3.1, 3.2 | T-202, T-206 | ⬜ |
+| Module 3 Inbox: one Issue object, status categories, whose-turn, ignored | FR-3.1, 3.2 | T-202 ✅ (schema, lifecycle rules), T-206 | 🟡 |
 | Module 3 Search that works | FR-3.8 | T-207 | ⬜ |
 | Module 3 Speed, keyboard, realtime, collision | FR-3.9, 3.11, NFR-1 | T-208, T-209 | ⬜ |
 | Module 4 Accounts-centric model | FR-4.1–4.3 | T-201 ✅ (schema), T-203, T-210 | 🟡 |
