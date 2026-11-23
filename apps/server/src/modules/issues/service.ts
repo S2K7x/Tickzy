@@ -72,7 +72,7 @@ export async function resolveIssueRef(tx: Tx, ref: string): Promise<Issue> {
   return issue;
 }
 
-async function toDtos(tx: Tx, rows: Issue[]): Promise<IssueDto[]> {
+export async function toDtos(tx: Tx, rows: Issue[]): Promise<IssueDto[]> {
   if (rows.length === 0) return [];
   const prefix = await workspacePrefix(tx);
   const ids = rows.map((r) => r.id);

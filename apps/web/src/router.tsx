@@ -8,6 +8,7 @@ import { Onboarding } from "./pages/Onboarding.tsx";
 import { Invite } from "./pages/Invite.tsx";
 import { More } from "./pages/More.tsx";
 import { Inbox, type InboxSearch } from "./pages/Inbox.tsx";
+import { SearchPage } from "./pages/Search.tsx";
 import { SORTS, VIEWS } from "./lib/issues.ts";
 import { SettingsLayout } from "./pages/settings/SettingsLayout.tsx";
 import { Members } from "./pages/settings/Members.tsx";
@@ -103,6 +104,8 @@ const routeTree = rootRoute.addChildren([
     }),
   }),
   page("/invite", Invite),
+  createRoute({ getParentRoute: () => rootRoute, path: "/search", component: SearchPage,
+    validateSearch: (s: Record<string, unknown>): { q?: string } => (typeof s.q === "string" && s.q.trim() ? { q: s.q.slice(0, 500) } : {}) }),
   page("/auth/verify", VerifyLink),
   page("/onboarding", Onboarding),
   page("/more", More),

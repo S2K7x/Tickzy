@@ -12,7 +12,7 @@ const Id64 = z.string().max(64);
 const csv = <T extends readonly [string, ...string[]]>(values: T) =>
   z.string().max(500).transform((s) => s.split(",").map((x) => x.trim()).filter(Boolean)).pipe(z.array(z.enum(values)).max(values.length));
 
-const Issue = z.object({
+export const IssueSchema = z.object({
   id: z.string(), key: z.string(), number: z.number(), title: z.string(),
   status: z.object({ category: z.enum(STATUS_CATEGORIES), id: z.string(), name: z.string() }),
   priority: z.enum(PRIORITIES),
@@ -61,7 +61,7 @@ export function issueRoutes(db: Db) {
           q: z.string().max(200).optional().describe("title text or an issue key such as ACME-12"),
           sort: z.enum(SORTS).optional(), cursor: z.string().max(500).optional(), limit: z.coerce.number().int().min(1).max(100).optional(),
         }),
-        response: { 200: z.object({ data: z.array(Issue), next_cursor: z.string().nullable() }) },
+        response: { 200: z.object({ data: z.array(IssueSchema), next_cursor: z.string().nullable() }) },
       },
     }, async (req) => service.list(await requireMember(db, req, "issues:read"), req.query));
 
@@ -82,12 +82,12 @@ export function issueRoutes(db: Db) {
     r.post("/v1/issues", {
       schema: {
         tags: ["issues"], summary: "Create an issue (starts in Triage unless `category` is given)", headers: WorkspaceHeader,
-        body: z.object({ ...Writable, category: z.enum(STATUS_CATEGORIES).optional() }), response: { 201: Issue },
+        body: z.object({ ...Writable, category: z.enum(STATUS_CATEGORIES).optional() }), response: { 201: IssueSchema },
       },
     }, async (req, reply) => reply.code(201).send(await service.create(await requireMember(db, req, "issues:write"), req.body)));
 
     r.get("/v1/issues/:ref", {
-      schema: { tags: ["issues"], summary: "One issue by id (iss_…), key (ACME-12) or number", headers: WorkspaceHeader, params: Ref, response: { 200: Issue } },
+      schema: { tags: ["issues"], summary: "One issue by id (iss_…), key (ACME-12) or number", headers: WorkspaceHeader, params: Ref, response: { 200: IssueSchema } },
     }, async (req) => service.get(await requireMember(db, req, "issues:read"), req.params.ref));
 
     r.patch("/v1/issues/:ref", {
@@ -96,7 +96,7 @@ export function issueRoutes(db: Db) {
         body: z.object({ ...Writable, title: Writable.title.optional(), status_id: Id64.optional(), status: z.enum(STATUS_CATEGORIES).optional(), version: z.number().int().min(1).optional() })
           .refine((b) => Object.keys(b).some((k) => k !== "version"), "empty patch")
           .refine((b) => !(b.status && b.status_id), "use either status or status_id"),
-        response: { 200: Issue },
+        response: { 200: IssueSchema },
       },
     }, async (req) => service.update(await requireMember(db, req, "issues:write"), req.params.ref, req.body));
 

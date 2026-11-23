@@ -175,7 +175,7 @@ function TopBar({ theme, onToggleTheme, user, workspaceName, workspaces, current
   function search(e: FormEvent) {
     e.preventDefault();
     const q = term.trim();
-    void navigate({ to: "/inbox", search: (q ? { q } : {}) as never });
+    void navigate({ to: "/search", search: (q ? { q } : {}) as never });
   }
   return (
     <header className="sticky top-0 z-10 flex min-h-[64px] items-center justify-between gap-3 border-b border-line bg-panel px-4 py-3 md:static md:px-6">
@@ -200,15 +200,15 @@ function TopBar({ theme, onToggleTheme, user, workspaceName, workspaces, current
         <span className="hidden truncate font-medium sm:inline" aria-current="page">{page}</span>
       </div>
 
-      <form role="search" onSubmit={search} className="hidden h-10 min-w-0 max-w-[460px] flex-1 items-center gap-2.5 rounded-xl border border-line bg-surface-2 px-3 text-muted lg:flex">
+      <form role="search" aria-label="Quick search" onSubmit={search} className="hidden h-10 min-w-0 max-w-[460px] flex-1 items-center gap-2.5 rounded-xl border border-line bg-surface-2 px-3 text-muted lg:flex">
         <SearchIcon size={16} />
         <label htmlFor="global-search" className="sr-only">Search issues</label>
         <input id="global-search" ref={searchRef} type="search" value={term} onChange={(e) => setTerm(e.target.value)}
-          placeholder="Search issues or press “/”" className="min-w-0 flex-1 border-0 bg-transparent text-[14px] text-fg outline-none placeholder:text-muted" />
+          placeholder="Search issues, messages, accounts or press “/”" className="min-w-0 flex-1 border-0 bg-transparent text-[14px] text-fg outline-none placeholder:text-muted" />
       </form>
 
       <div className="flex shrink-0 items-center gap-2">
-        <Link to="/inbox" aria-label="Search" className={`${iconBtn} lg:hidden`}><SearchIcon size={18} /></Link>
+        <Link to="/search" aria-label="Search" className={`${iconBtn} lg:hidden`}><SearchIcon size={18} /></Link>
         <button type="button" onClick={onToggleTheme} aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"} className={iconBtn}>
           {theme === "dark" ? <SunIcon /> : <MoonIcon />}
         </button>
@@ -233,7 +233,7 @@ function TopBar({ theme, onToggleTheme, user, workspaceName, workspaces, current
   );
 }
 
-const PAGE_TITLES: [string, string][] = [["/inbox", "Inbox"], ["/mine", "My issues"], ["/settings", "Settings"], ["/more", "More"], ...NAV.map((n) => [n.to, n.label] as [string, string])];
+const PAGE_TITLES: [string, string][] = [["/search", "Search"], ["/inbox", "Inbox"], ["/mine", "My issues"], ["/settings", "Settings"], ["/more", "More"], ...NAV.map((n) => [n.to, n.label] as [string, string])];
 
 export function AppShell({ theme, onToggleTheme, children, workspaceId, workspaces = [], onSelectWorkspace = () => undefined, fullBleed, ...shellUser }: {
   theme: Theme; onToggleTheme: () => void; children?: ReactNode; workspaceId: string | null;
@@ -257,7 +257,7 @@ export function AppShell({ theme, onToggleTheme, children, workspaceId, workspac
   // Focus the search box; on small screens it is hidden (cannot take focus), so open the inbox instead.
   const focusSearch = () => {
     searchRef.current?.focus();
-    if (document.activeElement !== searchRef.current) void navigate({ to: "/inbox" });
+    if (document.activeElement !== searchRef.current) void navigate({ to: "/search" });
   };
 
   // Global keys: "/" or ⌘K search, "?" shortcuts, "c" new issue (ux-spec §2.5).

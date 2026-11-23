@@ -20,6 +20,7 @@ import { memberRoutes } from "./modules/members/routes.ts";
 import { apiTokenRoutes } from "./modules/api-tokens/routes.ts";
 import { customerRoutes } from "./modules/customers/routes.ts";
 import { issueRoutes } from "./modules/issues/routes.ts";
+import { searchRoutes } from "./modules/search/routes.ts";
 import { messageRoutes } from "./modules/messages/routes.ts";
 import { createDeliveryRegistry, type DeliveryRegistry } from "./modules/messages/delivery.ts";
 import { createApiTokenService } from "./modules/api-tokens/service.ts";
@@ -93,6 +94,7 @@ export async function buildApp({ config, database, email, rateLimitStore = new M
   await app.register(apiTokenRoutes(database.db, apiTokens));
   await app.register(customerRoutes(database.db));
   await app.register(issueRoutes(database.db));
+  await app.register(searchRoutes(database.db));
   await app.register(messageRoutes(database.db, channels));
   return app;
 }

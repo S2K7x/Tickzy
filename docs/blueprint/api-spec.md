@@ -31,7 +31,7 @@ Codes: `unauthenticated` 401, `forbidden` 403, `not_found` 404, `validation_fail
 | GET `/v1/issues/{ref}/timeline` → `{data: ({kind:"message", message: {…, author:{type,id,name}}} \| {kind:"event", event})[], truncated}` chronological (capped at 1000) | messages + events | `issues:read` | M2 ✅ |
 | POST `/v1/issues/{ref}/messages` `{body, visibility}` → Message (201). Reply goes into the issue's latest conversation; queued (`delivery_state: pending`) only when that channel has a delivery adapter; internal notes are never queued · POST `/v1/messages/{id}/retry` re-queues a `failed` public message (FR-2.4) | reply (`visibility: public`) or note (`internal`) | public: `issues:reply`; internal: `issues:note`; retry: `issues:reply` | M2 ✅ |
 | POST `/v1/issues/{id}/merge` · `/split` | merge/split | `issues:write` | M4 |
-| GET `/v1/search?q=` | global search | `issues:read` | M2 |
+| GET `/v1/search?q=&limit≤50` → `{query:{text, filters}, issues:[{issue, match:{in: title\|message\|filters, message_id, snippet}}], accounts:[{id,name,domains}]}`. Operators: `from:` `account:` `status:` `is:open\|unassigned\|mine\|internal` `channel:` `priority:`; "phrases", `-word`. Snippet highlights are wrapped in U+0001 … U+0002 (render as `<mark>`, never HTML) | global search (ADR-028) | `issues:read` | M2 ✅ |
 | GET/POST `/v1/views` | saved views | member | M2 |
 | GET/POST/PATCH `/v1/channels/*` | Slack/email/widget connections & endpoints | `channels:manage` | M3 |
 | POST `/ingest/slack/events` · `/ingest/slack/interactions` · `/ingest/email/postmark` · `/ingest/linear` · `/ingest/jira` | provider webhooks (signature-verified, not /v1) | provider signature | M3/M6 |

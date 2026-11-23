@@ -57,10 +57,17 @@ const { check, axeCheck, noOverflow, signUpWithWorkspace, finish } = createRun(l
   await page.keyboard.press("/");
   await page.keyboard.type("webhook");
   await page.keyboard.press("Enter");
-  await page.waitForURL(/\/inbox\?.*q=webhook/);
-  await page.getByRole("region", { name: "Issue queue" }).getByText("Webhook retries pile up").waitFor();
-  check(true, "global search opens the inbox filtered by text");
-  await page.getByRole("region", { name: "Issue queue" }).click({ position: { x: 5, y: 5 } }); // leave the search box
+  await page.waitForURL(/\/search\?.*q=webhook/);
+  const results = page.getByRole("region", { name: /Issues/ });
+  await results.getByText("Webhook retries pile up").waitFor();
+  check(true, "global search opens the search page with results");
+  await page.getByLabel("Search query").fill(`webhook priority:high is:open`);
+  await page.getByRole("button", { name: "Search", exact: true }).click();
+  await results.getByText("Webhook retries pile up").waitFor();
+  check((await results.getByRole("link").count()) === 1, "operators narrow the results");
+  await axeCheck(page, "search results");
+  await page.screenshot({ path: path.join(shots, "v2-search-1440.png") });
+  await page.locator("h1").click(); // leave the search box
   await page.keyboard.press("?");
   check(await page.getByRole("dialog", { name: "Keyboard shortcuts" }).isVisible(), "? opens the shortcuts sheet");
   await page.keyboard.press("Escape");

@@ -1,10 +1,10 @@
 # Pipeline Checklist — Tickzy (live status)
 
-- **Last updated:** 2026-11-23 (T-212 design system v2). Legend: ✅ done · 🟡 in progress / partial · ⬜ not started. Each item links to its evidence.
+- **Last updated:** 2026-11-23 (T-207 search). Legend: ✅ done · 🟡 in progress / partial · ⬜ not started. Each item links to its evidence.
 - Rules: update this file whenever an item changes status; an item is ✅ only with linked evidence (document, test, or deployment).
 - Process definition: [`development-pipeline.md`](development-pipeline.md).
 
-**Overall:** 21 ✅ · 12 🟡 · 23 ⬜ (of 56). **Current position:** Stage 5 (Build), M1 complete → milestone M2, while Stage 1 user research/validation remains open on the discovery track.
+**Overall:** 21 ✅ · 13 🟡 · 22 ⬜ (of 56). **Current position:** Stage 5 (Build), M1 complete → milestone M2, while Stage 1 user research/validation remains open on the discovery track.
 
 ## 01 · Discovery (3/6)
 - ✅ Define the idea and problem — `docs/strategy/product-strategy.md` §1
@@ -41,7 +41,7 @@
 ## 05 · Build (3/6)
 - ✅ Repository and project setup — monorepo, CI file (`CURRENT-STATE.md`)
 - 🟡 Implement frontend and backend — M0 done; M1 **complete** (T-101 auth core ✅, T-101b Google/Microsoft ✅, T-102 invitations & members ✅, T-103 API tokens ✅, T-106 rate limiting ✅, T-104 ✅, T-105 web sign-in/onboarding ✅)
-- 🟡 Implement database and integrations — migrations 0001–0009 with RLS and composite foreign keys ✅; migrations verified under a non-superuser owner; integrations from M3
+- 🟡 Implement database and integrations — migrations 0001–0010 with RLS and composite foreign keys ✅; migrations verified under a non-superuser owner; integrations from M3
 - 🟡 Code reviews — automated gates + self-review in place; CI green on GitHub ✅ (run #1, 2026-11-23); **founder review of auth/access code pending**
 - ✅ Documentation kept current — `CURRENT-STATE.md`, ADRs, checklists
 - ✅ Feature flags / trunk-based workflow defined — `engineering-workflow.md` (flags implemented when first needed)
@@ -52,7 +52,7 @@
 - 🟡 Accessibility & responsive checks — signed-in shell 8/8 (390/768/1024/1280 × light/dark) + all auth pages + Members and API tokens (light/dark, 1280/390) + invite page + inbox (1280 light/dark, 390 queue/issue) + v2 Overview (1440 light/dark, 1024, 768, 390), 0 axe violations; repeat per new screen
 - ⬜ AI evaluation sets & regression gates — from M5
 - 🟡 Security testing — authz, tenant-isolation, token and rate-limit tests ✅ (server suites); **SAST, dependency/secret scanning in CI, ASVS L2 review, pentest ⬜**
-- ⬜ Performance / load testing — before design partners
+- 🟡 Performance / load testing — search benchmark (`apps/server/scripts/bench-search.ts`, ADR-028) ✅; API load tests before design partners ⬜
 - ⬜ User acceptance testing — design partners
 
 ## 07 · Release (0/6)

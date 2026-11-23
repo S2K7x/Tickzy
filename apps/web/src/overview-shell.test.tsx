@@ -106,16 +106,17 @@ describe("shell (design v2)", () => {
     expect(screen.queryByRole("menu")).toBeNull();
   });
 
-  it("'/' focuses search; Enter opens the inbox filtered by the text", async () => {
-    base({ "GET /v1/issues?status=triage,waiting_on_us,waiting_on_customer,blocked&sort=updated&q=export&limit=50": { status: 200, body: { data: [ISSUE], next_cursor: null } } });
+  it("'/' focuses search; Enter opens the search page with results", async () => {
+    base({ "GET /v1/search?q=export&limit=30": { status: 200, body: { query: { text: "export", filters: {} }, issues: [{ issue: ISSUE, match: { in: "message", message_id: "msg_1", snippet: "the \u0001export\u0002 fails" } }], accounts: [] } } });
     const { router } = await renderAt("/");
     await screen.findByRole("region", { name: "Key numbers" });
     await userEvent.keyboard("/");
     expect(document.activeElement).toBe(screen.getByLabelText("Search issues", { selector: "#global-search" }));
     await userEvent.keyboard("export{Enter}");
-    await waitFor(() => expect(router.state.location.pathname).toBe("/inbox"));
+    await waitFor(() => expect(router.state.location.pathname).toBe("/search"));
     expect(router.state.location.search).toMatchObject({ q: "export" });
-    expect(await screen.findByText(/Results for/)).toBeTruthy();
+    const mark = await screen.findByText("export", { selector: "mark" });
+    expect(mark).toBeTruthy();
   });
 
   it("'?' opens the shortcuts sheet, 'c' opens New issue, the sidebar collapse is remembered", async () => {
