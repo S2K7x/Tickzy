@@ -1,6 +1,6 @@
 # Pipeline Checklist — Tickzy (live status)
 
-- **Last updated:** 2026-11-23 (T-101b, M1 complete). Legend: ✅ done · 🟡 in progress / partial · ⬜ not started. Each item links to its evidence.
+- **Last updated:** 2026-11-23 (T-201, M2 started). Legend: ✅ done · 🟡 in progress / partial · ⬜ not started. Each item links to its evidence.
 - Rules: update this file whenever an item changes status; an item is ✅ only with linked evidence (document, test, or deployment).
 - Process definition: [`development-pipeline.md`](development-pipeline.md).
 
@@ -41,7 +41,7 @@
 ## 05 · Build (3/6)
 - ✅ Repository and project setup — monorepo, CI file (`CURRENT-STATE.md`)
 - 🟡 Implement frontend and backend — M0 done; M1 **complete** (T-101 auth core ✅, T-101b Google/Microsoft ✅, T-102 invitations & members ✅, T-103 API tokens ✅, T-106 rate limiting ✅, T-104 ✅, T-105 web sign-in/onboarding ✅)
-- 🟡 Implement database and integrations — migrations 0001–0006 with RLS ✅; integrations from M3
+- 🟡 Implement database and integrations — migrations 0001–0007 with RLS and composite foreign keys ✅; migrations verified under a non-superuser owner; integrations from M3
 - 🟡 Code reviews — automated gates + self-review in place; CI green on GitHub ✅ (run #1, 2026-11-23); **founder review of auth/access code pending**
 - ✅ Documentation kept current — `CURRENT-STATE.md`, ADRs, checklists
 - ✅ Feature flags / trunk-based workflow defined — `engineering-workflow.md` (flags implemented when first needed)

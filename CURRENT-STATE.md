@@ -3,7 +3,7 @@
 _Last updated: 2026-11-23 (session 5)._ Read this first, then `docs/blueprint/backlog.md`. Process: `docs/process/development-pipeline.md` (we are in **Stage 5 · Build**; status per stage in `docs/process/pipeline-checklist.md`).
 
 ## Phase
-Implementation: **M0 · Foundations complete** (CI green on GitHub since 2026-11-23); **M1 · Identity & access complete** (T-101, T-101b, T-102, T-103, T-104, T-105, T-106). Next: **M2**. Planning docs are complete and approved:
+Implementation: **M0 · Foundations complete** (CI green on GitHub since 2026-11-23); **M1 · Identity & access complete** (T-101, T-101b, T-102, T-103, T-104, T-105, T-106). **M2 · Core inbox** in progress (T-201 done). Planning docs are complete and approved:
 strategy `docs/strategy/product-strategy.md` · architecture `docs/architecture/` · UX `docs/ux/ux-spec.md` + design canvas (https://claude.ai/artifact/BvvyCE24er29B2iYNqLVxg, source `design/canvas/`) · blueprint `docs/blueprint/`.
 
 ## Done (verified by tests)
@@ -34,9 +34,11 @@ strategy `docs/strategy/product-strategy.md` · architecture `docs/architecture/
 
 | T-101b | Google & Microsoft sign-in per **ADR-024**: `openid-client` 6.8.9 (certified RP) — code flow + PKCE S256 + state + nonce; per-attempt secrets in a `__Host-` httpOnly cookie; `return_to` restricted to relative paths; migration `0006_user_identities.sql` (global, no grants, `auth_oauth_sign_in()`); identities keyed on Google `sub` / Microsoft `tid:oid`; email used to create/link only when the provider vouches (Google `email_verified`, Microsoft `xms_edov` — nOAuth defence); providers enabled by config, `GET /v1/auth/providers`; errors returned as `/sign-in?error=…`. Web: provider buttons only for enabled providers, return to a pending invitation, error messages. Setup guide `docs/operations/sign-in-providers.md`; mock provider `apps/server/scripts/mock-oidc.ts` | 13 server tests against a mock OIDC provider with real discovery/JWKS/token + PKCE (new user, link by verified email, unverified refused, subject-stable against email change, Microsoft without/with `xms_edov`, forged state / missing cookie / wrong nonce / wrong aud / wrong iss / replayed code, cancel, open-redirect, table not readable) + 4 web tests + **browser E2E** `e2e-oauth.cjs` 15/15 (full redirect round trips, invitation via Google, axe light/dark/390) |
 
+| T-201 | M2 schema per **ADR-025** — migration `0007_customers_and_taxonomy.sql`: accounts (+ `account_domains`, one account per domain), contacts, contact_identities (email/slack/teams/widget; emails lowercase), teams + team_members, statuses (7 categories; one default each), labels (hierarchical, `ai_enabled`), custom_field_defs; all tenant RLS-forced with **composite foreign keys** (no cross-workspace references); `gen_ulid()` for SQL-made ids; `seed_workspace_defaults()` called on workspace creation + backfill for existing workspaces; Drizzle schema. **Deployment fix found while verifying:** migrations failed for a non-superuser owner (0002 needs SET ROLE tickzy_app on PG16+) → runner grants the owner membership or names the GRANT a DBA must run | 11 db tests (isolation per table, cross-workspace composite FKs, domain/identity uniqueness, lowercase email keys, account delete semantics, label/custom-field constraints, default statuses with valid ULIDs, idempotent seeding, one default per category, `gen_ulid` format/time) + migration test **as a non-superuser owner** incl. the backfill (proven to fail without the fix) + workspace creation seeds statuses; real dev DB backfill: 34/34 existing workspaces got 7 default statuses |
+
 Bugs found by verification and fixed in T-105: verify page re-POSTed an empty token on remount; top bar overflowed at 768 px once the user block existed; onboarding showed prefix "XX" before typing.
 
-Total: **166 tests passing** locally (`pnpm test`): shared 4 · db 13 · server 110 · web 39 — plus five real-browser scripts (all re-run green after T-101b; shared helpers in `apps/web/scripts/e2e-lib.cjs`). CI (lint, typecheck, tests with Postgres) green on GitHub.
+Total: **178 tests passing** locally (`pnpm test`): shared 4 · db 25 · server 110 · web 39 — plus five real-browser scripts (last run green after T-101b; shared helpers in `apps/web/scripts/e2e-lib.cjs`). CI (lint, typecheck, tests with Postgres) green on GitHub.
 
 ## Written but NOT yet verified
 - Google/Microsoft sign-in against the **real** providers: needs OAuth apps registered by the founder (`docs/operations/sign-in-providers.md`); `xms_edov` availability on the Entra app is an open item.
@@ -44,7 +46,7 @@ Total: **166 tests passing** locally (`pnpm test`): shared 4 · db 13 · server 
 T-011 CI is now verified: first GitHub Actions run (push to `main`, run #1) green on 2026-11-23.
 
 ## Not started (next, in order)
-1. **M2 · Core inbox**, starting with **T-201** (schema: accounts, contacts, contact_identities, teams, statuses, labels, custom field definitions — migrations + RLS + isolation suite), then T-202 (conversations, messages, issues, lifecycle as pure functions) and T-203/T-204 (APIs).
+1. **T-202** (schema + domain: conversations, messages, issues, issue_events, attachments, issue labels; issue number allocation; FR-3.1 lifecycle rules as pure functions with a state-machine test table), then T-203 (accounts & contacts API + identity resolution) and T-204 (issues API).
 2. Founder actions: review the auth / access-control / abuse-protection code (T-101, T-101b, T-102, T-103, T-106 — engineering-workflow §5); register Google/Microsoft OAuth apps (`docs/operations/sign-in-providers.md`).
 3. Discovery track (Stage 1 gate still open): interview guide and design-partner conversations.
 

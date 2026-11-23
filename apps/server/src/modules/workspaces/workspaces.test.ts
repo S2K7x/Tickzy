@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { sql } from "drizzle-orm";
 import { newId } from "@tickzy/shared";
-import { schema, withWorkspace } from "@tickzy/db";
+import { schema, STATUS_CATEGORIES, withWorkspace } from "@tickzy/db";
 import { auth, setupTestApp } from "../../test-helpers.ts";
 
 let t: Awaited<ReturnType<typeof setupTestApp>>;
@@ -38,6 +38,8 @@ describe("workspaces API (FR-1.1)", () => {
       expect(audit.map((a) => a.action)).toContain("workspace.created");
       const events = await tx.select().from(schema.outbox);
       expect(events.map((e) => e.type)).toEqual(["workspace.created"]);
+      const statuses = await tx.select().from(schema.statuses);
+      expect(statuses.filter((st) => st.isDefault).map((st) => st.category).sort()).toEqual([...STATUS_CATEGORIES].sort());
       const counters = await tx.select().from(schema.workspaceCounters);
       expect(counters).toEqual([{ workspaceId: wsId, name: "issue", value: 0 }]);
     });

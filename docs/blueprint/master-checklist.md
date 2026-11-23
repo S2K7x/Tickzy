@@ -5,14 +5,14 @@ Every strategy commitment must map to at least one requirement and task. ⬜ not
 | Strategy item (`product-strategy.md`) | Requirements | Tasks | Status |
 |---|---|---|---|
 | Module 1 Workspace & identity | FR-1.1–1.7 | T-002–T-008 ✅, T-101 ✅, T-101b ✅, T-102 ✅, T-103 ✅, T-104 ✅, T-105 ✅, T-106 ✅ | ✅ (M1 complete; real Google/Microsoft apps to verify at deploy) |
-| Tenant isolation (ADR-005) | FR-1.5, SEC-3 | T-003, T-004, T-201 | 🟡 |
+| Tenant isolation (ADR-005) | FR-1.5, SEC-3 | T-003 ✅, T-004 ✅, T-201 ✅ (composite FKs, ADR-025) | 🟡 (extended with every new table) |
 | Module 2 Channels: Slack (modes, reply as user, internal threads) | FR-2.1–2.5 | T-301, T-304–T-307, T-310 | ⬜ |
 | Module 2 Channels: email first-class | FR-2.7 | T-302, T-303 | ⬜ |
 | Module 2 Channels: widget | FR-2.8 | T-308 | ⬜ |
 | Module 3 Inbox: one Issue object, status categories, whose-turn, ignored | FR-3.1, 3.2 | T-202, T-206 | ⬜ |
 | Module 3 Search that works | FR-3.8 | T-207 | ⬜ |
 | Module 3 Speed, keyboard, realtime, collision | FR-3.9, 3.11, NFR-1 | T-208, T-209 | ⬜ |
-| Module 4 Accounts-centric model | FR-4.1–4.3 | T-201, T-203, T-210 | ⬜ |
+| Module 4 Accounts-centric model | FR-4.1–4.3 | T-201 ✅ (schema), T-203, T-210 | 🟡 |
 | Module 5 SLA (all metrics on all plans) | FR-5.1–5.4 | T-401–T-403 | ⬜ |
 | Module 5 Routing basic | FR-3.4 | T-404 | ⬜ |
 | Module 6 Built-in automations (MVP) | FR-6 MVP | T-404 | ⬜ |

@@ -1,4 +1,4 @@
-import { bigserial, bigint, customType, inet, jsonb, pgTable, primaryKey, text, timestamp } from "drizzle-orm/pg-core";
+import { bigserial, bigint, boolean, customType, inet, integer, jsonb, pgTable, primaryKey, text, timestamp } from "drizzle-orm/pg-core";
 
 const customBytea = customType<{ data: Buffer }>({ dataType: () => "bytea" });
 
@@ -95,4 +95,105 @@ export const apiTokens = pgTable("api_tokens", {
   expiresAt: timestamp("expires_at", { withTimezone: true }),
   lastUsedAt: timestamp("last_used_at", { withTimezone: true }),
   revokedAt: timestamp("revoked_at", { withTimezone: true }),
+});
+
+// --- Customers & taxonomy (migration 0007, T-201) ---------------------------------------------
+export const accounts = pgTable("accounts", {
+  id: text("id").primaryKey(),
+  workspaceId: text("workspace_id").notNull(),
+  name: text("name").notNull(),
+  tier: text("tier"),
+  ownerMembershipId: text("owner_membership_id"),
+  externalIds: jsonb("external_ids").$type<Record<string, string>>().notNull().default({}),
+  custom: jsonb("custom").$type<Record<string, unknown>>().notNull().default({}),
+  createdAt: ts("created_at").notNull().defaultNow(),
+  updatedAt: ts("updated_at").notNull().defaultNow(),
+  deletedAt: ts("deleted_at"),
+});
+
+export const accountDomains = pgTable("account_domains", {
+  workspaceId: text("workspace_id").notNull(),
+  domain: text("domain").notNull(),
+  accountId: text("account_id").notNull(),
+  createdAt: ts("created_at").notNull().defaultNow(),
+}, (t) => [primaryKey({ columns: [t.workspaceId, t.domain] })]);
+
+export const contacts = pgTable("contacts", {
+  id: text("id").primaryKey(),
+  workspaceId: text("workspace_id").notNull(),
+  accountId: text("account_id"),
+  name: text("name").notNull().default(""),
+  roleInAccount: text("role_in_account"),
+  custom: jsonb("custom").$type<Record<string, unknown>>().notNull().default({}),
+  createdAt: ts("created_at").notNull().defaultNow(),
+  updatedAt: ts("updated_at").notNull().defaultNow(),
+  deletedAt: ts("deleted_at"),
+});
+
+export const IDENTITY_KINDS = ["email", "slack", "teams", "widget"] as const;
+export const contactIdentities = pgTable("contact_identities", {
+  id: text("id").primaryKey(),
+  workspaceId: text("workspace_id").notNull(),
+  contactId: text("contact_id").notNull(),
+  kind: text("kind", { enum: IDENTITY_KINDS }).notNull(),
+  externalKey: text("external_key").notNull(),
+  createdAt: ts("created_at").notNull().defaultNow(),
+});
+
+export const teams = pgTable("teams", {
+  id: text("id").primaryKey(),
+  workspaceId: text("workspace_id").notNull(),
+  name: text("name").notNull(),
+  assignmentStrategy: text("assignment_strategy", { enum: ["manual", "round_robin"] }).notNull().default("manual"),
+  roundRobinCursor: text("round_robin_cursor"),
+  createdAt: ts("created_at").notNull().defaultNow(),
+  archivedAt: ts("archived_at"),
+});
+
+export const teamMembers = pgTable("team_members", {
+  workspaceId: text("workspace_id").notNull(),
+  teamId: text("team_id").notNull(),
+  membershipId: text("membership_id").notNull(),
+  createdAt: ts("created_at").notNull().defaultNow(),
+}, (t) => [primaryKey({ columns: [t.teamId, t.membershipId] })]);
+
+export const STATUS_CATEGORIES = ["triage", "waiting_on_us", "waiting_on_customer", "blocked", "resolved", "closed", "ignored"] as const;
+export type StatusCategory = (typeof STATUS_CATEGORIES)[number];
+export const statuses = pgTable("statuses", {
+  id: text("id").primaryKey(),
+  workspaceId: text("workspace_id").notNull(),
+  category: text("category", { enum: STATUS_CATEGORIES }).notNull(),
+  name: text("name").notNull(),
+  position: integer("position").notNull().default(0),
+  isDefault: boolean("is_default").notNull().default(false),
+  createdAt: ts("created_at").notNull().defaultNow(),
+  archivedAt: ts("archived_at"),
+});
+
+export const labels = pgTable("labels", {
+  id: text("id").primaryKey(),
+  workspaceId: text("workspace_id").notNull(),
+  name: text("name").notNull(),
+  color: text("color").notNull().default("#6b7280"),
+  description: text("description"),
+  parentId: text("parent_id"),
+  aiEnabled: boolean("ai_enabled").notNull().default(false),
+  createdAt: ts("created_at").notNull().defaultNow(),
+  archivedAt: ts("archived_at"),
+});
+
+export const CUSTOM_FIELD_ENTITIES = ["issue", "account", "contact"] as const;
+export const CUSTOM_FIELD_TYPES = ["text", "number", "boolean", "date", "select", "multi_select", "url"] as const;
+export const customFieldDefs = pgTable("custom_field_defs", {
+  id: text("id").primaryKey(),
+  workspaceId: text("workspace_id").notNull(),
+  entity: text("entity", { enum: CUSTOM_FIELD_ENTITIES }).notNull(),
+  key: text("key").notNull(),
+  label: text("label").notNull(),
+  type: text("type", { enum: CUSTOM_FIELD_TYPES }).notNull(),
+  options: jsonb("options").$type<{ id: string; label: string }[]>().notNull().default([]),
+  required: boolean("required").notNull().default(false),
+  position: integer("position").notNull().default(0),
+  createdAt: ts("created_at").notNull().defaultNow(),
+  archivedAt: ts("archived_at"),
 });

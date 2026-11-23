@@ -2,7 +2,8 @@
 
 - **Conventions:** snake_case; PK `id text` = prefixed ULID (ADR-018); every tenant table has `workspace_id text not null references workspaces(id)` and RLS enabled; timestamps `timestamptz not null default now()`; soft delete via `deleted_at` where user-deletable; JSONB only for genuinely schemaless data (custom field values, workflow definitions, raw payloads).
 - **RLS policy template:** `CREATE POLICY tenant_isolation ON <t> USING (workspace_id = current_setting('app.workspace_id', true)) WITH CHECK (workspace_id = current_setting('app.workspace_id', true));` + `ALTER TABLE <t> ENABLE ROW LEVEL SECURITY; ALTER TABLE <t> FORCE ROW LEVEL SECURITY;`
-- **Roles:** `tickzy_owner` (migrations), `tickzy_app` (NOBYPASSRLS, runtime), `tickzy_system` (BYPASSRLS, audited platform jobs only).
+- **Cross-table references** between tenant tables are composite foreign keys `(workspace_id, x_id) → x (workspace_id, id)` (ADR-025): FK checks bypass RLS, so a plain FK could point across workspaces.
+- **Roles:** `tickzy_owner` (migrations; needs CREATEROLE and must be able to act as `tickzy_app` — the runner grants itself membership, ADR-025), `tickzy_app` (NOBYPASSRLS, runtime), `tickzy_system` (BYPASSRLS, audited platform jobs only).
 
 ## 1. ERD (core)
 ```mermaid
@@ -52,9 +53,10 @@ erDiagram
 | `inbound_events` | id `evt_`, workspace_id null, provider, provider_event_id, payload jsonb, received_at, processed_at, error; unique(provider, provider_event_id) | dedupe; workspace resolved later |
 
 ### Customers (M2)
-| `accounts` | id `acc_`, workspace_id, name, domain citext, tier, owner_member_id, external_ids jsonb, custom jsonb, created_at | idx (workspace_id, domain) |
-| `contacts` | id `con_`, workspace_id, account_id null, name, email citext, role_in_account, created_at | |
-| `contact_identities` | id, workspace_id, contact_id, kind enum(email,slack,teams,widget), external_key text; unique(workspace_id,kind,external_key) | slack key = `team_id:user_id` |
+| `accounts` (0007) | id `acc_`, workspace_id, name, tier, owner_membership_id, external_ids jsonb, custom jsonb, created_at, updated_at, deleted_at | soft delete; idx (workspace_id, lower(name)) |
+| `account_domains` (0007) | (workspace_id, domain citext) PK, account_id | one account per domain per workspace — email-domain auto-mapping (FR-4.2) |
+| `contacts` (0007) | id `con_`, workspace_id, account_id null (SET NULL when the account is deleted), name, role_in_account, custom jsonb, created_at, updated_at, deleted_at | emails live in `contact_identities` |
+| `contact_identities` (0007) | id `cid_`, workspace_id, contact_id, kind (email, slack, teams, widget), external_key; unique (workspace_id, kind, external_key) | email keys lowercase (CHECK); slack key = `team_id:user_id` |
 
 ### Channels & conversations (M1–M2)
 | `channel_connections` | id `chc_`, workspace_id, kind(slack,email,widget,linear,jira), external_tenant_id (Slack team_id), credentials_enc bytea, status, settings jsonb | tokens encrypted |
@@ -66,10 +68,10 @@ erDiagram
 ### Issues (M1–M3)
 | `issues` | id `iss_`, workspace_id, number int, title, status_category enum(`triage`,`waiting_on_us`,`waiting_on_customer`,`blocked`,`resolved`,`closed`,`ignored`), status_id (custom), priority enum(urgent,high,normal,low), assignee_principal_id, team_id, account_id, requester_contact_id, channel_kind, product_area, problem_id, custom jsonb, first_response_at, resolved_at, last_customer_message_at, last_team_message_at, created_at, updated_at, version int | unique(workspace_id,number); idx (workspace_id,status_category,updated_at) |
 | `issue_events` | id bigserial, workspace_id, issue_id, type, actor_type, actor_id, data jsonb, created_at | append-only timeline |
-| `issue_labels` / `labels` | label: id, workspace_id, name, color, description, parent_id, ai_enabled | |
-| `statuses` | id, workspace_id, category, name, position, archived | custom statuses inside categories |
-| `teams`, `team_members` | round-robin pointer on team | |
-| `custom_field_defs` | id, workspace_id, entity(issue,account,contact), key, type, options jsonb, required | |
+| `issue_labels` / `labels` | label (0007): id `lbl_`, workspace_id, name, color `#rrggbb`, description, parent_id (same workspace), ai_enabled, archived_at; unique name per parent (case-insensitive) | `issue_labels` with issues (T-202) |
+| `statuses` (0007) | id `sts_`, workspace_id, category (7 FR-3.1 categories), name, position, is_default, archived_at; one default per category; unique name | seeded by `seed_workspace_defaults()` |
+| `teams`, `team_members` (0007) | team: id `tm_`, name, assignment_strategy (manual, round_robin), round_robin_cursor, archived_at; member: (team_id, membership_id) | |
+| `custom_field_defs` (0007) | id `cfd_`, workspace_id, entity (issue, account, contact), key `^[a-z][a-z0-9_]{0,39}$` (never reused), label, type (text, number, boolean, date, select, multi_select, url), options (select types only), required, position, archived_at | values in the entity's `custom` jsonb, validated by the API |
 | `external_links` | id, workspace_id, issue_id, provider(linear,jira,github), external_id, url, title, status, synced_at | |
 | `problems` (GA) | id `prb_`, workspace_id, title, status, external_link_id | |
 

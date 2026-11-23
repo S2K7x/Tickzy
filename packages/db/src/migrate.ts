@@ -37,6 +37,7 @@ export async function migrate(ownerUrl: string, dir: string = MIGRATIONS_DIR): P
         result.skipped.push(file);
         continue;
       }
+      await ensureOwnerCanActAsAppRole(client);
       await client.query("BEGIN");
       try {
         await client.query(sql);
@@ -48,11 +49,36 @@ export async function migrate(ownerUrl: string, dir: string = MIGRATIONS_DIR): P
         throw new Error(`Migration ${file} failed: ${(err as Error).message}`, { cause: err });
       }
     }
+    await ensureOwnerCanActAsAppRole(client);
     await installJobQueueSchema(client);
     return result;
   } finally {
     await client.query("SELECT pg_advisory_unlock($1)", [LOCK_KEY]).catch(() => undefined);
     await client.end();
+  }
+}
+
+/**
+ * Some migrations hand objects to the runtime role (`CREATE SCHEMA … AUTHORIZATION tickzy_app`, `ALTER … OWNER TO
+ * tickzy_app`). On PostgreSQL 16+ that requires the migrating role to be able to SET ROLE tickzy_app — automatic for
+ * superusers, but not for the non-superuser owner of a managed database. The role that created tickzy_app holds ADMIN
+ * on it, so it can grant itself membership; otherwise a DBA must run the GRANT named in the error.
+ * No-op until 0001 has created the role.
+ */
+export async function ensureOwnerCanActAsAppRole(client: pg.Client): Promise<void> {
+  const { rows } = await client.query<{ exists: boolean; can_set: boolean | null }>(
+    "SELECT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'tickzy_app') AS exists, " +
+      "CASE WHEN EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'tickzy_app') THEN pg_has_role(current_user, 'tickzy_app', 'SET') END AS can_set",
+  );
+  if (!rows[0]?.exists || rows[0].can_set) return;
+  const { rows: who } = await client.query<{ u: string }>("SELECT current_user AS u");
+  try {
+    await client.query(`GRANT tickzy_app TO ${pg.escapeIdentifier(who[0]!.u)}`);
+  } catch (err) {
+    throw new Error(
+      `The migration role cannot act as tickzy_app. Ask a database admin to run: GRANT tickzy_app TO ${who[0]!.u};`,
+      { cause: err },
+    );
   }
 }
 

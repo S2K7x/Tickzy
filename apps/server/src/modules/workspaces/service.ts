@@ -39,6 +39,7 @@ export function createWorkspaceService(db: Db) {
             .returning();
           await tx.insert(schema.memberships).values({ id: newId("membership"), workspaceId: id, userId, role: "admin" });
           await tx.insert(schema.workspaceCounters).values({ workspaceId: id, name: "issue", value: 0 });
+          await tx.execute(sql`SELECT seed_workspace_defaults()`); // default status per category (T-201)
           await audit(tx, id, { type: "user", id: userId }, "workspace.created", { slug: input.slug });
           await tx.insert(schema.outbox).values({ workspaceId: id, type: "workspace.created", payload: { workspace_id: id } });
           return toDto(ws!);
