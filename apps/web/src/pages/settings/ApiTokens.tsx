@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { api, ApiError, type ApiToken } from "../../lib/api.ts";
+import { api, ApiError, type ApiToken, errorMessage } from "../../lib/api.ts";
 import { useCurrentWorkspace, useSession } from "../../lib/session.ts";
 import { SCOPE_GROUPS, ALL_SCOPES, scopeLabel } from "../../lib/scopes.ts";
 import { inputClass } from "../AuthLayout.tsx";
@@ -49,7 +49,7 @@ export function ApiTokens() {
       setNotice(`Token “${t.name}” revoked. Requests using it now fail.`);
       await qc.invalidateQueries({ queryKey: ["api-tokens", wsId] });
     } catch (err) {
-      setActionError((err as Error).message);
+      setActionError(errorMessage(err));
     }
   }
 
@@ -80,7 +80,7 @@ export function ApiTokens() {
       <section aria-labelledby="tokens-heading" className={card}>
         <h3 id="tokens-heading" className="m-0 border-b border-line px-5 py-3 text-[15px] font-semibold">Active tokens</h3>
         {tokens.isPending && <p role="status" className="m-0 px-5 py-4 text-sm text-muted">Loading tokens…</p>}
-        {tokens.isError && <p role="alert" className="m-0 px-5 py-4 text-sm text-danger">{(tokens.error as Error).message}</p>}
+        {tokens.isError && <p role="alert" className="m-0 px-5 py-4 text-sm text-danger">{errorMessage(tokens.error)}</p>}
         {tokens.data?.data.length === 0 && <p className="m-0 px-5 py-4 text-sm text-muted">No API tokens yet.</p>}
         <ul className="m-0 list-none p-0">
           {tokens.data?.data.map((t) => <TokenRow key={t.id} token={t} onRevoke={() => void revoke(t)} />)}
@@ -167,7 +167,7 @@ function CreateTokenForm({ workspaceId, onCreated }: { workspaceId: string; onCr
       setName("");
       await onCreated(res.name, res.token);
     } catch (err) {
-      setError(err instanceof ApiError && err.code === "validation_failed" ? "Give the token a name and at least one scope." : (err as Error).message);
+      setError(err instanceof ApiError && err.code === "validation_failed" ? "Give the token a name and at least one scope." : errorMessage(err));
     } finally {
       setBusy(false);
     }

@@ -12,7 +12,7 @@ Every strategy commitment must map to at least one requirement and task. ⬜ not
 | Module 3 Inbox: one Issue object, status categories, whose-turn, ignored | FR-3.1, 3.2 | T-202 ✅ (schema, lifecycle rules), T-206 ✅ (automation, reopen, follow-ups, ignored) | ✅ backend (UI in T-209) |
 | Module 3 Search that works | FR-3.8 | T-207 ✅ (operators, snippets, indexed under RLS via ADR-028) | ✅ |
 | Module 3 Speed, keyboard, realtime, collision | FR-3.9, 3.11, NFR-1 | T-209a ✅ (keyboard j/k/r/n/e/Esc, optimistic edits), T-208 ✅ (live updates, presence/typing collision), T-209b ✅ (filters, bulk actions FR-3.10, team/label editing FR-3.3, ⌘K palette + a/s/p/l, virtualised queue: 24 rows in the DOM for 261 issues) | ✅ (SLA pills with T-403) |
-| Module 4 Accounts-centric model | FR-4.1–4.3 | T-201 ✅ (schema), T-203 ✅ (API + identity resolution), T-210 | 🟡 |
+| Module 4 Accounts-centric model | FR-4.1–4.3 | T-201 ✅ (schema), T-203 ✅ (API + identity resolution), T-210 ✅ (accounts list + profile, contacts, inbox account filter) | ✅ (health signals with M4) |
 | Module 5 SLA (all metrics on all plans) | FR-5.1–5.4 | T-401–T-403 | ⬜ |
 | Module 5 Routing basic | FR-3.4 | T-404 | ⬜ |
 | Module 6 Built-in automations (MVP) | FR-6 MVP | T-404 | ⬜ |

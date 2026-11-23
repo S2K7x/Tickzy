@@ -2,7 +2,7 @@ import { useState, type ReactNode } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { PRIORITIES, canTransition } from "@tickzy/shared/lifecycle";
 import { useQueryClient } from "@tanstack/react-query";
-import { api } from "../lib/api.ts";
+import { api, errorMessage } from "../lib/api.ts";
 import { useCurrentWorkspace, useSession } from "../lib/session.ts";
 import { useMembers } from "../lib/members.ts";
 import {
@@ -159,7 +159,7 @@ function IssuesTable({ ws, stats }: { ws: string | null; stats: IssueStats | und
       await api(`/v1/issues/${issue.key}`, { method: "PATCH", body, workspaceId: ws });
       await qc.invalidateQueries({ queryKey: ["issues", ws] });
     } catch (e) {
-      setError((e as Error).message);
+      setError(errorMessage(e));
     }
   }
   async function next() {

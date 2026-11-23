@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { useSearch } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { api, ApiError } from "../lib/api.ts";
+import { api, ApiError, errorMessage } from "../lib/api.ts";
 import { pendingInviteToken } from "../lib/invite.ts";
 import { AuthLayout, inputClass, primaryButtonClass } from "./AuthLayout.tsx";
 
@@ -39,7 +39,7 @@ export function SignIn() {
       setState("sent");
     } catch (err) {
       setState("idle");
-      setError(err instanceof ApiError && err.code === "validation_failed" ? "Enter a valid email address." : (err as Error).message);
+      setError(err instanceof ApiError && err.code === "validation_failed" ? "Enter a valid email address." : errorMessage(err));
     }
   }
 

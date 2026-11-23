@@ -6,6 +6,7 @@ import { relativeTime } from "../lib/issues.ts";
 import { ChannelBadge, PriorityDot, StatusChip } from "../components/issue-ui.tsx";
 import { SearchIcon } from "../components/icons.tsx";
 import { btn, card } from "../components/ui.ts";
+import { errorMessage } from "../lib/api.ts";
 
 /** Search results (FR-3.8, T-207): issues by title or message text with highlighted snippets, plus accounts. */
 export function SearchPage() {
@@ -47,7 +48,7 @@ export function SearchPage() {
       )}
 
       {q && results.isPending && <p role="status" className="m-0 text-sm text-muted">Searching…</p>}
-      {results.isError && <p role="alert" className="m-0 text-sm text-danger">{(results.error as Error).message}</p>}
+      {results.isError && <p role="alert" className="m-0 text-sm text-danger">{errorMessage(results.error)}</p>}
       {q && results.data && (
         <>
           {results.data.accounts.length > 0 && (

@@ -1,4 +1,13 @@
 /** Thin client for the Tickzy REST API (docs/blueprint/api-spec.md). Same-origin via the dev proxy / reverse proxy. */
+/**
+ * User-facing text for any error: the API message plus its specific issues, e.g.
+ * "Invalid domains: gmail.com is a public email provider; it cannot identify one company".
+ */
+export function errorMessage(err: unknown): string {
+  if (err instanceof ApiError && err.details.length) return `${err.message}: ${err.details.map((d) => d.issue).join("; ")}`;
+  return err instanceof Error ? err.message : String(err);
+}
+
 export class ApiError extends Error {
   readonly status: number;
   readonly code: string;

@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { api, ApiError, type Workspace } from "../lib/api.ts";
+import { api, ApiError, type Workspace, errorMessage } from "../lib/api.ts";
 import { rememberWorkspace, SESSION_KEY } from "../lib/session.ts";
 import { AuthLayout, inputClass, primaryButtonClass } from "./AuthLayout.tsx";
 
@@ -42,7 +42,7 @@ export function Onboarding() {
       if (err instanceof ApiError && err.code === "conflict") setErrors({ slug: "This URL is already taken." });
       else if (err instanceof ApiError && err.details.length) {
         setErrors(Object.fromEntries(err.details.map((d) => [d.path.replace(/^body\./, ""), d.issue])));
-      } else setErrors({ form: (err as Error).message });
+      } else setErrors({ form: errorMessage(err) });
     } finally {
       setBusy(false);
     }

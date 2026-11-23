@@ -62,8 +62,9 @@ export const CHANNELS = Object.keys(CHANNEL_LABEL) as Issue["channel"][];
 /** Filters on top of a view (T-209b). Lists are comma-separated, as in the URL and the API. */
 export interface ListFilters {
   q?: string | undefined; priority?: string | undefined; channel?: string | undefined; team?: string | undefined; label?: string | undefined;
+  account?: string | undefined;
 }
-const FILTER_KEYS = ["priority", "channel", "team", "label"] as const;
+const FILTER_KEYS = ["priority", "channel", "team", "label", "account"] as const;
 
 /** Query string for a view plus filters and text search. */
 export function listQuery(view: ViewId, sort: SortId, extra: ListFilters = {}): string {

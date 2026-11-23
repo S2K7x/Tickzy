@@ -14,6 +14,7 @@ import { useVirtualizer } from "@tanstack/react-virtual";
 import { useIssuePresence, type Viewer } from "../lib/realtime.ts";
 import { useCreateLabel, useLabels, useTeams } from "../lib/taxonomy.ts";
 import { activeFilterCount, BulkBar, BulkSummary, FILTER_KEYS, FilterChips, FilterPanel, type QueueFilters } from "./inbox-tools.tsx";
+import { errorMessage } from "../lib/api.ts";
 
 export interface InboxSearch extends QueueFilters { view?: ViewId; sort?: SortId; issue?: string; q?: string }
 
@@ -143,7 +144,7 @@ export function Inbox({ defaultView = "open" }: { defaultView?: ViewId }) {
         <p role="status" className={bulkSummary ? "m-0 border-b border-line px-4 py-2 text-[12px]" : "sr-only"}>{bulkSummary && <BulkSummary summary={bulkSummary} />}</p>
         <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto">
           {list.isPending && <p role="status" className="m-0 p-4 text-sm text-muted">Loading issues…</p>}
-          {list.isError && <p role="alert" className="m-0 p-4 text-sm text-danger">{(list.error as Error).message}</p>}
+          {list.isError && <p role="alert" className="m-0 p-4 text-sm text-danger">{errorMessage(list.error)}</p>}
           {list.isSuccess && issues.length === 0 && (
             <div className="p-6 text-center">
               <p className="m-0 text-sm font-semibold">Nothing here</p>
@@ -239,7 +240,7 @@ function IssueView({ ws, issueRef, onBack, composerRef, resolveRef }: {
     return (
       <section className="flex flex-1 flex-col gap-2 p-6">
         <button type="button" onClick={onBack} className="self-start text-sm font-semibold text-accent-fg md:hidden">← Back</button>
-        <p role="alert" className="m-0 text-sm text-danger">{(issue.error as Error).message}</p>
+        <p role="alert" className="m-0 text-sm text-danger">{errorMessage(issue.error)}</p>
       </section>
     );
   }
@@ -328,7 +329,7 @@ function Details({ issue: i, ws, update, memberName, collapsible }: {
   const select = "h-9 w-full rounded-lg border border-line bg-surface-2 px-2 text-[13px] text-fg disabled:opacity-60";
   const body = (
     <div className="flex flex-col gap-4 p-4">
-      {update.isError && <p role="alert" className="m-0 text-[13px] text-danger">Couldn't save: {(update.error as Error).message}</p>}
+      {update.isError && <p role="alert" className="m-0 text-[13px] text-danger">Couldn't save: {errorMessage(update.error)}</p>}
       <div className="flex flex-col gap-1 rounded-xl border border-line p-3">
         <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">Account</span>
         {i.account ? (
@@ -435,7 +436,7 @@ function LabelsField({ issue: i, ws, update, className }: { issue: Issue; ws: st
           <option value="__new">+ New label…</option>
         </select>
       )}
-      {create.isError && <p role="alert" className="m-0 text-[12px] text-danger">{(create.error as Error).message}</p>}
+      {create.isError && <p role="alert" className="m-0 text-[12px] text-danger">{errorMessage(create.error)}</p>}
     </div>
   );
 }
@@ -474,7 +475,7 @@ const Composer = ({ ref, ws, issue, onTyping }: { ref: React.Ref<ComposerHandle>
       <textarea id="composer-body" ref={area} value={body} onChange={(e) => { setBody(e.target.value); onTyping?.(); }} onKeyDown={onKey} rows={3}
         placeholder={internal ? "Only your team sees internal notes" : "Write a reply…"}
         className="w-full resize-y rounded-xl border border-line bg-surface-2 px-3 py-2 text-sm text-fg outline-none focus:border-accent" />
-      {post.isError && <p role="alert" className="m-0 text-[13px] text-danger">{(post.error as Error).message}</p>}
+      {post.isError && <p role="alert" className="m-0 text-[13px] text-danger">{errorMessage(post.error)}</p>}
       <div className="flex items-center justify-between gap-2">
         <span className="text-[12px] text-muted">{internal ? "Never sent to the customer." : issue.channel === "api" || issue.channel === "ui" ? "Visible to the customer through the API." : "Sent to the customer's conversation."} ⌘↵ to send</span>
         <button type="submit" disabled={!body.trim() || post.isPending} className={`${btn.primary} ${btn.md} shrink-0`}>

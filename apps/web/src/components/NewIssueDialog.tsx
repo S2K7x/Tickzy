@@ -1,27 +1,17 @@
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useRef, useState, type FormEvent } from "react";
+import { Modal } from "./Modal.tsx";
 import { useNavigate } from "@tanstack/react-router";
 import { PRIORITIES, type Priority } from "@tickzy/shared/lifecycle";
 import { PRIORITY_LABEL, useCreateIssue } from "../lib/issues.ts";
+import { errorMessage } from "../lib/api.ts";
 
-/** "New issue" (top bar): title + priority, then opens the issue in the inbox. Accessible modal: focus trapped by design, Esc closes. */
+/** "New issue" (top bar): title + priority, then opens the issue in the inbox. Uses the shared accessible Modal. */
 export function NewIssueDialog({ workspaceId, onClose }: { workspaceId: string | null; onClose: () => void }) {
   const [title, setTitle] = useState("");
   const [priority, setPriority] = useState<Priority>("normal");
   const create = useCreateIssue(workspaceId);
   const navigate = useNavigate();
   const input = useRef<HTMLInputElement>(null);
-  const opener = useRef<Element | null>(null);
-
-  useEffect(() => {
-    opener.current = document.activeElement;
-    input.current?.focus();
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
-    window.addEventListener("keydown", onKey);
-    return () => {
-      window.removeEventListener("keydown", onKey);
-      (opener.current as HTMLElement | null)?.focus?.();
-    };
-  }, [onClose]);
 
   async function submit(e: FormEvent) {
     e.preventDefault();
@@ -33,10 +23,7 @@ export function NewIssueDialog({ workspaceId, onClose }: { workspaceId: string |
   }
 
   return (
-    <div className="fixed inset-0 z-40 flex items-start justify-center bg-black/40 p-4 pt-[12vh]" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <form role="dialog" aria-modal="true" aria-labelledby="new-issue-title" onSubmit={submit}
-        className="flex w-full max-w-md flex-col gap-4 rounded-2xl border border-line bg-surface p-5 text-fg shadow-xl">
-        <h2 id="new-issue-title" className="m-0 text-lg font-semibold">New issue</h2>
+    <Modal title="New issue" titleId="new-issue-title" onClose={onClose} onSubmit={submit} initialFocus={input}>
         <div className="flex flex-col gap-1.5">
           <label htmlFor="new-issue-name" className="text-sm font-medium">Title</label>
           <input id="new-issue-name" ref={input} value={title} maxLength={300} onChange={(e) => setTitle(e.target.value)}
@@ -48,14 +35,13 @@ export function NewIssueDialog({ workspaceId, onClose }: { workspaceId: string |
             {PRIORITIES.map((p) => <option key={p} value={p}>{PRIORITY_LABEL[p]}</option>)}
           </select>
         </div>
-        {create.isError && <p role="alert" className="m-0 text-sm text-danger">{(create.error as Error).message}</p>}
+        {create.isError && <p role="alert" className="m-0 text-sm text-danger">{errorMessage(create.error)}</p>}
         <div className="flex justify-end gap-2">
           <button type="button" onClick={onClose} className="h-10 rounded-[10px] border border-line bg-surface px-4 text-sm font-semibold text-fg">Cancel</button>
           <button type="submit" disabled={!title.trim() || create.isPending} className="h-10 rounded-[10px] bg-primary px-4 text-sm font-semibold text-primary-fg hover:opacity-90 disabled:opacity-50">
             {create.isPending ? "Creating…" : "Create issue"}
           </button>
         </div>
-      </form>
-    </div>
+    </Modal>
   );
 }

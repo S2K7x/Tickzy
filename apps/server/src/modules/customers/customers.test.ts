@@ -41,14 +41,14 @@ describe("accounts (FR-4.1)", () => {
     expect(res.statusCode).toBe(201);
     const a = res.json();
     globex = a.id;
-    expect(a).toMatchObject({ name: "Globex", domains: ["globex.com", "globex.io"], tier: "Enterprise", owner_membership_id: aliceMembership, external_ids: { hubspot: "123" }, contact_count: 0, open_issue_count: 0 });
+    expect(a).toMatchObject({ name: "Globex", domains: ["globex.com", "globex.io"], tier: "Enterprise", owner_membership_id: aliceMembership, external_ids: { hubspot: "123" }, contact_count: 0, open_issue_count: 0, last_activity_at: null });
     expect(await auditActions()).toContain("account.created");
   });
 
   it("rejects public email domains, malformed domains, taken domains and invalid owners", async () => {
     const pub = await post("/v1/accounts", { name: "X", domains: ["gmail.com", "not a domain"] });
     expect(pub.statusCode).toBe(422);
-    expect(pub.json().error.details.map((d: { issue: string }) => d.issue)).toEqual(["public email provider; it cannot identify one company", "not a domain"]);
+    expect(pub.json().error.details.map((d: { issue: string }) => d.issue)).toEqual(["gmail.com is a public email provider; it cannot identify one company", "\"not a domain\" is not a domain"]);
     expect((await post("/v1/accounts", { name: "Copycat", domains: ["globex.com"] })).statusCode).toBe(409);
     expect((await post("/v1/accounts", { name: "Y", owner_membership_id: newId("membership") })).statusCode).toBe(422);
     const otherMembership = await withWorkspace(t.database.db, { workspaceId: otherWs }, async (tx) => (await tx.select().from(schema.memberships))[0]!.id);
@@ -85,7 +85,7 @@ describe("accounts (FR-4.1)", () => {
     await withWorkspace(t.database.db, { workspaceId: ws }, async (tx) => {
       await createIssue(tx, ws, { type: "user", id: alice }, { title: "open one", channelKind: "api", accountId: globex });
     });
-    expect((await get(`/v1/accounts/${globex}`)).json()).toMatchObject({ contact_count: 1, open_issue_count: 1 });
+    expect((await get(`/v1/accounts/${globex}`)).json()).toMatchObject({ contact_count: 1, open_issue_count: 1, last_activity_at: expect.any(String) });
   });
 
   it("collaborators read but cannot write; tokens need accounts:write; outsiders get 404", async () => {
@@ -155,7 +155,7 @@ describe("contacts & identity mapping (FR-4.2)", () => {
     expect(unlinked.identities).toEqual([]);
   });
 
-  it("deleting an account releases its domains and unassigns contacts; issues keep their account", async () => {
+  it("deleting an account releases its domains and unassigns contacts; issues keep the link but no longer show the account", async () => {
     const tmp = (await post("/v1/accounts", { name: "Temp", domains: ["temp.dev"] })).json();
     const c = (await post("/v1/contacts", { email: "x@temp.dev" })).json();
     expect(c.account_id).toBe(tmp.id);
@@ -165,7 +165,8 @@ describe("contacts & identity mapping (FR-4.2)", () => {
     expect((await get(`/v1/contacts/${c.id}`)).json().account_id).toBeNull();
     expect((await post("/v1/accounts", { name: "Temp 2", domains: ["temp.dev"] })).statusCode).toBe(201);
     const [kept] = await withWorkspace(t.database.db, { workspaceId: ws }, (tx) => tx.select().from(schema.issues).where(eq(schema.issues.id, issue.id)));
-    expect(kept!.accountId).toBe(tmp.id);
+    expect(kept!.accountId).toBe(tmp.id); // the link is retained in the database…
+    expect((await get(`/v1/issues/${issue.id}`)).json().account).toBeNull(); // …but a deleted account is not shown
   });
 });
 

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { api, type InvitationPreview } from "../lib/api.ts";
+import { api, type InvitationPreview, errorMessage } from "../lib/api.ts";
 import { rememberWorkspace, SESSION_KEY, useSession, useSignOut } from "../lib/session.ts";
 import { captureInviteToken, clearInviteToken } from "../lib/invite.ts";
 import { ROLE_INFO } from "../lib/roles.ts";
@@ -87,7 +87,7 @@ export function Invite() {
       await qc.invalidateQueries({ queryKey: SESSION_KEY });
       await navigate({ to: "/" });
     } catch (err) {
-      setError((err as Error).message);
+      setError(errorMessage(err));
       setBusy(false);
     }
   }

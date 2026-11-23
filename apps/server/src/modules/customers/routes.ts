@@ -10,7 +10,7 @@ const Custom = z.record(z.string().max(40), z.unknown());
 const Page = { cursor: z.string().max(500).optional(), limit: z.coerce.number().int().min(1).max(100).optional() };
 const Account = z.object({
   id: z.string(), name: z.string(), domains: z.array(z.string()), tier: z.string().nullable(), owner_membership_id: z.string().nullable(),
-  external_ids: z.record(z.string(), z.string()), custom: z.record(z.string(), z.unknown()), contact_count: z.number(), open_issue_count: z.number(),
+  external_ids: z.record(z.string(), z.string()), custom: z.record(z.string(), z.unknown()), contact_count: z.number(), open_issue_count: z.number(), last_activity_at: z.string().nullable(),
   created_at: z.string(), updated_at: z.string(),
 });
 const Identity = z.object({ id: z.string(), kind: z.enum(["email", "slack", "teams", "widget"]), external_key: z.string() });

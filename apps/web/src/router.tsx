@@ -2,6 +2,8 @@ import { createRootRoute, createRoute, createRouter, createMemoryHistory, Naviga
 import { AppShell } from "./components/AppShell.tsx";
 import { Overview } from "./pages/Overview.tsx";
 import { Placeholder } from "./pages/Placeholder.tsx";
+import { Accounts } from "./pages/Accounts.tsx";
+import { AccountProfile } from "./pages/AccountProfile.tsx";
 import { SignIn } from "./pages/SignIn.tsx";
 import { VerifyLink } from "./pages/VerifyLink.tsx";
 import { Onboarding } from "./pages/Onboarding.tsx";
@@ -79,7 +81,7 @@ function inboxSearch(s: Record<string, unknown>): InboxSearch {
   if (typeof s.issue === "string" && /^[\w-]{1,64}$/.test(s.issue)) out.issue = s.issue;
   if (typeof s.q === "string" && s.q.trim()) out.q = s.q.slice(0, 200);
   // Filters: comma lists of plain tokens / ids only (the API validates values again).
-  for (const k of ["priority", "channel", "team", "label"] as const) {
+  for (const k of ["priority", "channel", "team", "label", "account"] as const) {
     if (typeof s[k] === "string" && /^[\w,-]{1,300}$/.test(s[k])) out[k] = s[k];
   }
   return out;
@@ -89,7 +91,10 @@ const routeTree = rootRoute.addChildren([
   page("/", Overview),
   createRoute({ getParentRoute: () => rootRoute, path: "/inbox", component: () => <Inbox />, validateSearch: inboxSearch }),
   createRoute({ getParentRoute: () => rootRoute, path: "/mine", component: () => <Inbox defaultView="mine" />, validateSearch: inboxSearch }),
-  page("/accounts", () => <Placeholder title="Accounts" milestone="M2" description="Customer accounts with their issues, contacts, channels and signals." />),
+  createRoute({ getParentRoute: () => rootRoute, path: "/accounts", component: Accounts,
+    validateSearch: (s: Record<string, unknown>): { q?: string } => (typeof s.q === "string" && s.q.trim() ? { q: s.q.slice(0, 100) } : {}) }),
+  createRoute({ getParentRoute: () => rootRoute, path: "/accounts/$accountId", component: AccountProfile,
+    validateSearch: (s: Record<string, unknown>): { tab?: "contacts" } => (s.tab === "contacts" ? { tab: "contacts" } : {}) }),
   page("/ai", () => <Placeholder title="AI agent" milestone="M5" description="Copilot drafts, shadow mode, backtests and spend limits." />),
   page("/knowledge", () => <Placeholder title="Knowledge" milestone="M5" description="Docs and resolved issues the AI answers from." />),
   page("/analytics", () => <Placeholder title="Analytics" milestone="M4" description="Volume, response times, SLA compliance and AI outcomes." />),

@@ -1,4 +1,4 @@
-import { and, asc, count, eq, ilike, inArray, isNull, or, sql, type SQL } from "drizzle-orm";
+import { and, asc, count, eq, ilike, inArray, isNull, max, or, sql, type SQL } from "drizzle-orm";
 import { AppError, newId, normalizeDomain, PUBLIC_EMAIL_DOMAINS } from "@tickzy/shared";
 import { schema, withWorkspace, type Db, type Tx } from "@tickzy/db";
 import type { MemberContext } from "../../http/auth.ts";
@@ -11,6 +11,8 @@ const PAGE_MAX = 100;
 export interface AccountDto {
   id: string; name: string; domains: string[]; tier: string | null; owner_membership_id: string | null;
   external_ids: Record<string, string>; custom: Record<string, unknown>; contact_count: number; open_issue_count: number;
+  /** Most recent change on any of the account's issues (null when it has none). */
+  last_activity_at: string | null;
   created_at: string; updated_at: string;
 }
 export interface ContactDto {
@@ -56,8 +58,9 @@ function cleanDomains(input: string[]): string[] {
   const issues: { path: string; issue: string }[] = [];
   input.forEach((raw, i) => {
     const d = normalizeDomain(raw);
-    if (!d) issues.push({ path: `domains.${i}`, issue: "not a domain" });
-    else if (PUBLIC_EMAIL_DOMAINS.has(d)) issues.push({ path: `domains.${i}`, issue: "public email provider; it cannot identify one company" });
+    // Issues name the value so a UI can show them as-is ("gmail.com is a public email provider…").
+    if (!d) issues.push({ path: `domains.${i}`, issue: `"${raw.slice(0, 80)}" is not a domain` });
+    else if (PUBLIC_EMAIL_DOMAINS.has(d)) issues.push({ path: `domains.${i}`, issue: `${d} is a public email provider; it cannot identify one company` });
     else out.add(d);
   });
   if (issues.length) throw new AppError("validation_failed", "Invalid domains", issues);
@@ -89,12 +92,16 @@ export function createCustomersService(db: Db) {
       .where(and(inArray(schema.contacts.accountId, ids), isNull(schema.contacts.deletedAt))).groupBy(schema.contacts.accountId);
     const open = await tx.select({ id: schema.issues.accountId, n: count() }).from(schema.issues)
       .where(and(inArray(schema.issues.accountId, ids), inArray(schema.issues.statusCategory, [...OPEN_CATEGORIES]))).groupBy(schema.issues.accountId);
+    const activity = await tx.select({ id: schema.issues.accountId, at: max(schema.issues.updatedAt) }).from(schema.issues)
+      .where(inArray(schema.issues.accountId, ids)).groupBy(schema.issues.accountId);
+    const lastActivity = new Map(activity.map((c) => [c.id, c.at]));
     const nContacts = new Map(contacts.map((c) => [c.id, c.n]));
     const nOpen = new Map(open.map((c) => [c.id, c.n]));
     return rows.map((a) => ({
       id: a.id, name: a.name, domains: domains.filter((d) => d.accountId === a.id).map((d) => d.domain), tier: a.tier,
       owner_membership_id: a.ownerMembershipId, external_ids: a.externalIds, custom: a.custom,
       contact_count: nContacts.get(a.id) ?? 0, open_issue_count: nOpen.get(a.id) ?? 0,
+      last_activity_at: lastActivity.get(a.id)?.toISOString() ?? null,
       created_at: a.createdAt.toISOString(), updated_at: a.updatedAt.toISOString(),
     }));
   }

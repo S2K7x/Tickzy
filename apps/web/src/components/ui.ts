@@ -6,6 +6,10 @@ export const btn = {
   primary: "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-[10px] bg-primary px-4 font-semibold text-primary-fg shadow-sm transition-opacity hover:opacity-90 disabled:opacity-50",
   secondary: "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-[10px] border border-line bg-surface px-4 font-semibold text-fg shadow-[0_1px_0_rgba(0,0,0,0.03)] hover:bg-surface-2 disabled:opacity-50",
   ghost: "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-[10px] px-3 font-medium text-muted hover:bg-surface-2 hover:text-fg disabled:opacity-50",
+  /** Destructive trigger (opens a confirmation). */
+  danger: "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-[10px] px-3 font-semibold text-danger hover:bg-danger/10 disabled:opacity-50",
+  /** Destructive confirm action inside a confirmation dialog. */
+  dangerSolid: "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-[10px] bg-danger px-4 font-semibold text-white hover:opacity-90 disabled:opacity-50",
   sm: "h-8 text-[13px]",
   md: "h-9 text-[13px]",
   lg: "h-11 text-sm",

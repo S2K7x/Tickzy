@@ -1,4 +1,5 @@
 import { PRIORITIES, STATUS_CATEGORIES } from "@tickzy/shared";
+import { ROLES, type Role } from "@tickzy/shared/permissions";
 import { bigserial, bigint, boolean, customType, inet, integer, jsonb, pgTable, primaryKey, text, timestamp } from "drizzle-orm/pg-core";
 
 const customBytea = customType<{ data: Buffer }>({ dataType: () => "bytea" });
@@ -25,8 +26,8 @@ export const workspaces = pgTable("workspaces", {
   updatedAt: ts("updated_at").notNull().defaultNow(),
 });
 
-export const ROLES = ["admin", "agent", "collaborator", "viewer"] as const;
-export type Role = (typeof ROLES)[number];
+// Roles are defined once in @tickzy/shared/permissions (with the permission matrix) and re-exported here.
+export { ROLES, type Role };
 
 export const memberships = pgTable("memberships", {
   id: text("id").primaryKey(),

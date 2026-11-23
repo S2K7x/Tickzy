@@ -82,7 +82,7 @@ export async function toDtos(tx: Tx, rows: Issue[]): Promise<IssueDto[]> {
   const members = memberIds.length ? await tx.select({ id: schema.memberships.id, userId: schema.users.id, name: schema.users.name, email: schema.users.email })
     .from(schema.memberships).innerJoin(schema.users, eq(schema.users.id, schema.memberships.userId)).where(inArray(schema.memberships.id, memberIds)) : [];
   const accountIds = uniq(rows.map((r) => r.accountId));
-  const accounts = accountIds.length ? await tx.select().from(schema.accounts).where(inArray(schema.accounts.id, accountIds)) : [];
+  const accounts = accountIds.length ? await tx.select().from(schema.accounts).where(and(inArray(schema.accounts.id, accountIds), isNull(schema.accounts.deletedAt))) : [];
   const contactIds = uniq(rows.map((r) => r.requesterContactId));
   const contacts = contactIds.length ? await tx.select().from(schema.contacts).where(inArray(schema.contacts.id, contactIds)) : [];
   const labels = await tx.select({ issueId: schema.issueLabels.issueId, id: schema.labels.id, name: schema.labels.name, color: schema.labels.color })

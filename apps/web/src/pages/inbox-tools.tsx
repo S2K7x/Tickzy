@@ -2,11 +2,13 @@ import { PRIORITIES, STATUS_CATEGORIES, type Priority, type StatusCategory } fro
 import { CHANNEL_LABEL, CHANNELS, PRIORITY_LABEL, STATUS_LABEL, useBulkUpdate, type BulkChanges, type Issue } from "../lib/issues.ts";
 import { useLabels, useTeams } from "../lib/taxonomy.ts";
 import { assignable, useMembers } from "../lib/members.ts";
+import { useAccount, useAccounts } from "../lib/accounts.ts";
 import { btn } from "../components/ui.ts";
+import { errorMessage } from "../lib/api.ts";
 
 /** Queue filters held in the URL (T-209b). Lists are comma-separated. */
-export interface QueueFilters { priority?: string | undefined; channel?: string | undefined; team?: string | undefined; label?: string | undefined }
-export const FILTER_KEYS = ["priority", "channel", "team", "label"] as const;
+export interface QueueFilters { priority?: string | undefined; channel?: string | undefined; team?: string | undefined; label?: string | undefined; account?: string | undefined }
+export const FILTER_KEYS = ["priority", "channel", "team", "label", "account"] as const;
 export const activeFilterCount = (f: QueueFilters) => FILTER_KEYS.filter((k) => f[k]).length;
 
 const list = (csv: string | undefined) => (csv ? csv.split(",").filter(Boolean) : []);
@@ -22,6 +24,8 @@ const legend = "mb-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-
 export function FilterPanel({ ws, filters, onChange }: { ws: string | null; filters: QueueFilters; onChange: (f: QueueFilters) => void }) {
   const labels = useLabels(ws);
   const teams = useTeams(ws);
+  const accounts = useAccounts(ws, "");
+  const firstAccounts = accounts.data?.pages[0]?.data ?? [];
   const check = "h-4 w-4 accent-[var(--primary)]";
   return (
     <div id="queue-filters" role="group" aria-label="Filters" className="grid grid-cols-2 gap-3 rounded-xl border border-line bg-surface p-3">
@@ -57,19 +61,36 @@ export function FilterPanel({ ws, filters, onChange }: { ws: string | null; filt
           {teams.data?.data.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
         </select>
       </label>
+      <label className="col-span-2 flex min-w-0 flex-col gap-1">
+        <span className={legend}>Account</span>
+        <select className={field} value={filters.account ?? ""} onChange={(e) => onChange({ ...filters, account: e.target.value || undefined })} disabled={!firstAccounts.length && !filters.account}>
+          <option value="">{firstAccounts.length ? "Any account" : "No accounts yet"}</option>
+          {filters.account && !firstAccounts.some((a) => a.id === filters.account) && <AccountOption ws={ws} id={filters.account} />}
+          {firstAccounts.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
+        </select>
+        {accounts.data?.pages[0]?.next_cursor && <span className="text-[11px] text-muted">First 50 accounts by name; open any account's page to filter by it.</span>}
+      </label>
     </div>
   );
+}
+
+/** Option for an account outside the first page (e.g. opened from its profile). */
+function AccountOption({ ws, id }: { ws: string | null; id: string }) {
+  const a = useAccount(ws, id);
+  return <option value={id}>{a.data?.name ?? "…"}</option>;
 }
 
 /** Active filters as removable chips. */
 export function FilterChips({ ws, filters, onChange }: { ws: string | null; filters: QueueFilters; onChange: (f: QueueFilters) => void }) {
   const labels = useLabels(ws);
   const teams = useTeams(ws);
+  const account = useAccount(ws, filters.account ?? "");
   const chips: { key: string; text: string; next: QueueFilters }[] = [
     ...list(filters.priority).map((p) => ({ key: `p-${p}`, text: `Priority: ${PRIORITY_LABEL[p as Priority] ?? p}`, next: { ...filters, priority: toggle(filters.priority, p) } })),
     ...list(filters.channel).map((c) => ({ key: `c-${c}`, text: `Channel: ${CHANNEL_LABEL[c as Issue["channel"]] ?? c}`, next: { ...filters, channel: toggle(filters.channel, c) } })),
     ...(filters.label ? [{ key: "l", text: `Label: ${labels.data?.data.find((l) => l.id === filters.label)?.name ?? "…"}`, next: { ...filters, label: undefined } }] : []),
     ...(filters.team ? [{ key: "t", text: `Team: ${teams.data?.data.find((t) => t.id === filters.team)?.name ?? "…"}`, next: { ...filters, team: undefined } }] : []),
+    ...(filters.account ? [{ key: "a", text: `Account: ${account.data?.name ?? "…"}`, next: { ...filters, account: undefined } }] : []),
   ];
   if (!chips.length) return null;
   return (
@@ -138,7 +159,7 @@ export function BulkBar({ ws, selected, issues, onSelectAll, onClear, onDone }: 
         </select>
       </div>
       {busy && <p className="m-0 text-[12px] text-muted">Updating {n} issue{n === 1 ? "" : "s"}…</p>}
-      {bulk.isError && <p role="alert" className="m-0 text-[12px] text-danger">Couldn't update: {(bulk.error as Error).message}</p>}
+      {bulk.isError && <p role="alert" className="m-0 text-[12px] text-danger">Couldn't update: {errorMessage(bulk.error)}</p>}
     </div>
   );
 }
