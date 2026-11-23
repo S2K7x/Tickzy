@@ -123,6 +123,7 @@ export const contacts = pgTable("contacts", {
   id: text("id").primaryKey(),
   workspaceId: text("workspace_id").notNull(),
   accountId: text("account_id"),
+  accountSource: text("account_source", { enum: ["auto", "manual"] }).notNull().default("auto"),
   name: text("name").notNull().default(""),
   roleInAccount: text("role_in_account"),
   custom: jsonb("custom").$type<Record<string, unknown>>().notNull().default({}),

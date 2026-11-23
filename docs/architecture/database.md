@@ -55,7 +55,7 @@ erDiagram
 ### Customers (M2)
 | `accounts` (0007) | id `acc_`, workspace_id, name, tier, owner_membership_id, external_ids jsonb, custom jsonb, created_at, updated_at, deleted_at | soft delete; idx (workspace_id, lower(name)) |
 | `account_domains` (0007) | (workspace_id, domain citext) PK, account_id | one account per domain per workspace — email-domain auto-mapping (FR-4.2) |
-| `contacts` (0007) | id `con_`, workspace_id, account_id null (SET NULL when the account is deleted), name, role_in_account, custom jsonb, created_at, updated_at, deleted_at | emails live in `contact_identities` |
+| `contacts` (0007, 0009) | id `con_`, workspace_id, account_id null (SET NULL when the account is deleted), account_source (`auto` \| `manual` — automation never overrides manual), name, role_in_account, custom jsonb, created_at, updated_at, deleted_at | emails live in `contact_identities` |
 | `contact_identities` (0007) | id `cid_`, workspace_id, contact_id, kind (email, slack, teams, widget), external_key; unique (workspace_id, kind, external_key) | email keys lowercase (CHECK); slack key = `team_id:user_id` |
 
 ### Channels & conversations (M1–M2)

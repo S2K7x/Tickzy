@@ -22,8 +22,8 @@ Codes: `unauthenticated` 401, `forbidden` 403, `not_found` 404, `validation_fail
 | POST `/v1/invitations/preview` `{token}` · POST `/v1/invitations/accept` `{token}` | invite landing page: preview is public (token = capability); accept requires sign-in with the invited email (403 otherwise, 404 when invalid/used/revoked/expired) | public · authenticated user | M1 ✅ |
 | GET/POST `/v1/api-tokens` (`{name, scopes[], expires_in_days: 30\|90\|365\|null}`; token returned once) · DELETE `/v1/api-tokens/{id}` | tokens (ADR-022; scopes = permissions minus `developers:manage`) | `developers:manage` (session only — tokens cannot manage tokens) | M1 ✅ |
 | GET `/v1/audit-log` | audit | `audit:read` | M0/M1 |
-| GET/POST `/v1/accounts` · GET/PATCH/DELETE `/v1/accounts/{id}` | accounts | read: member; write: `accounts:write` | M2 |
-| GET/POST `/v1/contacts` · GET/PATCH `/v1/contacts/{id}` | contacts | same | M2 |
+| GET/POST `/v1/accounts` (`q` = name or domain prefix; keyset `cursor`, `limit` ≤100) · GET/PATCH/DELETE `/v1/accounts/{id}` | accounts: `{name, domains[], tier, owner_membership_id, external_ids, custom}` + `contact_count`, `open_issue_count`. Public email domains refused (422), a domain belongs to one account (409); adding a domain attaches unassigned automatic contacts; DELETE is soft and releases domains | read: member or any token; write: `accounts:write` | M2 ✅ |
+| GET/POST `/v1/contacts` (`account_id`, `q`, keyset) · GET/PATCH/DELETE `/v1/contacts/{id}` · POST `/v1/contacts/{id}/identities` · DELETE `/v1/contacts/{id}/identities/{identityId}` | contacts + identity graph (FR-4.2): `email` on create auto-maps the account from its company domain; `account_id` on create/PATCH is a **manual** choice (audited, never changed automatically); `auto_account: true` hands back to auto-mapping | same | M2 ✅ |
 | GET `/v1/issues` (filters: status, assignee, team, account, priority, channel, label, q, sort) | list | `issues:read` | M2 |
 | POST `/v1/issues` | create (API/manual) | `issues:write` | M2 |
 | GET/PATCH `/v1/issues/{id or key}` | read/update status, priority, assignee, team, labels, fields | `issues:write` | M2 |

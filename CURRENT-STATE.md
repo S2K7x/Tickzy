@@ -3,7 +3,7 @@
 _Last updated: 2026-11-23 (session 5)._ Read this first, then `docs/blueprint/backlog.md`. Process: `docs/process/development-pipeline.md` (we are in **Stage 5 · Build**; status per stage in `docs/process/pipeline-checklist.md`).
 
 ## Phase
-Implementation: **M0 · Foundations complete** (CI green on GitHub since 2026-11-23); **M1 · Identity & access complete** (T-101, T-101b, T-102, T-103, T-104, T-105, T-106). **M2 · Core inbox** in progress (T-201, T-202 done). Planning docs are complete and approved:
+Implementation: **M0 · Foundations complete** (CI green on GitHub since 2026-11-23); **M1 · Identity & access complete** (T-101, T-101b, T-102, T-103, T-104, T-105, T-106). **M2 · Core inbox** in progress (T-201, T-202, T-203 done). Planning docs are complete and approved:
 strategy `docs/strategy/product-strategy.md` · architecture `docs/architecture/` · UX `docs/ux/ux-spec.md` + design canvas (https://claude.ai/artifact/BvvyCE24er29B2iYNqLVxg, source `design/canvas/`) · blueprint `docs/blueprint/`.
 
 ## Done (verified by tests)
@@ -38,9 +38,11 @@ strategy `docs/strategy/product-strategy.md` · architecture `docs/architecture/
 
 | T-202 | Issue core — migration `0008_issues_and_messages.sql`: conversations, issues (status ↔ category consistency enforced by a composite FK; `version` for optimistic concurrency), issue_labels, messages (DB CHECKs: inbound ⇔ contact, inbound public + received, **internal notes can never enter delivery**; provider-id dedupe; generated full-text vector + GIN), attachments, issue_events (append-only), `next_issue_number()` (row-locked, gap-free). **Lifecycle as pure functions** in `@tickzy/shared/lifecycle.ts` (`onMessage`, `canTransition`, `applyMessage`, `timestampsForTransition`, `countsInMetrics`/`notifies`/`isOpen`; status categories now defined there once). Server domain `modules/issues/domain.ts`: `createIssue` (number, default status, timeline + outbox), `changeStatus` (manual: custom statuses, closed is terminal, timestamps, version check) | 30 shared tests (full 7×3 state-machine table, manual-transition matrix, metrics/notify rules, timestamps) + 12 integration tests (numbering incl. 25 concurrent creations and rollback, per-workspace numbering, status/category and cross-workspace FKs, resolve/reopen/custom status/events, closed terminal, stale version 409, append-only timeline, internal-note delivery impossible, inbound rules, dedupe, full-text search, isolation) + real-process smoke on the migrated dev DB |
 
+| T-203 | Accounts & contacts API (FR-4.1/4.2): `modules/customers` — accounts CRUD (normalised domains; public email providers refused; one account per domain; owner must be an active member; custom fields validated against definitions; soft delete releases domains and unassigns contacts, issues keep history; contact/open-issue counts; name-ordered keyset pagination; name/domain search with literal wildcards), contacts CRUD + identities, **identity resolution service** `resolveContact()` for ingestion (existing identity → endpoint default account → company email domain; race-safe; fills a missing automatic account later), migration `0009` `contacts.account_source` (manual choices audited and never overridden; `auto_account` hands back), `lib/custom-fields.ts` validator, `@tickzy/shared` email-domain helpers | 18 integration tests (create/normalise/audit, invalid/public/taken domains + invalid owners, custom fields, exact keyset paging + search, counts, role/token permissions + isolation, auto/public/manual mapping, domain added later, override survives automation, identities link/unlink/conflict, account delete semantics, resolution: recognise, precedence, fill-later vs manual, 8 concurrent first messages → 1 contact, per-workspace, delete frees identity) + 3 custom-field + 2 domain unit tests + real-process curl smoke |
+
 Bugs found by verification and fixed in T-105: verify page re-POSTed an empty token on remount; top bar overflowed at 768 px once the user block existed; onboarding showed prefix "XX" before typing.
 
-Total: **220 tests passing** locally (`pnpm test`): shared 34 · db 25 · server 122 · web 39 — plus five real-browser scripts (last run green after T-101b; shared helpers in `apps/web/scripts/e2e-lib.cjs`). CI (lint, typecheck, tests with Postgres) green on GitHub.
+Total: **243 tests passing** locally (`pnpm test`): shared 36 · db 25 · server 143 · web 39 — plus five real-browser scripts (last run green after T-101b; shared helpers in `apps/web/scripts/e2e-lib.cjs`). CI (lint, typecheck, tests with Postgres) green on GitHub.
 
 ## Written but NOT yet verified
 - Google/Microsoft sign-in against the **real** providers: needs OAuth apps registered by the founder (`docs/operations/sign-in-providers.md`); `xms_edov` availability on the Entra app is an open item.
@@ -48,7 +50,7 @@ Total: **220 tests passing** locally (`pnpm test`): shared 34 · db 25 · server
 T-011 CI is now verified: first GitHub Actions run (push to `main`, run #1) green on 2026-11-23.
 
 ## Not started (next, in order)
-1. **T-203** (accounts & contacts API + identity resolution: email-domain → account, identity graph, audited manual override), then **T-204** (issues API: list with filters/sort/keyset, get by key, patch, timeline), T-205 (messages API: reply/note), T-206 (whose-turn automation wiring `applyMessage` into message creation).
+1. **T-204** (issues API: create, list with filters/sort/keyset, get by key `ACME-12`, patch with optimistic version, labels, assignee/team/account, timeline), then T-205 (messages API: reply/note with delivery abstraction), T-206 (whose-turn automation wiring `applyMessage` into message creation).
 2. Founder actions: review the auth / access-control / abuse-protection code (T-101, T-101b, T-102, T-103, T-106 — engineering-workflow §5); register Google/Microsoft OAuth apps (`docs/operations/sign-in-providers.md`).
 3. Discovery track (Stage 1 gate still open): interview guide and design-partner conversations.
 
