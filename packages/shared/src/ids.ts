@@ -9,6 +9,7 @@ export const ID_PREFIXES = {
   user: "usr",
   membership: "mem",
   invitation: "inv",
+  identity: "idn",
   auditLog: "aud",
   apiToken: "tok",
   account: "acc",

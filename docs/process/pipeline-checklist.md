@@ -1,10 +1,10 @@
 # Pipeline Checklist — Tickzy (live status)
 
-- **Last updated:** 2026-11-23 (T-106). Legend: ✅ done · 🟡 in progress / partial · ⬜ not started. Each item links to its evidence.
+- **Last updated:** 2026-11-23 (T-101b, M1 complete). Legend: ✅ done · 🟡 in progress / partial · ⬜ not started. Each item links to its evidence.
 - Rules: update this file whenever an item changes status; an item is ✅ only with linked evidence (document, test, or deployment).
 - Process definition: [`development-pipeline.md`](development-pipeline.md).
 
-**Overall:** 21 ✅ · 12 🟡 · 23 ⬜ (of 56). **Current position:** Stage 5 (Build), milestone M1, while Stage 1 user research/validation remains open on the discovery track.
+**Overall:** 21 ✅ · 12 🟡 · 23 ⬜ (of 56). **Current position:** Stage 5 (Build), M1 complete → milestone M2, while Stage 1 user research/validation remains open on the discovery track.
 
 ## 01 · Discovery (3/6)
 - ✅ Define the idea and problem — `docs/strategy/product-strategy.md` §1
@@ -40,15 +40,15 @@
 
 ## 05 · Build (3/6)
 - ✅ Repository and project setup — monorepo, CI file (`CURRENT-STATE.md`)
-- 🟡 Implement frontend and backend — M0 done; M1 in progress (T-101 auth core ✅, T-102 invitations & members ✅, T-103 API tokens ✅, T-106 rate limiting ✅, T-104 ✅, T-105 web sign-in/onboarding ✅)
-- 🟡 Implement database and integrations — migrations 0001–0005 with RLS ✅; integrations from M3
-- 🟡 Code reviews — automated gates + self-review in place; **CI not yet observed green on GitHub**
+- 🟡 Implement frontend and backend — M0 done; M1 **complete** (T-101 auth core ✅, T-101b Google/Microsoft ✅, T-102 invitations & members ✅, T-103 API tokens ✅, T-106 rate limiting ✅, T-104 ✅, T-105 web sign-in/onboarding ✅)
+- 🟡 Implement database and integrations — migrations 0001–0006 with RLS ✅; integrations from M3
+- 🟡 Code reviews — automated gates + self-review in place; CI green on GitHub ✅ (run #1, 2026-11-23); **founder review of auth/access code pending**
 - ✅ Documentation kept current — `CURRENT-STATE.md`, ADRs, checklists
 - ✅ Feature flags / trunk-based workflow defined — `engineering-workflow.md` (flags implemented when first needed)
 
 ## 06 · QA & security (1/7)
 - ✅ Unit and integration tests — 149 tests incl. RLS isolation, auth security, invitation/membership, API-token authorization and rate-limit suites
-- 🟡 End-to-end testing — sign-in/onboarding (`apps/web/scripts/e2e-auth.cjs`, 18/18) two-user invite/members journey (`e2e-invite.cjs`, 23/23) and API-token journey (`e2e-api-tokens.cjs`, 18/18) against the real stack ✅; not yet in CI; support journeys from M3
+- 🟡 End-to-end testing — sign-in/onboarding (`apps/web/scripts/e2e-auth.cjs`, 18/18) two-user invite/members journey (`e2e-invite.cjs`, 23/23) API-token journey (`e2e-api-tokens.cjs`, 18/18) and Google/Microsoft sign-in with a mock provider (`e2e-oauth.cjs`, 15/15) against the real stack ✅; not yet in CI; support journeys from M3
 - 🟡 Accessibility & responsive checks — signed-in shell 8/8 (390/768/1024/1280 × light/dark) + all auth pages + Members and API tokens (light/dark, 1280/390) + invite page, 0 axe violations; repeat per new screen
 - ⬜ AI evaluation sets & regression gates — from M5
 - 🟡 Security testing — authz, tenant-isolation, token and rate-limit tests ✅ (server suites); **SAST, dependency/secret scanning in CI, ASVS L2 review, pentest ⬜**
@@ -57,7 +57,7 @@
 
 ## 07 · Release (0/6)
 - ⬜ Environments: preview, staging, production
-- 🟡 CI/CD — CI workflow written; **CD not set up**
+- 🟡 CI/CD — CI green on GitHub ✅; browser suites not yet in CI; **CD not set up**
 - ⬜ Domain, TLS and secrets management
 - ⬜ Migrations strategy in production and verified backups
 - ⬜ Progressive delivery (flags, design-partner beta, rollback tested)
@@ -83,7 +83,7 @@
 - ⬜ Deprecation policy and customer data export path defined (export also needed for GDPR — planned in database.md §4)
 
 ## Recommended next steps (in priority order)
-1. Finish M1 (T-101b Google/Microsoft sign-in — needs OAuth client credentials for a real check) — the delivery track.
+1. Start M2 (accounts, contacts, issues, inbox) — the delivery track. Register real Google/Microsoft OAuth apps before the first deployment (docs/operations/sign-in-providers.md).
 2. In parallel on the discovery track: write the interview guide and start design-partner conversations (Stage 1 gate is still open; the MVP scope is a hypothesis until then).
 3. Before M3 (channels): written threat model for ingestion/auth/AI, and the Slack ToS legal review.
 4. Before first deploy: staging + preview environments, Sentry/OTel, SLO draft, backup/restore drill.

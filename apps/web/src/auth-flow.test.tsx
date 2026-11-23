@@ -57,6 +57,42 @@ describe("sign-in (FR-1.2)", () => {
   });
 });
 
+describe("Google & Microsoft sign-in (T-101b)", () => {
+  it("offers only the providers the server has enabled", async () => {
+    mockApi({ "GET /v1/auth/session": UNAUTH, "GET /v1/auth/providers": { status: 200, body: { providers: ["google"] } } });
+    await renderAt("/sign-in");
+    const google = await screen.findByRole("link", { name: "Continue with Google" });
+    expect(google.getAttribute("href")).toBe("/v1/auth/oauth/google/start?return_to=%2F");
+    expect(screen.queryByRole("link", { name: "Continue with Microsoft" })).toBeNull();
+  });
+
+  it("shows no provider buttons when none are configured", async () => {
+    mockApi({ "GET /v1/auth/session": UNAUTH, "GET /v1/auth/providers": { status: 200, body: { providers: [] } } });
+    await renderAt("/sign-in");
+    await screen.findByRole("heading", { name: "Sign in to Tickzy" });
+    await new Promise((r) => setTimeout(r, 0));
+    expect(screen.queryByRole("link", { name: /Continue with/ })).toBeNull();
+  });
+
+  it("returns to a pending invitation after provider sign-in", async () => {
+    localStorage.setItem("tickzy.invite", JSON.stringify({ token: "inv.secret", at: Date.now() }));
+    mockApi({ "GET /v1/auth/session": UNAUTH, "GET /v1/auth/providers": { status: 200, body: { providers: ["google", "microsoft"] } } });
+    await renderAt("/sign-in");
+    const ms = await screen.findByRole("link", { name: "Continue with Microsoft" });
+    expect(ms.getAttribute("href")).toBe("/v1/auth/oauth/microsoft/start?return_to=%2Finvite");
+  });
+
+  it("explains provider errors, including unverified emails", async () => {
+    mockApi({ "GET /v1/auth/session": UNAUTH, "GET /v1/auth/providers": { status: 200, body: { providers: ["microsoft"] } } });
+    await renderAt("/sign-in?error=email_unverified");
+    expect((await screen.findByRole("alert")).textContent).toContain("isn't verified by the provider");
+    cleanup();
+    mockApi({ "GET /v1/auth/session": UNAUTH, "GET /v1/auth/providers": { status: 200, body: { providers: [] } } });
+    await renderAt("/sign-in?error=<script>");
+    expect((await screen.findByRole("alert")).textContent).toBe("Sign-in didn't complete. Please try again.");
+  });
+});
+
 describe("rate limits (T-106)", () => {
   it("shows the server's 429 message on sign-in instead of failing silently", async () => {
     mockApi({

@@ -1,9 +1,9 @@
 # CURRENT STATE — Tickzy
 
-_Last updated: 2026-11-23 (session 4)._ Read this first, then `docs/blueprint/backlog.md`. Process: `docs/process/development-pipeline.md` (we are in **Stage 5 · Build**; status per stage in `docs/process/pipeline-checklist.md`).
+_Last updated: 2026-11-23 (session 5)._ Read this first, then `docs/blueprint/backlog.md`. Process: `docs/process/development-pipeline.md` (we are in **Stage 5 · Build**; status per stage in `docs/process/pipeline-checklist.md`).
 
 ## Phase
-Implementation: **M0 · Foundations complete** (except CI verification on GitHub); **M1 · Identity & access** in progress (T-104, T-101, T-105, T-102, T-103, T-106 done; T-101b left). Planning docs are complete and approved:
+Implementation: **M0 · Foundations complete** (CI green on GitHub since 2026-11-23); **M1 · Identity & access complete** (T-101, T-101b, T-102, T-103, T-104, T-105, T-106). Next: **M2**. Planning docs are complete and approved:
 strategy `docs/strategy/product-strategy.md` · architecture `docs/architecture/` · UX `docs/ux/ux-spec.md` + design canvas (https://claude.ai/artifact/BvvyCE24er29B2iYNqLVxg, source `design/canvas/`) · blueprint `docs/blueprint/`.
 
 ## Done (verified by tests)
@@ -32,17 +32,21 @@ strategy `docs/strategy/product-strategy.md` · architecture `docs/architecture/
 
 | T-106 | Rate limiting per **ADR-023**: `http/rate-limit.ts` — per-IP layer before auth (1200/min), tight per-IP layer on sign-in/invitation endpoints (20/min), per-token/per-user layer after auth (600/min); `RateLimit-*` headers, 429 envelope + `Retry-After`; health checks exempt; in-memory store behind `RateLimitStore` (bounded). **Security fix:** `trustProxy: true` was hard-coded (clients could spoof their IP) → `TRUST_PROXY` config (default off; hop count or proxy list; `true` refused). All limits configurable (`.env.example`) | 9 server tests (headers, per-token isolation + 429 + Retry-After + window reset, per-user, auth endpoints across emails/IPs, pre-auth token-guessing throttle, health exempt, XFF ignored by default / honoured behind configured proxy, config parsing, bounded store) + 1 web test (429 message shown) + real-process smoke (curl: 3×202 then 429 with headers; spoofed XFF still limited; `TRUST_PROXY=true` refused at startup) |
 
+| T-101b | Google & Microsoft sign-in per **ADR-024**: `openid-client` 6.8.9 (certified RP) — code flow + PKCE S256 + state + nonce; per-attempt secrets in a `__Host-` httpOnly cookie; `return_to` restricted to relative paths; migration `0006_user_identities.sql` (global, no grants, `auth_oauth_sign_in()`); identities keyed on Google `sub` / Microsoft `tid:oid`; email used to create/link only when the provider vouches (Google `email_verified`, Microsoft `xms_edov` — nOAuth defence); providers enabled by config, `GET /v1/auth/providers`; errors returned as `/sign-in?error=…`. Web: provider buttons only for enabled providers, return to a pending invitation, error messages. Setup guide `docs/operations/sign-in-providers.md`; mock provider `apps/server/scripts/mock-oidc.ts` | 13 server tests against a mock OIDC provider with real discovery/JWKS/token + PKCE (new user, link by verified email, unverified refused, subject-stable against email change, Microsoft without/with `xms_edov`, forged state / missing cookie / wrong nonce / wrong aud / wrong iss / replayed code, cancel, open-redirect, table not readable) + 4 web tests + **browser E2E** `e2e-oauth.cjs` 15/15 (full redirect round trips, invitation via Google, axe light/dark/390) |
+
 Bugs found by verification and fixed in T-105: verify page re-POSTed an empty token on remount; top bar overflowed at 768 px once the user block existed; onboarding showed prefix "XX" before typing.
 
-Total: **149 tests passing** locally (`pnpm test`): shared 4 · db 13 · server 97 · web 35 — plus the four real-browser scripts above (all re-run green after T-106; shared helpers in `apps/web/scripts/e2e-lib.cjs`).
+Total: **166 tests passing** locally (`pnpm test`): shared 4 · db 13 · server 110 · web 39 — plus five real-browser scripts (all re-run green after T-101b; shared helpers in `apps/web/scripts/e2e-lib.cjs`). CI (lint, typecheck, tests with Postgres) green on GitHub.
 
 ## Written but NOT yet verified
-- T-011 CI workflow `.github/workflows/ci.yml` (Postgres 17 service). Not run on GitHub yet — first push/PR will tell.
+- Google/Microsoft sign-in against the **real** providers: needs OAuth apps registered by the founder (`docs/operations/sign-in-providers.md`); `xms_edov` availability on the Entra app is an open item.
+
+T-011 CI is now verified: first GitHub Actions run (push to `main`, run #1) green on 2026-11-23.
 
 ## Not started (next, in order)
-1. **T-101b** Google/Microsoft sign-in (certified OIDC client, PKCE/state/nonce, link by verified email) → completes M1. Needs Google/Microsoft OAuth client credentials for a real check (integration tests use a mocked IdP).
-2. Founder review required for T-101, T-102, T-103 and T-106 (auth / access-control / abuse-protection code — engineering-workflow §5).
-3. Then M2 (accounts, issues, inbox).
+1. **M2 · Core inbox**, starting with **T-201** (schema: accounts, contacts, contact_identities, teams, statuses, labels, custom field definitions — migrations + RLS + isolation suite), then T-202 (conversations, messages, issues, lifecycle as pure functions) and T-203/T-204 (APIs).
+2. Founder actions: review the auth / access-control / abuse-protection code (T-101, T-101b, T-102, T-103, T-106 — engineering-workflow §5); register Google/Microsoft OAuth apps (`docs/operations/sign-in-providers.md`).
+3. Discovery track (Stage 1 gate still open): interview guide and design-partner conversations.
 
 Known limitations (T-102): invitation emails go through the console transport until Postmark (T-303); no seat-limit/billing check on invite (billing is E29); an expired pending invitation stays listed (marked "Expired") until resent or revoked.
 
@@ -55,6 +59,9 @@ Known limitations (T-102): invitation emails go through the console transport un
   node apps/web/scripts/e2e-auth.cjs /tmp/server.log /tmp/shots
   node apps/web/scripts/e2e-invite.cjs /tmp/server.log /tmp/shots
   node apps/web/scripts/e2e-api-tokens.cjs /tmp/server.log /tmp/shots
+  # OAuth: start the mock provider first and pass its URL as GOOGLE_ISSUER/MICROSOFT_ISSUER (+ *_CLIENT_ID=e2e-client, *_CLIENT_SECRET=e2e-secret) to the server
+  (cd apps/server && node scripts/mock-oidc.ts e2e-client e2e-secret > /tmp/mock.log &)
+  node apps/web/scripts/e2e-oauth.cjs /tmp/server.log /tmp/shots "$(head -1 /tmp/mock.log)"
   node apps/web/scripts/verify-responsive.cjs apps/web /tmp/shots /tmp/server.log
   ```
 - Run the full stack: migrate dev DB, then `cd apps/server && DATABASE_URL=… AUTH_DEV_MODE=true node src/main.ts --role=all` and `pnpm --filter @tickzy/web dev` (proxies `/v1` to :3000).

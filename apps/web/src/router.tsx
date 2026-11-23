@@ -81,7 +81,10 @@ const routeTree = rootRoute.addChildren([
     getParentRoute: () => rootRoute,
     path: "/sign-in",
     component: SignIn,
-    validateSearch: (s: Record<string, unknown>): { email?: string } => (typeof s.email === "string" ? { email: s.email.slice(0, 254) } : {}),
+    validateSearch: (s: Record<string, unknown>): { email?: string; error?: string } => ({
+      ...(typeof s.email === "string" ? { email: s.email.slice(0, 254) } : {}),
+      ...(typeof s.error === "string" ? { error: s.error.slice(0, 40) } : {}),
+    }),
   }),
   page("/invite", Invite),
   page("/auth/verify", VerifyLink),

@@ -49,6 +49,10 @@ const AUTH_ROUTES = new Set([
   "POST /v1/auth/magic-link/verify",
   "POST /v1/invitations/preview",
   "POST /v1/invitations/accept",
+  "GET /v1/auth/oauth/google/start",
+  "GET /v1/auth/oauth/google/callback",
+  "GET /v1/auth/oauth/microsoft/start",
+  "GET /v1/auth/oauth/microsoft/callback",
 ]);
 
 function apply(reply: FastifyReply, limit: number, count: number, resetAt: number, now: number, message: string) {

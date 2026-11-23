@@ -18,12 +18,12 @@
 | T-008 | P0 | S | T-007 | Permission model (`roles → permissions`), `requirePermission()` preHandler, matrix per api-spec §2 | table-driven; 403 envelope | unit matrix tests |
 | T-009 | P0 | M | T-003 | Outbox writer + relay to pg-boss; `JobQueue` interface; worker process role | event written in same tx as change; relay marks published; jobs retried | integration: tx rollback → no event; relay idempotent |
 | T-010 | P0 | M | T-001 | `apps/web`: Vite + React 19 + TanStack Router/Query + Tailwind v4 tokens (light/dark from UX spec), app shell (sidebar / icon rail / bottom tabs responsive), theme toggle persisted | renders at 390/768/1280 widths; theme persists; axe no serious violations | Vitest + Testing Library; Playwright smoke later |
-| T-011 | P0 | S | T-001..T-005 | GitHub Actions CI: install, lint, typecheck, test with Postgres 16 service | CI green on PR | — |
+| T-011 | P0 | S | T-001..T-005 | GitHub Actions CI: install, lint, typecheck, test with Postgres 16 service | CI green on PR | ✅ first GitHub run green 2026-11-23 (push to main, run #1) |
 | T-012 | P0 | S | T-005 | OpenAPI generation at `/v1/openapi.json` from route schemas | document validates as OpenAPI 3.1 | test: endpoints present |
 
 ### M1 · Identity & access (Epic E1)
 | T-101 | P0 | L | T-007 | Auth core (ADR-021): sessions (hashed tokens, sliding expiry, revocation), magic links (single-use, 15 min, no enumeration, per-email limit), CSRF Origin checks; email transport interface (console in dev, Postmark at T-303) | FR-1.2 AC | integration with memory email transport ✅ done 2026-11-23 |
-| T-101b | P0 | M | T-101 | Google & Microsoft sign-in via a certified OIDC client library (PKCE, state, nonce); account linking by verified email | FR-1.2 AC | integration with mocked IdP |
+| T-101b | P0 | M | T-101 | Google & Microsoft sign-in via a certified OIDC client library (PKCE, state, nonce); account linking by verified email | FR-1.2 AC | integration with mocked IdP ✅ done 2026-11-23 (ADR-024; 13 server, 4 web, browser E2E 15/15 with mock provider; real-provider check pending OAuth apps) |
 | T-102 | P0 | M | T-101,T-008 | Invitations & membership management API + UI | FR-1.3 | integration + UI tests ✅ done 2026-11-23 (18 server, 10 web, real-stack E2E 23/23) |
 | T-103 | P0 | M | T-008 | API tokens (hash, prefix, scopes, revoke) + bearer auth | FR-1.6 | integration ✅ done 2026-11-23 (12 server, 5 web, real-stack E2E 18/18) |
 | T-104 | P0 | S | T-007 | Audit log API `GET /v1/audit-log` with filters | FR-1.7 | integration |

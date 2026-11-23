@@ -27,6 +27,13 @@ const ConfigSchema = z
     RATE_LIMIT_PER_MIN: z.coerce.number().int().min(1).default(600),
     RATE_LIMIT_IP_PER_MIN: z.coerce.number().int().min(1).default(1200),
     RATE_LIMIT_AUTH_PER_MIN: z.coerce.number().int().min(1).default(20),
+    /** Google / Microsoft sign-in (T-101b, ADR-024). A provider is offered only when its client id and secret are set. */
+    GOOGLE_CLIENT_ID: z.string().optional(),
+    GOOGLE_CLIENT_SECRET: z.string().optional(),
+    GOOGLE_ISSUER: z.url().default("https://accounts.google.com"),
+    MICROSOFT_CLIENT_ID: z.string().optional(),
+    MICROSOFT_CLIENT_SECRET: z.string().optional(),
+    MICROSOFT_ISSUER: z.url().default("https://login.microsoftonline.com/common/v2.0"),
   })
   .superRefine((c, ctx) => {
     if (c.NODE_ENV === "production" && c.AUTH_DEV_MODE) {
@@ -34,6 +41,11 @@ const ConfigSchema = z
     }
     if (c.NODE_ENV === "production" && c.EMAIL_TRANSPORT === "console") {
       ctx.addIssue({ code: "custom", path: ["EMAIL_TRANSPORT"], message: "console email transport is for development only (Postmark arrives with T-303)" });
+    }
+    for (const key of ["GOOGLE_ISSUER", "MICROSOFT_ISSUER"] as const) {
+      if (c.NODE_ENV === "production" && !c[key].startsWith("https://")) {
+        ctx.addIssue({ code: "custom", path: [key], message: "identity provider issuers must use https in production" });
+      }
     }
     if (c.NODE_ENV === "production" && !c.COOKIE_SECURE) {
       ctx.addIssue({ code: "custom", path: ["COOKIE_SECURE"], message: "cookies must be Secure in production" });

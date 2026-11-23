@@ -10,6 +10,8 @@ import { MemoryRateLimitStore, registerRateLimitAfterAuth, registerRateLimitBefo
 import type { EmailTransport } from "./lib/email.ts";
 import { createAuthService } from "./modules/auth/service.ts";
 import { authRoutes } from "./modules/auth/routes.ts";
+import { oauthRoutes } from "./modules/auth/oauth-routes.ts";
+import { createOidc } from "./modules/auth/oidc.ts";
 import { registerErrorHandling } from "./http/errors.ts";
 import { registerAuth } from "./http/auth.ts";
 import { workspaceRoutes } from "./modules/workspaces/routes.ts";
@@ -19,7 +21,8 @@ import { apiTokenRoutes } from "./modules/api-tokens/routes.ts";
 import { createApiTokenService } from "./modules/api-tokens/service.ts";
 
 export interface AppDeps {
-  config: Pick<Config, "LOG_LEVEL" | "AUTH_DEV_MODE" | "APP_ORIGIN" | "ALLOWED_ORIGINS" | "COOKIE_SECURE" | "TRUST_PROXY" | "RATE_LIMIT_PER_MIN" | "RATE_LIMIT_IP_PER_MIN" | "RATE_LIMIT_AUTH_PER_MIN">;
+  config: Pick<Config, "LOG_LEVEL" | "AUTH_DEV_MODE" | "APP_ORIGIN" | "ALLOWED_ORIGINS" | "COOKIE_SECURE" | "TRUST_PROXY" | "RATE_LIMIT_PER_MIN" | "RATE_LIMIT_IP_PER_MIN" | "RATE_LIMIT_AUTH_PER_MIN"> &
+    Partial<Pick<Config, "GOOGLE_CLIENT_ID" | "GOOGLE_CLIENT_SECRET" | "GOOGLE_ISSUER" | "MICROSOFT_CLIENT_ID" | "MICROSOFT_CLIENT_SECRET" | "MICROSOFT_ISSUER">>;
   database: Database;
   email: EmailTransport;
   rateLimitStore?: RateLimitStore;
@@ -70,6 +73,14 @@ export async function buildApp({ config, database, email, rateLimitStore = new M
   app.get("/v1/openapi.json", { schema: { hide: true } }, async () => app.swagger());
 
   await app.register(authRoutes(database.db, auth, { cookieSecure: config.COOKIE_SECURE }));
+  const publicOrigin = new URL(config.APP_ORIGIN).origin;
+  const provider = (id?: string, secret?: string, issuer?: string) => (id && secret && issuer ? { clientId: id, clientSecret: secret, issuer } : undefined);
+  const oidc = createOidc(database.db, {
+    publicOrigin,
+    google: provider(config.GOOGLE_CLIENT_ID, config.GOOGLE_CLIENT_SECRET, config.GOOGLE_ISSUER ?? "https://accounts.google.com"),
+    microsoft: provider(config.MICROSOFT_CLIENT_ID, config.MICROSOFT_CLIENT_SECRET, config.MICROSOFT_ISSUER ?? "https://login.microsoftonline.com/common/v2.0"),
+  });
+  await app.register(oauthRoutes(oidc, auth, { cookieSecure: config.COOKIE_SECURE, publicOrigin }));
   await app.register(workspaceRoutes(database.db));
   await app.register(auditRoutes(database.db));
   await app.register(memberRoutes(database.db, { email, appOrigin: new URL(config.APP_ORIGIN).origin }));

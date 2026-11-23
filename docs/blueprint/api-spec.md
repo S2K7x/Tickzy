@@ -16,6 +16,7 @@ Codes: `unauthenticated` 401, `forbidden` 403, `not_found` 404, `validation_fail
 | POST `/v1/workspaces` | create workspace (caller becomes admin) | authenticated user | M0 |
 | GET `/v1/workspaces/current` | current workspace | member | M0 |
 | PATCH `/v1/workspaces/current` | update name/prefix | `workspace:manage` | M0 |
+| GET `/v1/auth/providers` → `{providers: ("google"\|"microsoft")[]}` · GET `/v1/auth/oauth/{provider}/start?return_to=/path` (302 to provider) · GET `/v1/auth/oauth/{provider}/callback` (302 to app; errors → `/sign-in?error=email_unverified\|cancelled\|provider_disabled\|provider_unavailable\|oauth_failed`) | Google/Microsoft sign-in (ADR-024) | public | M1 ✅ |
 | GET `/v1/members` · PATCH/DELETE `/v1/members/{id}` (role, status; last-active-admin guard → 409) | members | `members:manage` (list: member) | M1 ✅ |
 | GET/POST `/v1/invitations` (re-inviting a pending email rotates the token) · DELETE `/v1/invitations/{id}` (revoke) | invitations | `members:manage` | M1 ✅ |
 | POST `/v1/invitations/preview` `{token}` · POST `/v1/invitations/accept` `{token}` | invite landing page: preview is public (token = capability); accept requires sign-in with the invited email (403 otherwise, 404 when invalid/used/revoked/expired) | public · authenticated user | M1 ✅ |
