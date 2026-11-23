@@ -8,10 +8,10 @@ How every change moves through Stages 5–7 of [`development-pipeline.md`](devel
 3. **Implement in small, verifiable steps** — tests alongside code (unit for pure logic, integration against real Postgres for anything touching data, RLS isolation for every new tenant table).
 4. **Verify** — run the gates below; for UI also run the real-browser responsive/a11y check; for running services do a real-process smoke test. Never claim something works without having run it.
 5. **Document** — update `CURRENT-STATE.md`, the backlog/master checklist, `docs/process/pipeline-checklist.md` if a stage item changed, and ADRs for any design decision.
-6. **Commit & integrate** — small commits with clear messages on a short-lived branch; push; CI must be green before merge.
+6. **Commit & integrate** — small commits with clear messages, pushed directly to `main` once the task is verified locally; CI must stay green on `main`.
 
 ## 2. Branching & integration (trunk-based)
-- `main` is always releasable. Work happens on short-lived branches (hours to ~2 days) merged via pull request.
+- `main` is always releasable. Solo stage (founder decision 2026-11-23): commit directly to `main` after local verification (lint, typecheck, tests, required browser checks) — no feature branches or PRs; a red CI run on `main` is fixed before any new work. Revisit (short-lived branches + PR review) when a second engineer joins.
 - Unfinished user-facing features ship dark behind a **feature flag** (`workspace_flags`, introduced with the first flagged feature); remove flags once fully rolled out.
 - Database migrations follow **expand → migrate → contract** so every deploy is backward compatible; applied migration files are never edited (the runner rejects changed checksums).
 

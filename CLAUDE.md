@@ -50,4 +50,4 @@ pnpm --filter @tickzy/web dev                 # web app (proxies /v1 to :3000)
 Server code runs as TypeScript directly on Node 22 (type stripping): no enums, namespaces or constructor parameter properties (`erasableSyntaxOnly`), import with `.ts` extensions.
 
 ## Git
-Work on the session's feature branch; small commits; CI (lint, typecheck, tests with Postgres) must pass. Do not push to `main` without explicit permission.
+Work directly on `main` (founder decision, 2026-11-23): small commits, and push to `main` as soon as a task is finished and verified — `pnpm lint && pnpm typecheck && pnpm test` green locally (plus the real-stack/browser checks the task needs). CI (lint, typecheck, tests with Postgres) must stay green on `main`; if it fails, fixing it is the next task. Never force-push `main`.
