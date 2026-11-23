@@ -2,12 +2,18 @@ import { useEffect, useRef } from "react";
 
 /** "?" — the shortcuts that exist today (ux-spec §2.5); more are added as features ship. */
 const SHORTCUTS: [string, string][] = [
-  ["/  or  ⌘K", "Search issues"],
+  ["⌘K", "Command palette: jump to an issue, run a command"],
+  ["/", "Search"],
   ["c", "New issue"],
   ["j / k", "Next / previous issue (inbox)"],
   ["r", "Reply"],
   ["n", "Internal note"],
+  ["a", "Assign…"],
+  ["s", "Change status…"],
+  ["p", "Set priority…"],
+  ["l", "Add label…"],
   ["e", "Resolve"],
+  ["x", "Select for bulk actions"],
   ["⌘↵", "Send"],
   ["Esc", "Close / back"],
   ["?", "This list"],

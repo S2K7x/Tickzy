@@ -9,6 +9,8 @@ import {
 } from "../lib/issues.ts";
 import { Avatar, ChannelBadge, PriorityDot, StatusChip } from "../components/issue-ui.tsx";
 import { btn, segmented } from "../components/ui.ts";
+import { useShell } from "../components/AppShell.tsx";
+import { useVirtualizer } from "@tanstack/react-virtual";
 import { useIssuePresence, type Viewer } from "../lib/realtime.ts";
 import { useCreateLabel, useLabels, useTeams } from "../lib/taxonomy.ts";
 import { activeFilterCount, BulkBar, BulkSummary, FILTER_KEYS, FilterChips, FilterPanel, type QueueFilters } from "./inbox-tools.tsx";
@@ -33,6 +35,23 @@ export function Inbox({ defaultView = "open" }: { defaultView?: ViewId }) {
   const stats = useIssueStats(ws);
   const issues = useMemo(() => list.data?.pages.flatMap((p) => p.data) ?? [], [list.data]);
   const composerRef = useRef<ComposerHandle>(null);
+  const { openPalette } = useShell();
+
+  // Virtualised queue (architecture §7: 500 issues render < 100 ms). Rows have variable height, so they are measured.
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const virt = useVirtualizer({
+    count: issues.length, getScrollElement: () => scrollRef.current, estimateSize: () => 96, overscan: 8,
+    getItemKey: (n) => issues[n]!.id, initialRect: { width: 380, height: 800 },
+  });
+  const rendered = virt.getVirtualItems();
+  const lastRendered = rendered.at(-1)?.index ?? -1;
+  // Infinite scroll: fetch the next page as the end comes into view ("Load more" stays for keyboard/AT users).
+  useEffect(() => {
+    if (lastRendered >= issues.length - 5 && list.hasNextPage && !list.isFetchingNextPage) void list.fetchNextPage();
+  }, [lastRendered, issues.length, list.hasNextPage, list.isFetchingNextPage, list]);
+  // Keep the open issue in view when moving with j/k.
+  const selectedIndex = issues.findIndex((i) => i.key === selected);
+  useEffect(() => { if (selectedIndex >= 0) virt.scrollToIndex(selectedIndex, { align: "auto" }); }, [selectedIndex, virt]);
 
   const go = (patch: Partial<InboxSearch>) => void navigate({ to: "/inbox", search: { view, sort, ...filters, ...(q ? { q } : {}), ...(selected ? { issue: selected } : {}), ...patch } as never });
   const open = (key: string | undefined) => go({ issue: key });
@@ -58,6 +77,9 @@ export function Inbox({ defaultView = "open" }: { defaultView?: ViewId }) {
       } else if (selected && (e.key === "r" || e.key === "n")) {
         e.preventDefault();
         composerRef.current?.focus(e.key === "r" ? "public" : "internal");
+      } else if (selected && (e.key === "a" || e.key === "s" || e.key === "p" || e.key === "l")) {
+        e.preventDefault();
+        openPalette(({ a: "assign", s: "status", p: "priority", l: "label" } as const)[e.key]);
       } else if (selected && e.key === "e") {
         e.preventDefault();
         resolveRef.current();
@@ -119,7 +141,7 @@ export function Inbox({ defaultView = "open" }: { defaultView?: ViewId }) {
             onDone={(failed, summary) => { setChecked(failed); setBulkSummary(summary); }} />
         )}
         <p role="status" className={bulkSummary ? "m-0 border-b border-line px-4 py-2 text-[12px]" : "sr-only"}>{bulkSummary && <BulkSummary summary={bulkSummary} />}</p>
-        <div className="min-h-0 flex-1 overflow-y-auto">
+        <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto">
           {list.isPending && <p role="status" className="m-0 p-4 text-sm text-muted">Loading issues…</p>}
           {list.isError && <p role="alert" className="m-0 p-4 text-sm text-danger">{(list.error as Error).message}</p>}
           {list.isSuccess && issues.length === 0 && (
@@ -128,8 +150,14 @@ export function Inbox({ defaultView = "open" }: { defaultView?: ViewId }) {
               <p className="m-0 mt-1 text-[13px] text-muted">{activeFilterCount(filters) > 0 ? "No issues match these filters. " : ""}No issues in “{VIEWS.find((v) => v.id === view)!.label}”. Channels (Slack, email) arrive in M3; until then create issues with “New issue” or the API.</p>
             </div>
           )}
-          <ul className="m-0 list-none p-0">
-            {issues.map((i) => <QueueRow key={i.id} issue={i} active={i.key === selected} checked={checked.includes(i.id)} selecting={checked.length > 0} onCheck={() => toggleChecked(i.id)} />)}
+          <ul aria-label="Issues" className="relative m-0 list-none p-0" style={{ height: virt.getTotalSize() }}>
+            {rendered.map((v) => {
+              const i = issues[v.index]!;
+              return (
+                <QueueRow key={i.id} issue={i} active={i.key === selected} checked={checked.includes(i.id)} selecting={checked.length > 0} onCheck={() => toggleChecked(i.id)}
+                  measureRef={virt.measureElement} index={v.index} start={v.start} total={issues.length} />
+              );
+            })}
           </ul>
           {list.hasNextPage && (
             <div className="p-3">
@@ -156,9 +184,14 @@ export function Inbox({ defaultView = "open" }: { defaultView?: ViewId }) {
   );
 }
 
-function QueueRow({ issue: i, active, checked, selecting, onCheck }: { issue: Issue; active: boolean; checked: boolean; selecting: boolean; onCheck: () => void }) {
+function QueueRow({ issue: i, active, checked, selecting, onCheck, measureRef, index, start, total }: {
+  issue: Issue; active: boolean; checked: boolean; selecting: boolean; onCheck: () => void;
+  measureRef: (el: HTMLElement | null) => void; index: number; start: number; total: number;
+}) {
   return (
-    <li className={`group relative border-b border-line ${checked ? "bg-accent-soft" : active ? "bg-surface-2 shadow-[inset_3px_0_0_var(--primary)]" : "hover:bg-surface-2/60"}`}>
+    // Only visible rows are in the DOM: position in the whole list is exposed with aria-posinset/setsize.
+    <li ref={measureRef} data-index={index} aria-posinset={index + 1} aria-setsize={total} style={{ transform: `translateY(${start}px)` }}
+      className={`group absolute left-0 top-0 w-full border-b border-line ${checked ? "bg-accent-soft" : active ? "bg-surface-2 shadow-[inset_3px_0_0_var(--primary)]" : "hover:bg-surface-2/60"}`}>
       {/* Checkbox sits beside the link (not inside it); always visible while selecting or on touch screens. */}
       <input type="checkbox" checked={checked} onChange={onCheck} aria-label={`Select ${i.key}`}
         className={`absolute left-1.5 top-3.5 z-10 h-4 w-4 accent-[var(--primary)] ${selecting || checked ? "opacity-100" : "opacity-0 focus:opacity-100 group-hover:opacity-100 [@media(hover:none)]:opacity-100"}`} />

@@ -6,6 +6,7 @@ import type { Theme } from "../theme.ts";
 import type { SessionUser, WorkspaceMembership } from "../lib/api.ts";
 import { useIssueStats } from "../lib/issues.ts";
 import { RealtimeProvider } from "../lib/realtime.ts";
+import { CommandPalette, type PalettePage } from "./CommandPalette.tsx";
 import { NewIssueDialog } from "./NewIssueDialog.tsx";
 import { ShortcutsDialog } from "./ShortcutsDialog.tsx";
 import { Avatar } from "./issue-ui.tsx";
@@ -17,7 +18,7 @@ export interface ShellUser {
 }
 
 /** Shell actions available to pages (e.g. Overview's "New issue" button). */
-const ShellContext = createContext<{ openNewIssue: () => void }>({ openNewIssue: () => undefined });
+const ShellContext = createContext<{ openNewIssue: () => void; openPalette: (page?: PalettePage) => void }>({ openNewIssue: () => undefined, openPalette: () => undefined });
 export const useShell = () => useContext(ShellContext);
 
 const SIDEBAR_KEY = "tickzy.sidebar";
@@ -243,6 +244,9 @@ export function AppShell({ theme, onToggleTheme, children, workspaceId, workspac
 } & ShellUser) {
   const [creating, setCreating] = useState(false);
   const [shortcuts, setShortcuts] = useState(false);
+  const [palette, setPalette] = useState<PalettePage | null>(null);
+  // The issue open in the inbox (if any) is the palette's subject for issue commands.
+  const openIssue = useRouterState({ select: (s) => (/^\/(inbox|mine)/.test(s.location.pathname) ? ((s.location.search as { issue?: string }).issue ?? null) : null) });
   const [collapsed, setCollapsed] = useState(readCollapsed);
   const searchRef = useRef<HTMLInputElement>(null);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
@@ -261,11 +265,11 @@ export function AppShell({ theme, onToggleTheme, children, workspaceId, workspac
     if (document.activeElement !== searchRef.current) void navigate({ to: "/search" });
   };
 
-  // Global keys: "/" or ⌘K search, "?" shortcuts, "c" new issue (ux-spec §2.5).
+  // Global keys: ⌘K palette, "/" search, "?" shortcuts, "c" new issue (ux-spec §2.5).
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") { e.preventDefault(); focusSearch(); return; }
-      if (e.metaKey || e.ctrlKey || e.altKey || isTyping(e.target) || creating || shortcuts) return;
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") { e.preventDefault(); setPalette((p) => (p ? null : "root")); return; }
+      if (e.metaKey || e.ctrlKey || e.altKey || isTyping(e.target) || creating || shortcuts || palette) return;
       if (e.key === "/") { e.preventDefault(); focusSearch(); }
       else if (e.key === "?") { e.preventDefault(); setShortcuts(true); }
       else if (e.key === "c") { e.preventDefault(); setCreating(true); }
@@ -277,7 +281,7 @@ export function AppShell({ theme, onToggleTheme, children, workspaceId, workspac
   const sidebarProps = { collapsed, onToggle: toggleSidebar, onSearch: focusSearch, onShortcuts: () => setShortcuts(true), user: shellUser.user, workspaceName: shellUser.workspaceName, counts };
   return (
     <RealtimeProvider workspaceId={workspaceId}>
-    <ShellContext.Provider value={{ openNewIssue: () => setCreating(true) }}>
+    <ShellContext.Provider value={{ openNewIssue: () => setCreating(true), openPalette: (p = "root") => setPalette(p) }}>
       <div className="flex min-h-screen bg-bg text-fg">
         <Sidebar compact={false} {...sidebarProps} />
         <Sidebar compact {...sidebarProps} />
@@ -293,6 +297,10 @@ export function AppShell({ theme, onToggleTheme, children, workspaceId, workspac
         <BottomTabs />
         {creating && <NewIssueDialog workspaceId={workspaceId} onClose={() => setCreating(false)} />}
         {shortcuts && <ShortcutsDialog onClose={() => setShortcuts(false)} />}
+        {palette && (
+          <CommandPalette ws={workspaceId} userId={shellUser.user.id} issueRef={openIssue} initialPage={palette} onClose={() => setPalette(null)}
+            onNewIssue={() => setCreating(true)} onToggleTheme={onToggleTheme} onShortcuts={() => setShortcuts(true)} />
+        )}
       </div>
     </ShellContext.Provider>
     </RealtimeProvider>

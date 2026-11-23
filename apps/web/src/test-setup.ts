@@ -16,3 +16,19 @@ class InertWebSocket {
   close() { this.readyState = 3; }
 }
 (globalThis as { WebSocket: unknown }).WebSocket = InertWebSocket;
+
+// jsdom has no layout (every offset/client size is 0), so a virtualised list would render no rows. Give elements plausible
+// sizes: 800px for containers, 96px for measured virtual rows (they carry data-index). Real layout is checked in browsers.
+Object.defineProperty(HTMLElement.prototype, "offsetHeight", {
+  configurable: true,
+  get(this: HTMLElement) { return this.dataset.index !== undefined ? 96 : 800; },
+});
+Object.defineProperty(HTMLElement.prototype, "offsetWidth", { configurable: true, get() { return 1024; } });
+Object.defineProperty(HTMLElement.prototype, "clientHeight", { configurable: true, get() { return 800; } });
+Object.defineProperty(HTMLElement.prototype, "clientWidth", { configurable: true, get() { return 1024; } });
+
+// cmdk (command palette) measures its list and scrolls the active option into view; jsdom implements neither.
+if (!("ResizeObserver" in globalThis)) {
+  (globalThis as { ResizeObserver: unknown }).ResizeObserver = class { observe() {} unobserve() {} disconnect() {} };
+}
+Element.prototype.scrollIntoView = function scrollIntoView() {};
