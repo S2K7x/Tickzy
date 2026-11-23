@@ -14,6 +14,8 @@ import { registerAuth } from "./http/auth.ts";
 import { workspaceRoutes } from "./modules/workspaces/routes.ts";
 import { auditRoutes } from "./modules/audit/routes.ts";
 import { memberRoutes } from "./modules/members/routes.ts";
+import { apiTokenRoutes } from "./modules/api-tokens/routes.ts";
+import { createApiTokenService } from "./modules/api-tokens/service.ts";
 
 export interface AppDeps {
   config: Pick<Config, "LOG_LEVEL" | "AUTH_DEV_MODE" | "APP_ORIGIN" | "ALLOWED_ORIGINS" | "COOKIE_SECURE">;
@@ -47,7 +49,8 @@ export async function buildApp({ config, database, email }: AppDeps): Promise<Fa
   registerErrorHandling(app);
   await app.register(cookie);
   const auth = createAuthService({ db: database.db, email, appOrigin: new URL(config.APP_ORIGIN).origin });
-  registerAuth(app, { devMode: config.AUTH_DEV_MODE, sessions: auth, cookieSecure: config.COOKIE_SECURE, allowedOrigins: allowedOrigins(config) });
+  const apiTokens = createApiTokenService(database.db);
+  registerAuth(app, { devMode: config.AUTH_DEV_MODE, sessions: auth, apiTokens, cookieSecure: config.COOKIE_SECURE, allowedOrigins: allowedOrigins(config) });
 
   app.get("/healthz", { schema: { hide: true } }, async () => ({ status: "ok" }));
   app.get("/readyz", { schema: { hide: true } }, async (_req, reply) => {
@@ -64,5 +67,6 @@ export async function buildApp({ config, database, email }: AppDeps): Promise<Fa
   await app.register(workspaceRoutes(database.db));
   await app.register(auditRoutes(database.db));
   await app.register(memberRoutes(database.db, { email, appOrigin: new URL(config.APP_ORIGIN).origin }));
+  await app.register(apiTokenRoutes(database.db, apiTokens));
   return app;
 }

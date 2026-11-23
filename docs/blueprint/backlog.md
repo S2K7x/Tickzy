@@ -25,7 +25,7 @@
 | T-101 | P0 | L | T-007 | Auth core (ADR-021): sessions (hashed tokens, sliding expiry, revocation), magic links (single-use, 15 min, no enumeration, per-email limit), CSRF Origin checks; email transport interface (console in dev, Postmark at T-303) | FR-1.2 AC | integration with memory email transport ✅ done 2026-11-23 |
 | T-101b | P0 | M | T-101 | Google & Microsoft sign-in via a certified OIDC client library (PKCE, state, nonce); account linking by verified email | FR-1.2 AC | integration with mocked IdP |
 | T-102 | P0 | M | T-101,T-008 | Invitations & membership management API + UI | FR-1.3 | integration + UI tests ✅ done 2026-11-23 (18 server, 10 web, real-stack E2E 23/23) |
-| T-103 | P0 | M | T-008 | API tokens (hash, prefix, scopes, revoke) + bearer auth | FR-1.6 | integration |
+| T-103 | P0 | M | T-008 | API tokens (hash, prefix, scopes, revoke) + bearer auth | FR-1.6 | integration ✅ done 2026-11-23 (12 server, 5 web, real-stack E2E 18/18) |
 | T-104 | P0 | S | T-007 | Audit log API `GET /v1/audit-log` with filters | FR-1.7 | integration |
 | T-105 | P0 | M | T-010,T-101 | Web: sign-in, onboarding step 1 (create workspace), current workspace, sign-out (settings › members moved to T-102) | UX S11 step 1 | Playwright smoke ✅ done 2026-11-23 |
 | T-106 | P0 | S | T-005 | Rate limiting (per token/IP, Postgres-backed counter or in-memory per node) | 429 envelope + headers | integration |

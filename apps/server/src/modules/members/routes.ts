@@ -2,11 +2,10 @@ import type { FastifyInstance } from "fastify";
 import type { ZodTypeProvider } from "fastify-type-provider-zod";
 import { z } from "zod";
 import { ROLES, type Db } from "@tickzy/db";
-import { requireMember, requireUser } from "../../http/auth.ts";
+import { requireMember, requireUser, WorkspaceHeader } from "../../http/auth.ts";
 import type { EmailTransport } from "../../lib/email.ts";
 import { createMembersService } from "./service.ts";
 
-const WorkspaceHeader = z.object({ "tickzy-workspace": z.string() }).passthrough();
 const RoleSchema = z.enum(ROLES);
 const Member = z.object({
   id: z.string(), user_id: z.string(), name: z.string(), email: z.string(),

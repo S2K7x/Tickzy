@@ -9,6 +9,7 @@ import { Invite } from "./pages/Invite.tsx";
 import { More } from "./pages/More.tsx";
 import { SettingsLayout } from "./pages/settings/SettingsLayout.tsx";
 import { Members } from "./pages/settings/Members.tsx";
+import { ApiTokens } from "./pages/settings/ApiTokens.tsx";
 import { useCurrentWorkspace, useSession, useSignOut } from "./lib/session.ts";
 import { useTheme } from "./theme.ts";
 
@@ -74,6 +75,7 @@ const routeTree = rootRoute.addChildren([
   settingsRoute.addChildren([
     createRoute({ getParentRoute: () => settingsRoute, path: "/", component: () => <Navigate to="/settings/members" replace /> }),
     createRoute({ getParentRoute: () => settingsRoute, path: "members", component: Members }),
+    createRoute({ getParentRoute: () => settingsRoute, path: "api-tokens", component: ApiTokens }),
   ]),
   createRoute({
     getParentRoute: () => rootRoute,

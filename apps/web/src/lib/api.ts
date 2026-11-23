@@ -91,3 +91,14 @@ export interface InvitationPreview {
   role: Role;
   status: "pending" | "accepted" | "expired" | "revoked";
 }
+
+export interface ApiToken {
+  id: string;
+  name: string;
+  prefix: string;
+  scopes: string[];
+  created_by: string | null;
+  created_at: string;
+  expires_at: string | null;
+  last_used_at: string | null;
+}

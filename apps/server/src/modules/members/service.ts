@@ -2,6 +2,7 @@ import { and, desc, eq, isNull, sql } from "drizzle-orm";
 import { AppError, newId } from "@tickzy/shared";
 import { schema, withWorkspace, type Db, type Role, type Tx } from "@tickzy/db";
 import type { EmailTransport } from "../../lib/email.ts";
+import type { MemberContext } from "../../http/auth.ts";
 import { newToken, parseToken, sha256 } from "../../lib/tokens.ts";
 
 export const INVITE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
@@ -24,10 +25,7 @@ export interface InvitationDto {
   expires_at: string;
 }
 
-interface Ctx {
-  workspaceId: string;
-  userId: string;
-}
+type Ctx = MemberContext;
 
 function pgMessage(err: unknown): string {
   const e = err as { message?: string; cause?: { message?: string } };
@@ -35,7 +33,7 @@ function pgMessage(err: unknown): string {
 }
 
 async function audit(tx: Tx, ctx: Ctx, action: string, targetType: string, targetId: string, metadata: Record<string, unknown> = {}) {
-  await tx.insert(schema.auditLog).values({ id: newId("auditLog"), workspaceId: ctx.workspaceId, actorType: "user", actorId: ctx.userId, action, targetType, targetId, metadata });
+  await tx.insert(schema.auditLog).values({ id: newId("auditLog"), workspaceId: ctx.workspaceId, actorType: ctx.actor.type, actorId: ctx.actor.id, action, targetType, targetId, metadata });
 }
 
 /** Refuses any change that would leave the workspace without an active admin. */
@@ -119,18 +117,20 @@ export function createMembersService(deps: { db: Db; email: EmailTransport; appO
         let row: typeof schema.invitations.$inferSelect;
         if (pending) {
           [row] = await tx.update(schema.invitations)
-            .set({ role: input.role, tokenId: t.id, secretHash: t.secretHash, expiresAt, invitedBy: ctx.userId, createdAt: now() })
+            .set({ role: input.role, tokenId: t.id, secretHash: t.secretHash, expiresAt, invitedBy: ctx.userId ?? null, createdAt: now() })
             .where(eq(schema.invitations.id, pending.id)).returning() as [typeof row];
           await audit(tx, ctx, "invitation.resent", "invitation", row.id, { email: address, role: input.role });
         } else {
           [row] = await tx.insert(schema.invitations)
-            .values({ id: newId("invitation"), workspaceId: ctx.workspaceId, email: address, role: input.role, tokenId: t.id, secretHash: t.secretHash, invitedBy: ctx.userId, expiresAt })
+            .values({ id: newId("invitation"), workspaceId: ctx.workspaceId, email: address, role: input.role, tokenId: t.id, secretHash: t.secretHash, invitedBy: ctx.userId ?? null, expiresAt })
             .returning() as [typeof row];
           await audit(tx, ctx, "invitation.created", "invitation", row.id, { email: address, role: input.role });
         }
         const [ws] = await tx.select({ name: schema.workspaces.name }).from(schema.workspaces).limit(1);
-        const [inviter] = await tx.select({ name: schema.users.name, email: schema.users.email }).from(schema.users).where(eq(schema.users.id, ctx.userId));
-        return { invitation: row, workspaceName: ws!.name, inviterName: inviter?.name || inviter?.email || "A teammate" };
+        const [inviter] = ctx.userId
+          ? await tx.select({ name: schema.users.name, email: schema.users.email }).from(schema.users).where(eq(schema.users.id, ctx.userId))
+          : [];
+        return { invitation: row, workspaceName: ws!.name, inviterName: inviter?.name || inviter?.email || ws!.name };
       });
       await email.send({
         to: address,
@@ -155,7 +155,7 @@ export function createMembersService(deps: { db: Db; email: EmailTransport; appO
       const res = await db.execute(sql`SELECT * FROM invitation_preview(${parts.id}, ${sha256(parts.secret)})`);
       const row = res.rows[0];
       if (!row) throw new AppError("not_found", "Invitation not found");
-      return { workspace_name: String(row.workspace_name), inviter_name: String(row.inviter_name), email: String(row.email), role: String(row.role) as Role, status: String(row.status) as "pending" | "accepted" | "expired" | "revoked" };
+      return { workspace_name: String(row.workspace_name), inviter_name: String(row.inviter_name || row.workspace_name), email: String(row.email), role: String(row.role) as Role, status: String(row.status) as "pending" | "accepted" | "expired" | "revoked" };
     },
 
     async accept(userId: string, token: string): Promise<{ workspace_id: string }> {

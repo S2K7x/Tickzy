@@ -4,7 +4,7 @@ import { and, desc, eq, gte, lt, lte, type SQL } from "drizzle-orm";
 import { z } from "zod";
 import { AppError, isId } from "@tickzy/shared";
 import { schema, withWorkspace, type Db } from "@tickzy/db";
-import { requireMember } from "../../http/auth.ts";
+import { requireMember, WorkspaceHeader } from "../../http/auth.ts";
 
 const Entry = z.object({
   id: z.string(),
@@ -37,7 +37,7 @@ export function auditRoutes(db: Db) {
       schema: {
         tags: ["audit"],
         summary: "Audit log of administrative and data-access actions",
-        headers: z.object({ "tickzy-workspace": z.string() }).passthrough(),
+        headers: WorkspaceHeader,
         querystring: z.object({
           limit: z.coerce.number().int().min(1).max(100).default(50),
           cursor: z.string().optional(),
@@ -58,7 +58,7 @@ export function auditRoutes(db: Db) {
       if (q.from) conds.push(gte(a.createdAt, new Date(q.from)));
       if (q.to) conds.push(lte(a.createdAt, new Date(q.to)));
       if (q.cursor) conds.push(lt(a.id, decodeCursor(q.cursor)));
-      const rows = await withWorkspace(db, { workspaceId: m.workspaceId, userId: m.userId }, (tx) =>
+      const rows = await withWorkspace(db, m, (tx) =>
         tx.select().from(a).where(conds.length ? and(...conds) : undefined).orderBy(desc(a.id)).limit(q.limit + 1),
       );
       const page = rows.slice(0, q.limit);

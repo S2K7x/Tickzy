@@ -44,7 +44,7 @@ erDiagram
 | `memberships` | workspace_id, user_id, role enum(`admin`,`agent`,`collaborator`,`viewer`), status, created_at; unique(workspace_id,user_id) | |
 | `sessions`, `login_tokens` (migration 0003, ADR-021) | sessions: id (public half), user_id, secret_hash sha256, expires_at, last_used_at; login_tokens: id, email, secret_hash, expires_at, used_at | global; RLS forced with **no grants** — reachable only via `auth_*` SECURITY DEFINER functions |
 | `invitations` (migration 0004, T-102) | id `inv_`, workspace_id, email citext, role, token_id unique, secret_hash sha256, invited_by, expires_at (7 d), accepted_at/by, revoked_at; unique pending (workspace_id, email) | tenant RLS; public preview and accept only via `invitation_preview()` / `accept_invitation()` (token is the capability; accept checks the signed-in email) |
-| `api_tokens` | id `tok_`, workspace_id, name, token_hash (sha256), prefix, scopes text[], last_used_at, revoked_at | token shown once |
+| `api_tokens` (migration 0005, ADR-022) | id `tok_`, workspace_id, name, token_id unique (public half; prefix shown), secret_hash sha256, scopes text[] (CHECK: non-empty, never `developers:manage`), created_by, expires_at, last_used_at, revoked_at | token shown once; tenant RLS; UPDATE only on `revoked_at`/`name`; bearer lookup via `api_token_lookup()` |
 | `audit_log` | id `aud_`, workspace_id, actor_type, actor_id, action, target_type, target_id, metadata jsonb, ip, created_at | append-only (no UPDATE/DELETE grant) |
 | `workspace_counters` | workspace_id, name, value bigint | issue numbers via `UPDATE … RETURNING` |
 | `outbox` | id bigserial, workspace_id, type, payload jsonb, created_at, published_at | relay → pg-boss |

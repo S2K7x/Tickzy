@@ -3,7 +3,7 @@
 _Last updated: 2026-11-23 (session 4)._ Read this first, then `docs/blueprint/backlog.md`. Process: `docs/process/development-pipeline.md` (we are in **Stage 5 · Build**; status per stage in `docs/process/pipeline-checklist.md`).
 
 ## Phase
-Implementation: **M0 · Foundations complete** (except CI verification on GitHub); **M1 · Identity & access** in progress (T-104, T-101, T-105, T-102 done). Planning docs are complete and approved:
+Implementation: **M0 · Foundations complete** (except CI verification on GitHub); **M1 · Identity & access** in progress (T-104, T-101, T-105, T-102, T-103 done). Planning docs are complete and approved:
 strategy `docs/strategy/product-strategy.md` · architecture `docs/architecture/` · UX `docs/ux/ux-spec.md` + design canvas (https://claude.ai/artifact/BvvyCE24er29B2iYNqLVxg, source `design/canvas/`) · blueprint `docs/blueprint/`.
 
 ## Done (verified by tests)
@@ -28,16 +28,18 @@ strategy `docs/strategy/product-strategy.md` · architecture `docs/architecture/
 
 | T-102 | Invitations & members (FR-1.3): migration `0004_invitations.sql` (tenant RLS; `invitation_preview()` / `accept_invitation()` SECURITY DEFINER — token is the capability, accept requires the invited email, single-use, 7-day expiry, upsert/reactivate membership + audit + outbox `member.joined`); `modules/members` API (list/patch/delete members with last-active-admin guard, invite / re-invite rotates token / revoke, public preview, accept), all admin actions audited; shared `lib/email.ts` + `lib/tokens.ts` (moved from auth, no duplication). Web: Settings layout + **Members & roles** (invite form, role select with free-seat labels, deactivate/reactivate, remove with confirm, pending invites with resend/revoke; read-only for non-admins), `/invite` landing page (preview; token moved from URL fragment to storage so it survives the magic-link round trip; wrong-account and used/expired/revoked states), sign-in prefilled with the invited email, shared current-workspace store, phone **More** tab now lists AI/Knowledge/Analytics/Settings, Overview "Invite your team" links to Members | 18 server integration tests (invite email + link, preview, token rotation, wrong user 403, unauthenticated 401, accept → role/audit/outbox, single use, already-member 409, revoked/expired, permissions 403/404, validation, tenant isolation, list/role change/last-admin guard/deactivate/remove/re-invite, cross-tenant member edits 404) + 10 jsdom tests + **real-stack E2E** `apps/web/scripts/e2e-invite.cjs`: 23/23 (two users, 1280 + 390, light + dark, axe 0 violations on every page) |
 
+| T-103 | API tokens per **ADR-022**: migration `0005_api_tokens.sql` (tenant RLS, CHECK forbids `developers:manage`, column-level UPDATE on `revoked_at`/`name` only, `api_token_lookup()`/`api_token_touch()` entry points); bearer auth `tkz_live_<id>.<secret>` (hash only, constant-time, 401 on bad/revoked/expired); token principal = workspace principal (workspace from token, conflicting header → 404, scopes instead of role, user-only endpoints → 403, audit `actor_type=api_token`); `MemberContext.actor` used for all audit rows; permissions list moved to `@tickzy/shared/permissions` (one source for server + web); shared optional `WorkspaceHeader` schema. Web: Settings › **API tokens** (create with name/expiry/grouped scopes, secret shown once with Copy, list by prefix with last used/expiry/scopes, revoke with confirm; admins only) | 12 server integration tests (shown once + hashed at rest, header-less auth + last_used, scope enforcement + audit actor, cannot mint, cross-workspace header 404, user-only 403, Origin rules, forged/unknown 401, expiry, admin-only + tenant isolation, revoke immediate, immutable hash/scopes) + 5 jsdom tests (scope list == TOKEN_SCOPES) + **real-stack E2E** `e2e-api-tokens.cjs` 18/18 (create in browser → clipboard → call API from Node → scopes → revoke → 401; dark/390, axe 0) |
+
 Bugs found by verification and fixed in T-105: verify page re-POSTed an empty token on remount; top bar overflowed at 768 px once the user block existed; onboarding showed prefix "XX" before typing.
 
-Total: **122 tests passing** locally (`pnpm test`): shared 4 · db 13 · server 76 · web 29 — plus the three real-browser scripts above (all re-run green after T-102).
+Total: **139 tests passing** locally (`pnpm test`): shared 4 · db 13 · server 88 · web 34 — plus the four real-browser scripts above (all re-run green after T-103; shared helpers in `apps/web/scripts/e2e-lib.cjs`).
 
 ## Written but NOT yet verified
 - T-011 CI workflow `.github/workflows/ci.yml` (Postgres 17 service). Not run on GitHub yet — first push/PR will tell.
 
 ## Not started (next, in order)
-1. **T-103** API tokens (Settings › API tokens; `developers:manage`) · **T-106** rate limiting · **T-101b** Google/Microsoft sign-in → completes M1.
-2. Founder review required for T-101 and T-102 (auth / access-control code — engineering-workflow §5).
+1. **T-106** rate limiting (per token / per IP, 429 envelope + `RateLimit-*` headers) · **T-101b** Google/Microsoft sign-in → completes M1.
+2. Founder review required for T-101, T-102 and T-103 (auth / access-control code — engineering-workflow §5).
 3. Then M2 (accounts, issues, inbox).
 
 Known limitations (T-102): invitation emails go through the console transport until Postmark (T-303); no seat-limit/billing check on invite (billing is E29); an expired pending invitation stays listed (marked "Expired") until resent or revoked.
@@ -50,6 +52,7 @@ Known limitations (T-102): invitation emails go through the console transport un
   (cd apps/web && npx vite preview --port 4173 &)
   node apps/web/scripts/e2e-auth.cjs /tmp/server.log /tmp/shots
   node apps/web/scripts/e2e-invite.cjs /tmp/server.log /tmp/shots
+  node apps/web/scripts/e2e-api-tokens.cjs /tmp/server.log /tmp/shots
   node apps/web/scripts/verify-responsive.cjs apps/web /tmp/shots /tmp/server.log
   ```
 - Run the full stack: migrate dev DB, then `cd apps/server && DATABASE_URL=… AUTH_DEV_MODE=true node src/main.ts --role=all` and `pnpm --filter @tickzy/web dev` (proxies `/v1` to :3000).

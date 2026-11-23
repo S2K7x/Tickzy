@@ -17,6 +17,8 @@ export async function setupTestApp() {
     app,
     database,
     email,
+    /** Superuser-ish owner connection for arranging states the app role may not create (e.g. expiry). */
+    owner: owner as pg.Client,
     async createUser(email: string): Promise<string> {
       const id = newId("user");
       const res = await database.db.execute(sql`SELECT upsert_user(${id}, ${email}, ${email}) AS id`);

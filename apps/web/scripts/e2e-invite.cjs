@@ -3,45 +3,10 @@
 // Journey: admin signs up and creates a workspace → invites a teammate → teammate opens the invite link signed
 // out → signs in via magic link → lands back on the invitation → accepts → sees the workspace; admin changes the
 // role; the last-admin guard holds; a wrong-account and a revoked invite are refused.
-const { chromium } = (() => { try { return require("playwright"); } catch { return require("/opt/node-tools/node_modules/playwright"); } })();
-const fs = require("fs");
 const path = require("path");
-const axeSrc = fs.readFileSync(require.resolve("axe-core/axe.min.js", { paths: [__dirname] }), "utf8");
+const { chromium, BASE, createRun } = require("./e2e-lib.cjs");
 const [logPath, shots] = process.argv.slice(2);
-const BASE = "http://localhost:4173";
-let failures = 0;
-const check = (ok, label) => { console.log(`${ok ? "PASS" : "FAIL"} ${label}`); if (!ok) failures++; };
-
-async function axeCheck(page, label) {
-  await page.addScriptTag({ content: axeSrc });
-  const v = await page.evaluate(async () => (await axe.run()).violations.map((x) => `${x.id}(${x.impact})`));
-  check(v.length === 0, `axe ${label} ${v.length ? JSON.stringify(v) : ""}`);
-}
-const noOverflow = (page) => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth);
-
-async function waitForLink(email, kind, after = 0, timeoutMs = 10000) {
-  const re = new RegExp(`(http://\\S+/${kind}#token=[a-z2-7.]+)`);
-  const deadline = Date.now() + timeoutMs;
-  while (Date.now() < deadline) {
-    const log = fs.readFileSync(logPath, "utf8").slice(after);
-    const idx = log.lastIndexOf(`to=${email}`);
-    if (idx >= 0) {
-      const m = re.exec(log.slice(idx));
-      if (m) return m[1];
-    }
-    await new Promise((r) => setTimeout(r, 200));
-  }
-  throw new Error(`${kind} link for ${email} not found in server log`);
-}
-const logSize = () => fs.statSync(logPath).size;
-
-async function signIn(page, email) {
-  const mark = logSize();
-  await page.getByLabel("Work email").fill(email);
-  await page.getByRole("button", { name: "Email me a sign-in link" }).click();
-  await page.getByRole("heading", { name: "Check your email" }).waitFor();
-  await page.goto(await waitForLink(email, "auth/verify", mark));
-}
+const { check, axeCheck, noOverflow, logSize, waitForLink, signIn, signUpWithWorkspace, finish } = createRun(logPath);
 
 (async () => {
   const browser = await chromium.launch();
@@ -52,13 +17,7 @@ async function signIn(page, email) {
   // 1. Admin signs up and creates a workspace.
   const adminCtx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
   const admin = await adminCtx.newPage();
-  await admin.goto(`${BASE}/sign-in`);
-  await signIn(admin, adminEmail);
-  await admin.getByRole("heading", { name: "Create your workspace" }).waitFor({ timeout: 10000 });
-  await admin.getByLabel("Company or team name").fill("Invite Test Co");
-  await admin.getByLabel("Workspace URL").fill(`inv-${stamp}`);
-  await admin.getByRole("button", { name: "Create workspace" }).click();
-  await admin.getByRole("heading", { name: "Overview" }).waitFor({ timeout: 10000 });
+  await signUpWithWorkspace(admin, adminEmail, "Invite Test Co", `inv-${stamp}`);
 
   // 2. Settings › Members, invite a teammate.
   await admin.getByRole("link", { name: "Settings" }).first().click();
@@ -148,6 +107,5 @@ async function signIn(page, email) {
   await admin.screenshot({ path: path.join(shots, "members-1280-dark.png"), fullPage: true });
 
   await browser.close();
-  console.log(failures ? `\n${failures} FAILED` : "\nALL PASSED");
-  process.exit(failures ? 1 : 0);
+  finish();
 })().catch((err) => { console.error(err); process.exit(1); });

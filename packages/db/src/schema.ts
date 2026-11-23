@@ -82,3 +82,17 @@ export const invitations = pgTable("invitations", {
   acceptedBy: text("accepted_by"),
   revokedAt: ts("revoked_at"),
 });
+
+export const apiTokens = pgTable("api_tokens", {
+  id: text("id").primaryKey(),
+  workspaceId: text("workspace_id").notNull(),
+  name: text("name").notNull(),
+  tokenId: text("token_id").notNull(),
+  secretHash: customBytea("secret_hash").notNull(),
+  scopes: text("scopes").array().notNull(),
+  createdBy: text("created_by"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }),
+  lastUsedAt: timestamp("last_used_at", { withTimezone: true }),
+  revokedAt: timestamp("revoked_at", { withTimezone: true }),
+});

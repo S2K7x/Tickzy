@@ -2,7 +2,7 @@ import type { FastifyInstance } from "fastify";
 import type { ZodTypeProvider } from "fastify-type-provider-zod";
 import { z } from "zod";
 import type { Db } from "@tickzy/db";
-import { requireMember, requireUser } from "../../http/auth.ts";
+import { requireMember, requireUser, WorkspaceHeader } from "../../http/auth.ts";
 import { createWorkspaceService } from "./service.ts";
 
 const Workspace = z.object({
@@ -16,7 +16,6 @@ const Workspace = z.object({
 const Name = z.string().trim().min(1).max(80);
 const Slug = z.string().regex(/^[a-z0-9](?:[a-z0-9-]{1,38}[a-z0-9])$/, "3–40 chars: lowercase letters, digits, hyphens");
 const Prefix = z.string().regex(/^[A-Z]{2,5}$/, "2–5 uppercase letters");
-const WorkspaceHeader = z.object({ "tickzy-workspace": z.string() }).passthrough();
 
 export function workspaceRoutes(db: Db) {
   const service = createWorkspaceService(db);
@@ -40,7 +39,7 @@ export function workspaceRoutes(db: Db) {
       schema: { tags: ["workspaces"], summary: "The workspace named by the Tickzy-Workspace header", headers: WorkspaceHeader, response: { 200: Workspace } },
     }, async (req) => {
       const m = await requireMember(db, req);
-      return service.get(m.workspaceId, m.userId);
+      return service.get(m);
     });
 
     r.patch("/v1/workspaces/current", {
@@ -53,7 +52,7 @@ export function workspaceRoutes(db: Db) {
       },
     }, async (req) => {
       const m = await requireMember(db, req, "workspace:manage");
-      return service.update(m.workspaceId, m.userId, req.body);
+      return service.update(m, req.body);
     });
 
     r.get("/v1/me/workspaces", {

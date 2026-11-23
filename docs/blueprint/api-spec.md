@@ -19,7 +19,7 @@ Codes: `unauthenticated` 401, `forbidden` 403, `not_found` 404, `validation_fail
 | GET `/v1/members` · PATCH/DELETE `/v1/members/{id}` (role, status; last-active-admin guard → 409) | members | `members:manage` (list: member) | M1 ✅ |
 | GET/POST `/v1/invitations` (re-inviting a pending email rotates the token) · DELETE `/v1/invitations/{id}` (revoke) | invitations | `members:manage` | M1 ✅ |
 | POST `/v1/invitations/preview` `{token}` · POST `/v1/invitations/accept` `{token}` | invite landing page: preview is public (token = capability); accept requires sign-in with the invited email (403 otherwise, 404 when invalid/used/revoked/expired) | public · authenticated user | M1 ✅ |
-| GET/POST `/v1/api-tokens` · DELETE `/v1/api-tokens/{id}` | tokens | `developers:manage` | M1 |
+| GET/POST `/v1/api-tokens` (`{name, scopes[], expires_in_days: 30\|90\|365\|null}`; token returned once) · DELETE `/v1/api-tokens/{id}` | tokens (ADR-022; scopes = permissions minus `developers:manage`) | `developers:manage` (session only — tokens cannot manage tokens) | M1 ✅ |
 | GET `/v1/audit-log` | audit | `audit:read` | M0/M1 |
 | GET/POST `/v1/accounts` · GET/PATCH/DELETE `/v1/accounts/{id}` | accounts | read: member; write: `accounts:write` | M2 |
 | GET/POST `/v1/contacts` · GET/PATCH `/v1/contacts/{id}` | contacts | same | M2 |
