@@ -1,10 +1,12 @@
 import { useState, type FormEvent } from "react";
+import { useSearch } from "@tanstack/react-router";
 import { api, ApiError } from "../lib/api.ts";
 import { AuthLayout, inputClass, primaryButtonClass } from "./AuthLayout.tsx";
 
 /** FR-1.2: passwordless sign-in. The API answers the same way for unknown emails, so does this page. */
 export function SignIn() {
-  const [email, setEmail] = useState("");
+  const search = useSearch({ strict: false }) as { email?: string };
+  const [email, setEmail] = useState(search.email ?? "");
   const [state, setState] = useState<"idle" | "sending" | "sent">("idle");
   const [error, setError] = useState<string | null>(null);
 

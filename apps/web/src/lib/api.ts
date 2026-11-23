@@ -65,3 +65,29 @@ export interface Workspace {
   region: string;
   created_at: string;
 }
+
+export type Role = "admin" | "agent" | "collaborator" | "viewer";
+export interface Member {
+  id: string;
+  user_id: string;
+  name: string;
+  email: string;
+  role: Role;
+  status: "active" | "deactivated";
+  joined_at: string;
+}
+export interface Invitation {
+  id: string;
+  email: string;
+  role: Role;
+  invited_by: string | null;
+  created_at: string;
+  expires_at: string;
+}
+export interface InvitationPreview {
+  workspace_name: string;
+  inviter_name: string;
+  email: string;
+  role: Role;
+  status: "pending" | "accepted" | "expired" | "revoked";
+}

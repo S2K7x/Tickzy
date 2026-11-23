@@ -8,6 +8,7 @@ export const ID_PREFIXES = {
   workspace: "ws",
   user: "usr",
   membership: "mem",
+  invitation: "inv",
   auditLog: "aud",
   apiToken: "tok",
   account: "acc",

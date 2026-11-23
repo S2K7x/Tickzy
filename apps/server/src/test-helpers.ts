@@ -4,7 +4,7 @@ import { resetTestDatabase } from "@tickzy/db/testing";
 import type { Database } from "@tickzy/db";
 import type pg from "pg";
 import { buildApp } from "./app.ts";
-import { MemoryEmailTransport } from "./modules/auth/email.ts";
+import { MemoryEmailTransport } from "./lib/email.ts";
 
 export const TEST_ORIGIN = "http://localhost:5173";
 export const testConfig = { LOG_LEVEL: "silent" as const, AUTH_DEV_MODE: true, APP_ORIGIN: TEST_ORIGIN, ALLOWED_ORIGINS: "", COOKIE_SECURE: true };

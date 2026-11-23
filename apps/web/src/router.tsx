@@ -5,10 +5,14 @@ import { Placeholder } from "./pages/Placeholder.tsx";
 import { SignIn } from "./pages/SignIn.tsx";
 import { VerifyLink } from "./pages/VerifyLink.tsx";
 import { Onboarding } from "./pages/Onboarding.tsx";
+import { Invite } from "./pages/Invite.tsx";
+import { More } from "./pages/More.tsx";
+import { SettingsLayout } from "./pages/settings/SettingsLayout.tsx";
+import { Members } from "./pages/settings/Members.tsx";
 import { useCurrentWorkspace, useSession, useSignOut } from "./lib/session.ts";
 import { useTheme } from "./theme.ts";
 
-const PUBLIC_PATHS = new Set(["/sign-in", "/auth/verify"]);
+const PUBLIC_PATHS = new Set(["/sign-in", "/auth/verify", "/invite"]);
 
 function FullScreenMessage({ title, children }: { title: string; children?: React.ReactNode }) {
   return (
@@ -39,7 +43,7 @@ function Root() {
   const isPublic = PUBLIC_PATHS.has(pathname);
   if (!data) return isPublic ? <Outlet /> : <Navigate to="/sign-in" replace />;
   if (pathname === "/sign-in") return <Navigate to="/" replace />;
-  if (pathname === "/auth/verify") return <Outlet />;
+  if (pathname === "/auth/verify" || pathname === "/invite") return <Outlet />; // invite works with or without a workspace
   if (data.workspaces.length === 0) return pathname === "/onboarding" ? <Outlet /> : <Navigate to="/onboarding" replace />;
   if (pathname === "/onboarding") return <Outlet />; // creating an additional workspace
   return (
@@ -57,6 +61,8 @@ const rootRoute = createRootRoute({ component: Root });
 const page = <const P extends string>(path: P, component: () => React.JSX.Element) =>
   createRoute({ getParentRoute: () => rootRoute, path, component });
 
+const settingsRoute = page("/settings", SettingsLayout);
+
 const routeTree = rootRoute.addChildren([
   page("/", Overview),
   page("/inbox", () => <Placeholder title="Inbox" milestone="M2" description="Issues from Slack, email and chat in one queue, with SLA timers and AI drafts." />),
@@ -65,11 +71,20 @@ const routeTree = rootRoute.addChildren([
   page("/ai", () => <Placeholder title="AI agent" milestone="M5" description="Copilot drafts, shadow mode, backtests and spend limits." />),
   page("/knowledge", () => <Placeholder title="Knowledge" milestone="M5" description="Docs and resolved issues the AI answers from." />),
   page("/analytics", () => <Placeholder title="Analytics" milestone="M4" description="Volume, response times, SLA compliance and AI outcomes." />),
-  page("/settings", () => <Placeholder title="Settings" milestone="M1" description="Members, roles, channels, business hours and integrations." />),
-  page("/sign-in", SignIn),
+  settingsRoute.addChildren([
+    createRoute({ getParentRoute: () => settingsRoute, path: "/", component: () => <Navigate to="/settings/members" replace /> }),
+    createRoute({ getParentRoute: () => settingsRoute, path: "members", component: Members }),
+  ]),
+  createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/sign-in",
+    component: SignIn,
+    validateSearch: (s: Record<string, unknown>): { email?: string } => (typeof s.email === "string" ? { email: s.email.slice(0, 254) } : {}),
+  }),
+  page("/invite", Invite),
   page("/auth/verify", VerifyLink),
   page("/onboarding", Onboarding),
-  page("/more", () => <Placeholder title="More" milestone="M2" description="AI agent, knowledge, analytics and settings on phones." />),
+  page("/more", More),
 ]);
 
 export function createAppRouter(history?: RouterHistory) {

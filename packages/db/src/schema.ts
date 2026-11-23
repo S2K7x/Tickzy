@@ -1,4 +1,6 @@
-import { bigserial, bigint, inet, jsonb, pgTable, primaryKey, text, timestamp } from "drizzle-orm/pg-core";
+import { bigserial, bigint, customType, inet, jsonb, pgTable, primaryKey, text, timestamp } from "drizzle-orm/pg-core";
+
+const customBytea = customType<{ data: Buffer }>({ dataType: () => "bytea" });
 
 // Mirrors migrations/*.sql (the SQL files are the source of truth; ADR-010 amendment).
 const ts = (name: string) => timestamp(name, { withTimezone: true, mode: "date" });
@@ -64,4 +66,19 @@ export const outbox = pgTable("outbox", {
   payload: jsonb("payload").$type<Record<string, unknown>>().notNull(),
   createdAt: ts("created_at").notNull().defaultNow(),
   publishedAt: ts("published_at"),
+});
+
+export const invitations = pgTable("invitations", {
+  id: text("id").primaryKey(),
+  workspaceId: text("workspace_id").notNull(),
+  email: text("email").notNull(),
+  role: text("role", { enum: ROLES }).notNull(),
+  tokenId: text("token_id").notNull(),
+  secretHash: customBytea("secret_hash").notNull(),
+  invitedBy: text("invited_by"),
+  createdAt: ts("created_at").notNull().defaultNow(),
+  expiresAt: ts("expires_at").notNull(),
+  acceptedAt: ts("accepted_at"),
+  acceptedBy: text("accepted_by"),
+  revokedAt: ts("revoked_at"),
 });

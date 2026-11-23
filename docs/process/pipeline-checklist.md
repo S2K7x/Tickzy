@@ -1,6 +1,6 @@
 # Pipeline Checklist — Tickzy (live status)
 
-- **Last updated:** 2026-11-23 (T-105). Legend: ✅ done · 🟡 in progress / partial · ⬜ not started. Each item links to its evidence.
+- **Last updated:** 2026-11-23 (T-102). Legend: ✅ done · 🟡 in progress / partial · ⬜ not started. Each item links to its evidence.
 - Rules: update this file whenever an item changes status; an item is ✅ only with linked evidence (document, test, or deployment).
 - Process definition: [`development-pipeline.md`](development-pipeline.md).
 
@@ -40,16 +40,16 @@
 
 ## 05 · Build (3/6)
 - ✅ Repository and project setup — monorepo, CI file (`CURRENT-STATE.md`)
-- 🟡 Implement frontend and backend — M0 done; M1 in progress (T-101 auth core ✅, T-104 ✅, T-105 web sign-in/onboarding ✅)
-- 🟡 Implement database and integrations — migrations 0001–0002 with RLS ✅; integrations from M3
+- 🟡 Implement frontend and backend — M0 done; M1 in progress (T-101 auth core ✅, T-102 invitations & members ✅, T-104 ✅, T-105 web sign-in/onboarding ✅)
+- 🟡 Implement database and integrations — migrations 0001–0004 with RLS ✅; integrations from M3
 - 🟡 Code reviews — automated gates + self-review in place; **CI not yet observed green on GitHub**
 - ✅ Documentation kept current — `CURRENT-STATE.md`, ADRs, checklists
 - ✅ Feature flags / trunk-based workflow defined — `engineering-workflow.md` (flags implemented when first needed)
 
 ## 06 · QA & security (1/7)
-- ✅ Unit and integration tests — 94 tests incl. RLS isolation and auth security suites
-- 🟡 End-to-end testing — sign-in/onboarding journey against the real stack ✅ (`apps/web/scripts/e2e-auth.cjs`); not yet in CI; support journeys from M3
-- 🟡 Accessibility & responsive checks — signed-in shell 8/8 (390/768/1024/1280 × light/dark) + all auth pages, 0 axe violations; repeat per new screen
+- ✅ Unit and integration tests — 122 tests incl. RLS isolation, auth security and invitation/membership authorization suites
+- 🟡 End-to-end testing — sign-in/onboarding (`apps/web/scripts/e2e-auth.cjs`, 18/18) and two-user invite/members journey (`e2e-invite.cjs`, 23/23) against the real stack ✅; not yet in CI; support journeys from M3
+- 🟡 Accessibility & responsive checks — signed-in shell 8/8 (390/768/1024/1280 × light/dark) + all auth pages + Members (light/dark, 1280/390) + invite page, 0 axe violations; repeat per new screen
 - ⬜ AI evaluation sets & regression gates — from M5
 - ⬜ Security testing (SAST, dependency/secret scanning in CI, authz tests, ASVS L2, pentest)
 - ⬜ Performance / load testing — before design partners
@@ -83,7 +83,7 @@
 - ⬜ Deprecation policy and customer data export path defined (export also needed for GDPR — planned in database.md §4)
 
 ## Recommended next steps (in priority order)
-1. Keep building M1 (T-101 authentication) — the delivery track.
+1. Finish M1 (T-103 API tokens, T-106 rate limiting, T-101b Google/Microsoft sign-in) — the delivery track.
 2. In parallel on the discovery track: write the interview guide and start design-partner conversations (Stage 1 gate is still open; the MVP scope is a hypothesis until then).
 3. Before M3 (channels): written threat model for ingestion/auth/AI, and the Slack ToS legal review.
 4. Before first deploy: staging + preview environments, Sentry/OTel, SLO draft, backup/restore drill.

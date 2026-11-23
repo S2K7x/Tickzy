@@ -1,8 +1,8 @@
 import { sql } from "drizzle-orm";
 import { AppError, newId } from "@tickzy/shared";
 import { withUser, type Db } from "@tickzy/db";
-import type { EmailTransport } from "./email.ts";
-import { constantTimeEqual, newToken, parseToken, sha256 } from "./tokens.ts";
+import type { EmailTransport } from "../../lib/email.ts";
+import { constantTimeEqual, newToken, parseToken, sha256 } from "../../lib/tokens.ts";
 
 export const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 export const SESSION_RENEW_WITHIN_MS = 15 * 24 * 60 * 60 * 1000;

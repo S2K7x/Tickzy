@@ -1,9 +1,9 @@
 # CURRENT STATE — Tickzy
 
-_Last updated: 2026-11-23 (session 3)._ Read this first, then `docs/blueprint/backlog.md`. Process: `docs/process/development-pipeline.md` (we are in **Stage 5 · Build**; status per stage in `docs/process/pipeline-checklist.md`).
+_Last updated: 2026-11-23 (session 4)._ Read this first, then `docs/blueprint/backlog.md`. Process: `docs/process/development-pipeline.md` (we are in **Stage 5 · Build**; status per stage in `docs/process/pipeline-checklist.md`).
 
 ## Phase
-Implementation: **M0 · Foundations complete** (except CI verification on GitHub); **M1 · Identity & access** in progress (T-104, T-101, T-105 done). Planning docs are complete and approved:
+Implementation: **M0 · Foundations complete** (except CI verification on GitHub); **M1 · Identity & access** in progress (T-104, T-101, T-105, T-102 done). Planning docs are complete and approved:
 strategy `docs/strategy/product-strategy.md` · architecture `docs/architecture/` · UX `docs/ux/ux-spec.md` + design canvas (https://claude.ai/artifact/BvvyCE24er29B2iYNqLVxg, source `design/canvas/`) · blueprint `docs/blueprint/`.
 
 ## Done (verified by tests)
@@ -26,18 +26,21 @@ strategy `docs/strategy/product-strategy.md` · architecture `docs/architecture/
 
 | T-105 | Web sign-in & onboarding: API client (error envelope), session query, route guard (signed-out → /sign-in, no workspace → /onboarding, API down → retry screen), sign-in page (no enumeration), verify page (token from URL fragment, POSTed once even across remounts, removed from URL), create-workspace page (slug/prefix derived, field errors), user/workspace in top bar, sign-out; "New issue" disabled until M2 | 13 new jsdom tests (19 web) + **real-stack E2E** `apps/web/scripts/e2e-auth.cjs`: 18/18 (redirect, link from server email, token stripped, httpOnly/Lax cookie unreadable from JS, onboarding, reload, dark mode, sign-out kills server session, axe on every page, 390 & 1280) + `verify-responsive.cjs` now signed in: 8/8 (390/768/1024/1280 × light/dark) |
 
-Bugs found by verification and fixed in this task: verify page re-POSTed an empty token on remount; top bar overflowed at 768 px once the user block existed; onboarding showed prefix "XX" before typing.
+| T-102 | Invitations & members (FR-1.3): migration `0004_invitations.sql` (tenant RLS; `invitation_preview()` / `accept_invitation()` SECURITY DEFINER — token is the capability, accept requires the invited email, single-use, 7-day expiry, upsert/reactivate membership + audit + outbox `member.joined`); `modules/members` API (list/patch/delete members with last-active-admin guard, invite / re-invite rotates token / revoke, public preview, accept), all admin actions audited; shared `lib/email.ts` + `lib/tokens.ts` (moved from auth, no duplication). Web: Settings layout + **Members & roles** (invite form, role select with free-seat labels, deactivate/reactivate, remove with confirm, pending invites with resend/revoke; read-only for non-admins), `/invite` landing page (preview; token moved from URL fragment to storage so it survives the magic-link round trip; wrong-account and used/expired/revoked states), sign-in prefilled with the invited email, shared current-workspace store, phone **More** tab now lists AI/Knowledge/Analytics/Settings, Overview "Invite your team" links to Members | 18 server integration tests (invite email + link, preview, token rotation, wrong user 403, unauthenticated 401, accept → role/audit/outbox, single use, already-member 409, revoked/expired, permissions 403/404, validation, tenant isolation, list/role change/last-admin guard/deactivate/remove/re-invite, cross-tenant member edits 404) + 10 jsdom tests + **real-stack E2E** `apps/web/scripts/e2e-invite.cjs`: 23/23 (two users, 1280 + 390, light + dark, axe 0 violations on every page) |
 
-Total: **94 tests passing** locally (`pnpm test`): shared 4 · db 13 · server 58 · web 19 — plus the two real-browser scripts above.
+Bugs found by verification and fixed in T-105: verify page re-POSTed an empty token on remount; top bar overflowed at 768 px once the user block existed; onboarding showed prefix "XX" before typing.
+
+Total: **122 tests passing** locally (`pnpm test`): shared 4 · db 13 · server 76 · web 29 — plus the three real-browser scripts above (all re-run green after T-102).
 
 ## Written but NOT yet verified
 - T-011 CI workflow `.github/workflows/ci.yml` (Postgres 17 service). Not run on GitHub yet — first push/PR will tell.
 
 ## Not started (next, in order)
-1. **T-102** invitations & members (API + Settings › Members UI) — unlocks onboarding step "Invite your team".
-2. **T-103** API tokens · **T-106** rate limiting · **T-101b** Google/Microsoft sign-in → completes M1.
-3. Founder review required for T-101 (auth code — engineering-workflow §5).
+1. **T-103** API tokens (Settings › API tokens; `developers:manage`) · **T-106** rate limiting · **T-101b** Google/Microsoft sign-in → completes M1.
+2. Founder review required for T-101 and T-102 (auth / access-control code — engineering-workflow §5).
 3. Then M2 (accounts, issues, inbox).
+
+Known limitations (T-102): invitation emails go through the console transport until Postmark (T-303); no seat-limit/billing check on invite (billing is E29); an expired pending invitation stays listed (marked "Expired") until resent or revoked.
 
 ## Notes for the next session
 - Real-stack browser checks (need dev DB migrated):
@@ -46,6 +49,7 @@ Total: **94 tests passing** locally (`pnpm test`): shared 4 · db 13 · server 5
   (cd apps/server && DATABASE_URL=postgres://tickzy_app:tickzy_app@localhost:5432/tickzy_dev COOKIE_SECURE=false APP_ORIGIN=http://localhost:4173 node src/main.ts --role=all > /tmp/server.log 2>&1 &)
   (cd apps/web && npx vite preview --port 4173 &)
   node apps/web/scripts/e2e-auth.cjs /tmp/server.log /tmp/shots
+  node apps/web/scripts/e2e-invite.cjs /tmp/server.log /tmp/shots
   node apps/web/scripts/verify-responsive.cjs apps/web /tmp/shots /tmp/server.log
   ```
 - Run the full stack: migrate dev DB, then `cd apps/server && DATABASE_URL=… AUTH_DEV_MODE=true node src/main.ts --role=all` and `pnpm --filter @tickzy/web dev` (proxies `/v1` to :3000).

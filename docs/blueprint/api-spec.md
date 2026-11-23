@@ -16,7 +16,9 @@ Codes: `unauthenticated` 401, `forbidden` 403, `not_found` 404, `validation_fail
 | POST `/v1/workspaces` | create workspace (caller becomes admin) | authenticated user | M0 |
 | GET `/v1/workspaces/current` | current workspace | member | M0 |
 | PATCH `/v1/workspaces/current` | update name/prefix | `workspace:manage` | M0 |
-| GET `/v1/members` · POST `/v1/invitations` · PATCH/DELETE `/v1/members/{id}` | members | `members:manage` (list: member) | M1 |
+| GET `/v1/members` · PATCH/DELETE `/v1/members/{id}` (role, status; last-active-admin guard → 409) | members | `members:manage` (list: member) | M1 ✅ |
+| GET/POST `/v1/invitations` (re-inviting a pending email rotates the token) · DELETE `/v1/invitations/{id}` (revoke) | invitations | `members:manage` | M1 ✅ |
+| POST `/v1/invitations/preview` `{token}` · POST `/v1/invitations/accept` `{token}` | invite landing page: preview is public (token = capability); accept requires sign-in with the invited email (403 otherwise, 404 when invalid/used/revoked/expired) | public · authenticated user | M1 ✅ |
 | GET/POST `/v1/api-tokens` · DELETE `/v1/api-tokens/{id}` | tokens | `developers:manage` | M1 |
 | GET `/v1/audit-log` | audit | `audit:read` | M0/M1 |
 | GET/POST `/v1/accounts` · GET/PATCH/DELETE `/v1/accounts/{id}` | accounts | read: member; write: `accounts:write` | M2 |

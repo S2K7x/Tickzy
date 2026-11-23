@@ -1,8 +1,10 @@
+import { Link } from "@tanstack/react-router";
+
 /** Overview for a new workspace: the onboarding checklist from ux-spec §3 S11 (metrics arrive in M4). */
-const STEPS = [
+const STEPS: { title: string; detail: string; milestone: string; to?: "/settings/members" }[] = [
   { title: "Connect Slack", detail: "Pick your customer channels and a triage channel.", milestone: "M3" },
   { title: "Connect email", detail: "Forward your support address to Tickzy.", milestone: "M3" },
-  { title: "Invite your team", detail: "Agents are paid seats; collaborators are free.", milestone: "M1" },
+  { title: "Invite your team", detail: "Agents are paid seats; collaborators are free.", milestone: "M1", to: "/settings/members" as const },
   { title: "Set business hours and SLAs", detail: "Start from a template and preview it on recent issues.", milestone: "M4" },
 ];
 
@@ -20,7 +22,11 @@ export function Overview() {
             <div className="flex flex-col gap-1">
               <h2 className="m-0 text-[15px] font-semibold">{s.title}</h2>
               <p className="m-0 text-sm text-muted">{s.detail}</p>
-              <span className="text-xs text-muted">Available in {s.milestone}</span>
+              {s.to ? (
+                <Link to={s.to} className="text-sm font-semibold text-accent-fg no-underline">Invite people →</Link>
+              ) : (
+                <span className="text-xs text-muted">Available in {s.milestone}</span>
+              )}
             </div>
           </li>
         ))}

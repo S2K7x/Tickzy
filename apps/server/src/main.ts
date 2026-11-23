@@ -3,7 +3,7 @@ import { loadConfig } from "./config.ts";
 import { buildApp } from "./app.ts";
 import { createPgBossQueue } from "./jobs/queue.ts";
 import { startWorker, type Worker } from "./worker.ts";
-import { ConsoleEmailTransport } from "./modules/auth/email.ts";
+import { ConsoleEmailTransport } from "./lib/email.ts";
 
 // Process roles (architecture §3): `api`, `worker`, or `all` (solo-stage default: one process runs both).
 const roleArg = process.argv.find((a) => a.startsWith("--role="))?.slice("--role=".length) ?? process.env.TICKZY_ROLE ?? "all";

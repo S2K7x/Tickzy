@@ -3,6 +3,7 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { api } from "../lib/api.ts";
 import { SESSION_KEY } from "../lib/session.ts";
+import { pendingInviteToken } from "../lib/invite.ts";
 import { AuthLayout } from "./AuthLayout.tsx";
 
 // One verification per page load. The page can remount while the session refetches (and under StrictMode);
@@ -34,7 +35,7 @@ export function VerifyLink() {
       .then(async () => {
         if (!active) return;
         await qc.invalidateQueries({ queryKey: SESSION_KEY });
-        await navigate({ to: "/" });
+        await navigate({ to: pendingInviteToken() ? "/invite" : "/" }); // finish accepting an invitation first
       })
       .catch((err: Error) => {
         if (active) setError(err.message);

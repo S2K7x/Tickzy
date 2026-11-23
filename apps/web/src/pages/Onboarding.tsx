@@ -2,7 +2,7 @@ import { useState, type FormEvent } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { api, ApiError, type Workspace } from "../lib/api.ts";
-import { SESSION_KEY } from "../lib/session.ts";
+import { rememberWorkspace, SESSION_KEY } from "../lib/session.ts";
 import { AuthLayout, inputClass, primaryButtonClass } from "./AuthLayout.tsx";
 
 export function slugify(name: string): string {
@@ -35,11 +35,7 @@ export function Onboarding() {
     setBusy(true);
     try {
       const ws = await api<Workspace>("/v1/workspaces", { method: "POST", body: { name: name.trim(), slug: effSlug, issue_prefix: effPrefix } });
-      try {
-        localStorage.setItem("tickzy.workspace", ws.id);
-      } catch {
-        /* ignore */
-      }
+      rememberWorkspace(ws.id);
       await qc.invalidateQueries({ queryKey: SESSION_KEY });
       await navigate({ to: "/" });
     } catch (err) {

@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useCallback, useState } from "react";
+import { useCallback, useSyncExternalStore } from "react";
 import { api, ApiError, type Session } from "./api.ts";
 
 export const SESSION_KEY = ["session"] as const;
@@ -21,28 +21,39 @@ export function useSession() {
   });
 }
 
+// The chosen workspace is shared by every component (shell, pages) and persisted per browser.
+const listeners = new Set<() => void>();
+let memoryWorkspace: string | null = null;
+
 function readStoredWorkspace(): string | null {
   try {
     return localStorage.getItem(WORKSPACE_KEY);
   } catch {
-    return null;
+    return memoryWorkspace;
   }
+}
+
+/** Remember the workspace to open (after onboarding, accepting an invite or switching). */
+export function rememberWorkspace(id: string): void {
+  try {
+    localStorage.setItem(WORKSPACE_KEY, id);
+  } catch {
+    memoryWorkspace = id; // storage blocked: keep it for this page load
+  }
+  for (const l of listeners) l();
+}
+
+function subscribe(listener: () => void) {
+  listeners.add(listener);
+  return () => listeners.delete(listener);
 }
 
 /** Current workspace: the remembered one if the user still belongs to it, otherwise the first. */
 export function useCurrentWorkspace(session: Session | null | undefined) {
-  const [stored, setStored] = useState<string | null>(readStoredWorkspace);
+  const stored = useSyncExternalStore(subscribe, readStoredWorkspace, () => null);
   const workspaces = session?.workspaces ?? [];
   const current = workspaces.find((w) => w.workspace_id === stored) ?? workspaces[0] ?? null;
-  const select = useCallback((id: string) => {
-    setStored(id);
-    try {
-      localStorage.setItem(WORKSPACE_KEY, id);
-    } catch {
-      /* not persisted */
-    }
-  }, []);
-  return { current, workspaces, select };
+  return { current, workspaces, select: rememberWorkspace };
 }
 
 export function useSignOut() {

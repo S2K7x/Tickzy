@@ -6,13 +6,14 @@ import { sql } from "drizzle-orm";
 import { newId } from "@tickzy/shared";
 import type { Database } from "@tickzy/db";
 import { allowedOrigins, type Config } from "./config.ts";
-import type { EmailTransport } from "./modules/auth/email.ts";
+import type { EmailTransport } from "./lib/email.ts";
 import { createAuthService } from "./modules/auth/service.ts";
 import { authRoutes } from "./modules/auth/routes.ts";
 import { registerErrorHandling } from "./http/errors.ts";
 import { registerAuth } from "./http/auth.ts";
 import { workspaceRoutes } from "./modules/workspaces/routes.ts";
 import { auditRoutes } from "./modules/audit/routes.ts";
+import { memberRoutes } from "./modules/members/routes.ts";
 
 export interface AppDeps {
   config: Pick<Config, "LOG_LEVEL" | "AUTH_DEV_MODE" | "APP_ORIGIN" | "ALLOWED_ORIGINS" | "COOKIE_SECURE">;
@@ -62,5 +63,6 @@ export async function buildApp({ config, database, email }: AppDeps): Promise<Fa
   await app.register(authRoutes(database.db, auth, { cookieSecure: config.COOKIE_SECURE }));
   await app.register(workspaceRoutes(database.db));
   await app.register(auditRoutes(database.db));
+  await app.register(memberRoutes(database.db, { email, appOrigin: new URL(config.APP_ORIGIN).origin }));
   return app;
 }
