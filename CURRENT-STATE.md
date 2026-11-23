@@ -3,7 +3,7 @@
 _Last updated: 2026-11-23 (session 5)._ Read this first, then `docs/blueprint/backlog.md`. Process: `docs/process/development-pipeline.md` (we are in **Stage 5 · Build**; status per stage in `docs/process/pipeline-checklist.md`).
 
 ## Phase
-Implementation: **M0 · Foundations complete** (CI green on GitHub since 2026-11-23); **M1 · Identity & access complete** (T-101, T-101b, T-102, T-103, T-104, T-105, T-106). **M2 · Core inbox** in progress (T-201, T-202, T-203 done). Planning docs are complete and approved:
+Implementation: **M0 · Foundations complete** (CI green on GitHub since 2026-11-23); **M1 · Identity & access complete** (T-101, T-101b, T-102, T-103, T-104, T-105, T-106). **M2 · Core inbox** in progress (T-201–T-204 done). Planning docs are complete and approved:
 strategy `docs/strategy/product-strategy.md` · architecture `docs/architecture/` · UX `docs/ux/ux-spec.md` + design canvas (https://claude.ai/artifact/BvvyCE24er29B2iYNqLVxg, source `design/canvas/`) · blueprint `docs/blueprint/`.
 
 ## Done (verified by tests)
@@ -40,9 +40,11 @@ strategy `docs/strategy/product-strategy.md` · architecture `docs/architecture/
 
 | T-203 | Accounts & contacts API (FR-4.1/4.2): `modules/customers` — accounts CRUD (normalised domains; public email providers refused; one account per domain; owner must be an active member; custom fields validated against definitions; soft delete releases domains and unassigns contacts, issues keep history; contact/open-issue counts; name-ordered keyset pagination; name/domain search with literal wildcards), contacts CRUD + identities, **identity resolution service** `resolveContact()` for ingestion (existing identity → endpoint default account → company email domain; race-safe; fills a missing automatic account later), migration `0009` `contacts.account_source` (manual choices audited and never overridden; `auto_account` hands back), `lib/custom-fields.ts` validator, `@tickzy/shared` email-domain helpers | 18 integration tests (create/normalise/audit, invalid/public/taken domains + invalid owners, custom fields, exact keyset paging + search, counts, role/token permissions + isolation, auto/public/manual mapping, domain added later, override survives automation, identities link/unlink/conflict, account delete semantics, resolution: recognise, precedence, fill-later vs manual, 8 concurrent first messages → 1 contact, per-workspace, delete frees identity) + 3 custom-field + 2 domain unit tests + real-process curl smoke |
 
+| T-204 | Issues API (`modules/issues/{service,routes}.ts`): create (channel `ui`/`api` by principal; assignee/team/account/requester/labels/custom validated with 422s; assignees must be able to work issues), list (filters: status/status_id/assignee me·none·id/team/account/priority/channel/label/q title-or-key; sorts updated·newest·oldest·priority; generic mixed-direction keyset `lib/keyset.ts` with exact cursor values), get by id/key/number, PATCH (status via lifecycle rules, optional `version` → 409, labels replace-set, one version bump per update, events `issue.updated` with from/to changes, `issue.assigned`, `issue.labels_changed`, outbox `issue.updated`), timeline (messages incl. internal notes + events, chronological) | 11 integration tests (create/read/key forms, 7 validation cases, role + token scopes, change events and version, no-op update, lifecycle via PATCH incl. closed terminal + stale version, every filter, **exact keyset paging for all 4 sorts**, isolation, timeline) + OpenAPI contract assertions + real-process curl smoke. **Bug found by the paging test:** typed comparisons mapped the cursor's exact timestamp text through Drizzle's Date mapper → 500; keyset now uses plain bound parameters |
+
 Bugs found by verification and fixed in T-105: verify page re-POSTed an empty token on remount; top bar overflowed at 768 px once the user block existed; onboarding showed prefix "XX" before typing.
 
-Total: **243 tests passing** locally (`pnpm test`): shared 36 · db 25 · server 143 · web 39 — plus five real-browser scripts (last run green after T-101b; shared helpers in `apps/web/scripts/e2e-lib.cjs`). CI (lint, typecheck, tests with Postgres) green on GitHub.
+Total: **254 tests passing** locally (`pnpm test`): shared 36 · db 25 · server 154 · web 39 — plus five real-browser scripts (last run green after T-101b; shared helpers in `apps/web/scripts/e2e-lib.cjs`). CI (lint, typecheck, tests with Postgres) green on GitHub.
 
 ## Written but NOT yet verified
 - Google/Microsoft sign-in against the **real** providers: needs OAuth apps registered by the founder (`docs/operations/sign-in-providers.md`); `xms_edov` availability on the Entra app is an open item.
@@ -50,7 +52,7 @@ Total: **243 tests passing** locally (`pnpm test`): shared 36 · db 25 · server
 T-011 CI is now verified: first GitHub Actions run (push to `main`, run #1) green on 2026-11-23.
 
 ## Not started (next, in order)
-1. **T-204** (issues API: create, list with filters/sort/keyset, get by key `ACME-12`, patch with optimistic version, labels, assignee/team/account, timeline), then T-205 (messages API: reply/note with delivery abstraction), T-206 (whose-turn automation wiring `applyMessage` into message creation).
+1. **T-205** (messages API: `POST /v1/issues/{ref}/messages` reply/note with a delivery abstraction — no channel yet → `api`/`ui` source; internal notes never delivered), then **T-206** (whose-turn automation: wire `applyMessage` into message creation, reopen rules, `new_issue` for closed), T-207 (search), T-209 (web inbox).
 2. Founder actions: review the auth / access-control / abuse-protection code (T-101, T-101b, T-102, T-103, T-106 — engineering-workflow §5); register Google/Microsoft OAuth apps (`docs/operations/sign-in-providers.md`).
 3. Discovery track (Stage 1 gate still open): interview guide and design-partner conversations.
 

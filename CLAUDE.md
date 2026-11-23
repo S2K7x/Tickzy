@@ -8,7 +8,7 @@ All work follows the **Tickzy Development Pipeline** — read it before starting
 - [`docs/process/pipeline-checklist.md`](docs/process/pipeline-checklist.md) — live status of every stage item. Keep it accurate.
 - [`docs/process/engineering-workflow.md`](docs/process/engineering-workflow.md) — the per-task loop, branching, review rules, Definition of Ready and **Definition of Done**.
 
-**Current position:** Stage 5 (Build), milestone **M1 · Identity & access**. Stage 1 user research / design-partner validation is still open on the discovery track — treat MVP scope as a validated-by-research hypothesis, not as customer-confirmed.
+**Current position:** Stage 5 (Build), milestone **M2 · Core inbox** (M0 and M1 complete). Stage 1 user research / design-partner validation is still open on the discovery track — treat MVP scope as a validated-by-research hypothesis, not as customer-confirmed.
 
 ## Start of every session
 1. Read [`CURRENT-STATE.md`](CURRENT-STATE.md) (what is done, verified, next, blocked).

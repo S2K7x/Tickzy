@@ -21,7 +21,7 @@ Every strategy commitment must map to at least one requirement and task. ⬜ not
 | Module 8 Knowledge sources & hybrid retrieval | FR-8.1–8.2 | T-504, T-505 | ⬜ |
 | Module 9 Linear/Jira bidirectional | FR-9.1 | T-601, T-602 | ⬜ |
 | Module 10 Analytics with definitions | FR-10.1 | T-405, T-406 | ⬜ |
-| Module 11 API = product API, OpenAPI | FR-11.1 | T-005, T-012, all API tasks | 🟡 |
+| Module 11 API = product API, OpenAPI | FR-11.1 | T-005, T-012, T-103 (tokens), T-203 (accounts/contacts), T-204 (issues) ✅; messages T-205 | 🟡 |
 | Module 11 Typed signed webhooks | FR-11.2 | T-603 | ⬜ |
 | Responsive mobile + light/dark | NFR-5, NFR-6 | T-010 ✅, T-209, T-406 | 🟡 |
 | Slack ToS compliance (provenance, no training) | NFR-4 | T-202 (`source` column), T-310, legal review | ⬜ |

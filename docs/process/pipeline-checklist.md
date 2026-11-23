@@ -1,6 +1,6 @@
 # Pipeline Checklist — Tickzy (live status)
 
-- **Last updated:** 2026-11-23 (T-203). Legend: ✅ done · 🟡 in progress / partial · ⬜ not started. Each item links to its evidence.
+- **Last updated:** 2026-11-23 (T-204). Legend: ✅ done · 🟡 in progress / partial · ⬜ not started. Each item links to its evidence.
 - Rules: update this file whenever an item changes status; an item is ✅ only with linked evidence (document, test, or deployment).
 - Process definition: [`development-pipeline.md`](development-pipeline.md).
 

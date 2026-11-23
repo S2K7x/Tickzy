@@ -43,5 +43,12 @@ describe("http foundation", () => {
     expect(doc.openapi).toBe("3.1.0");
     expect(Object.keys(doc.paths)).toEqual(expect.arrayContaining(["/v1/workspaces", "/v1/workspaces/current", "/v1/me/workspaces"]));
     expect(doc.paths["/healthz"]).toBeUndefined();
+    // Contract (T-204): the issues API and its documented filters and sorts.
+    expect(Object.keys(doc.paths)).toEqual(expect.arrayContaining(["/v1/issues", "/v1/issues/{ref}", "/v1/issues/{ref}/timeline", "/v1/accounts", "/v1/contacts"]));
+    const listParams = (doc.paths["/v1/issues"].get.parameters as { name: string }[]).map((p) => p.name);
+    expect(listParams).toEqual(expect.arrayContaining(["status", "assignee", "team", "account", "priority", "channel", "label", "q", "sort", "cursor", "limit"]));
+    const sortParam = (doc.paths["/v1/issues"].get.parameters as { name: string; schema: { enum?: string[] } }[]).find((p) => p.name === "sort")!;
+    expect(sortParam.schema.enum).toEqual(["updated", "newest", "oldest", "priority"]);
+    expect(Object.keys(doc.paths["/v1/issues/{ref}"])).toEqual(expect.arrayContaining(["get", "patch"]));
   });
 });

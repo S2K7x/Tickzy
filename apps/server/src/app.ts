@@ -19,6 +19,7 @@ import { auditRoutes } from "./modules/audit/routes.ts";
 import { memberRoutes } from "./modules/members/routes.ts";
 import { apiTokenRoutes } from "./modules/api-tokens/routes.ts";
 import { customerRoutes } from "./modules/customers/routes.ts";
+import { issueRoutes } from "./modules/issues/routes.ts";
 import { createApiTokenService } from "./modules/api-tokens/service.ts";
 
 export interface AppDeps {
@@ -87,5 +88,6 @@ export async function buildApp({ config, database, email, rateLimitStore = new M
   await app.register(memberRoutes(database.db, { email, appOrigin: new URL(config.APP_ORIGIN).origin }));
   await app.register(apiTokenRoutes(database.db, apiTokens));
   await app.register(customerRoutes(database.db));
+  await app.register(issueRoutes(database.db));
   return app;
 }

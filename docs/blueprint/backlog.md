@@ -34,7 +34,7 @@
 | T-201 | P0 | M | T-004 | Schema: accounts, contacts, contact_identities, teams, statuses, labels, custom_field_defs | migrations + RLS | isolation suite extended ✅ done 2026-11-23 (migration 0007, ADR-025; 11 db tests + non-superuser migration test) |
 | T-202 | P0 | L | T-201 | Schema + domain: conversations, messages, issues, issue_events, attachments; issue number allocation | FR-3.1 lifecycle rules as pure functions | unit: state machine table; integration ✅ done 2026-11-23 (migration 0008; lifecycle in `@tickzy/shared`, 30 state-machine/timestamp tests; 12 integration tests) |
 | T-203 | P0 | M | T-202 | Accounts & contacts API + identity resolution service | FR-4.1, FR-4.2 | integration ✅ done 2026-11-23 (18 integration + 3 custom-field + 2 domain unit tests; Slack-team mapping arrives with T-301) |
-| T-204 | P0 | L | T-202 | Issues API (list filters/sort/keyset, get by key, patch, timeline) | api-spec §1 | contract + integration |
+| T-204 | P0 | L | T-202 | Issues API (list filters/sort/keyset, get by key, patch, timeline) | api-spec §1 | contract + integration ✅ done 2026-11-23 (11 integration + OpenAPI contract test; SLA sort with the SLA engine) |
 | T-205 | P0 | M | T-204 | Messages API (reply/note) with delivery abstraction (no channel yet → `api` source) | internal notes never delivered externally | integration |
 | T-206 | P0 | M | T-202 | Whose-turn status automation & reopen rules | FR-3.2 | unit + integration |
 | T-207 | P0 | M | T-204 | Search (tsvector + operators parser) | FR-3.8 | unit parser; integration; benchmark script |

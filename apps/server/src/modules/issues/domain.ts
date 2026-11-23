@@ -21,7 +21,10 @@ export async function defaultStatusId(tx: Tx, category: StatusCategory): Promise
   return row.id;
 }
 
-async function event(tx: Tx, workspaceId: string, issueId: string, type: string, actor: Actor | { type: "system" | "ai" | "contact"; id: string | null }, data: Record<string, unknown>) {
+export type EventActor = Actor | { type: "system" | "ai" | "contact"; id: string | null };
+
+/** Appends to the issue timeline (append-only table). */
+export async function recordEvent(tx: Tx, workspaceId: string, issueId: string, type: string, actor: EventActor, data: Record<string, unknown>) {
   await tx.insert(schema.issueEvents).values({ workspaceId, issueId, type, actorType: actor.type, actorId: actor.id, data });
 }
 
@@ -34,7 +37,7 @@ export interface CreateIssueInput {
   requesterContactId?: string | null | undefined;
 }
 
-export async function createIssue(tx: Tx, workspaceId: string, actor: Actor | { type: "system" | "ai" | "contact"; id: string | null }, input: CreateIssueInput): Promise<Issue> {
+export async function createIssue(tx: Tx, workspaceId: string, actor: EventActor, input: CreateIssueInput): Promise<Issue> {
   const category = input.category ?? "triage";
   const numberRes = await tx.execute(sql`SELECT next_issue_number() AS n`);
   const number = Number(numberRes.rows[0]?.n);
@@ -51,7 +54,7 @@ export async function createIssue(tx: Tx, workspaceId: string, actor: Actor | { 
     accountId: input.accountId ?? null,
     requesterContactId: input.requesterContactId ?? null,
   }).returning();
-  await event(tx, workspaceId, issue!.id, "issue.created", actor, { number, category, channel: input.channelKind });
+  await recordEvent(tx, workspaceId, issue!.id, "issue.created", actor, { number, category, channel: input.channelKind });
   await tx.insert(schema.outbox).values({ workspaceId, type: "issue.created", payload: { issue_id: issue!.id, number } });
   return issue!;
 }
@@ -96,7 +99,7 @@ export async function changeStatus(tx: Tx, workspaceId: string, actor: Actor, is
     updatedAt: now,
     version: issue.version + 1,
   }).where(eq(schema.issues.id, issueId)).returning();
-  await event(tx, workspaceId, issueId, "issue.status_changed", actor, {
+  await recordEvent(tx, workspaceId, issueId, "issue.status_changed", actor, {
     from: { category: issue.statusCategory, status_id: issue.statusId }, to: { category, status_id: statusId }, reason: "manual",
   });
   await tx.insert(schema.outbox).values({ workspaceId, type: "issue.updated", payload: { issue_id: issueId, fields: ["status"] } });
