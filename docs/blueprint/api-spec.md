@@ -28,7 +28,7 @@ Codes: `unauthenticated` 401, `forbidden` 403, `not_found` 404, `validation_fail
 | POST `/v1/issues` — `{title, priority?, category?, assignee_membership_id?, team_id?, account_id?, requester_contact_id?, product_area?, labels?: id[], custom?}`; channel = `ui` (user) or `api` (token) | create | `issues:write` | M2 ✅ |
 | GET/PATCH `/v1/issues/{id \| key \| number}` — PATCH also takes `status` (category) or `status_id`, and optional `version` (409 if changed meanwhile); assignee must be able to work issues (admin/agent); every change appends a timeline event | read / update | read: `issues:read`; write: `issues:write` | M2 ✅ |
 | GET `/v1/issues/{ref}/timeline` → `{data: ({kind:"message", message} \| {kind:"event", event})[], truncated}` chronological (capped at 1000) | messages + events | `issues:read` | M2 ✅ |
-| POST `/v1/issues/{id}/messages` | reply (`visibility: public`) or note (`internal`) | public: `issues:reply`; internal: `issues:note` | M2 |
+| POST `/v1/issues/{ref}/messages` `{body, visibility}` → Message (201). Reply goes into the issue's latest conversation; queued (`delivery_state: pending`) only when that channel has a delivery adapter; internal notes are never queued · POST `/v1/messages/{id}/retry` re-queues a `failed` public message (FR-2.4) | reply (`visibility: public`) or note (`internal`) | public: `issues:reply`; internal: `issues:note`; retry: `issues:reply` | M2 ✅ |
 | POST `/v1/issues/{id}/merge` · `/split` | merge/split | `issues:write` | M4 |
 | GET `/v1/search?q=` | global search | `issues:read` | M2 |
 | GET/POST `/v1/views` | saved views | member | M2 |

@@ -14,7 +14,7 @@ export const testConfig = {
 };
 
 export async function setupTestApp() {
-  const { app: database, owner } = await resetTestDatabase();
+  const { app: database, owner, appUrl } = await resetTestDatabase();
   const email = new MemoryEmailTransport();
   const app = await buildApp({ config: testConfig, database, email });
   return {
@@ -23,6 +23,8 @@ export async function setupTestApp() {
     email,
     /** Superuser-ish owner connection for arranging states the app role may not create (e.g. expiry). */
     owner: owner as pg.Client,
+    /** Connection string of the runtime role (for starting a real job queue in tests). */
+    appUrl,
     async createUser(email: string): Promise<string> {
       const id = newId("user");
       const res = await database.db.execute(sql`SELECT upsert_user(${id}, ${email}, ${email}) AS id`);

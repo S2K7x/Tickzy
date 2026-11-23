@@ -25,6 +25,9 @@ export interface JobContext<T> {
 
 export type JobHandler<T> = (job: JobContext<T>) => Promise<void>;
 
+/** Retries per job after the first attempt (exponential backoff from 5 s). Consumers use it to detect the final attempt. */
+export const QUEUE_RETRY_LIMIT = 5;
+
 /** The only queue API the rest of the code base may use (ADR-007): pg-boss stays swappable. */
 export interface JobQueue {
   start(): Promise<void>;
@@ -48,7 +51,7 @@ export function createPgBossQueue(connectionString: string): JobQueue {
     },
     async ensureQueue(name) {
       if (created.has(name)) return;
-      await boss.createQueue(name, { retryLimit: 5, retryDelay: 5, retryBackoff: true });
+      await boss.createQueue(name, { retryLimit: QUEUE_RETRY_LIMIT, retryDelay: 5, retryBackoff: true });
       created.add(name);
     },
     async send(queue, data, opts = {}) {

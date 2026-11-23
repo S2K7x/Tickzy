@@ -57,7 +57,7 @@ async function workspacePrefix(tx: Tx): Promise<string> {
 }
 
 /** Accepts `iss_…`, `ACME-12` (the workspace's prefix, any case) or `12`. */
-async function resolveIssueRef(tx: Tx, ref: string): Promise<Issue> {
+export async function resolveIssueRef(tx: Tx, ref: string): Promise<Issue> {
   let where: SQL;
   if (ref.startsWith("iss_")) where = eq(schema.issues.id, ref);
   else {

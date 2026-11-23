@@ -20,6 +20,8 @@ import { memberRoutes } from "./modules/members/routes.ts";
 import { apiTokenRoutes } from "./modules/api-tokens/routes.ts";
 import { customerRoutes } from "./modules/customers/routes.ts";
 import { issueRoutes } from "./modules/issues/routes.ts";
+import { messageRoutes } from "./modules/messages/routes.ts";
+import { createDeliveryRegistry, type DeliveryRegistry } from "./modules/messages/delivery.ts";
 import { createApiTokenService } from "./modules/api-tokens/service.ts";
 
 export interface AppDeps {
@@ -28,10 +30,12 @@ export interface AppDeps {
   database: Database;
   email: EmailTransport;
   rateLimitStore?: RateLimitStore;
+  /** Outbound channel adapters (ADR-012); none until the first channel ships (M3). */
+  channels?: DeliveryRegistry;
   now?: () => number;
 }
 
-export async function buildApp({ config, database, email, rateLimitStore = new MemoryRateLimitStore(), now }: AppDeps): Promise<FastifyInstance> {
+export async function buildApp({ config, database, email, rateLimitStore = new MemoryRateLimitStore(), now, channels = createDeliveryRegistry() }: AppDeps): Promise<FastifyInstance> {
   const app = Fastify({
     logger: config.LOG_LEVEL === "silent" ? false : { level: config.LOG_LEVEL, redact: ["req.headers.authorization", "req.headers.cookie"] },
     genReqId: () => newId("request"),
@@ -89,5 +93,6 @@ export async function buildApp({ config, database, email, rateLimitStore = new M
   await app.register(apiTokenRoutes(database.db, apiTokens));
   await app.register(customerRoutes(database.db));
   await app.register(issueRoutes(database.db));
+  await app.register(messageRoutes(database.db, channels));
   return app;
 }
