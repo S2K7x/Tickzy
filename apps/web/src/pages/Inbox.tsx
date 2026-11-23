@@ -10,8 +10,10 @@ import {
 import { Avatar, ChannelBadge, PriorityDot, StatusChip } from "../components/issue-ui.tsx";
 import { btn, segmented } from "../components/ui.ts";
 import { useIssuePresence, type Viewer } from "../lib/realtime.ts";
+import { useCreateLabel, useLabels, useTeams } from "../lib/taxonomy.ts";
+import { activeFilterCount, BulkBar, BulkSummary, FILTER_KEYS, FilterChips, FilterPanel, type QueueFilters } from "./inbox-tools.tsx";
 
-export interface InboxSearch { view?: ViewId; sort?: SortId; issue?: string; q?: string }
+export interface InboxSearch extends QueueFilters { view?: ViewId; sort?: SortId; issue?: string; q?: string }
 
 const isTyping = (t: EventTarget | null) => t instanceof HTMLElement && (t.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(t.tagName));
 
@@ -26,13 +28,23 @@ export function Inbox({ defaultView = "open" }: { defaultView?: ViewId }) {
   const sort = search.sort ?? "updated";
   const selected = search.issue ?? null;
   const q = search.q?.trim() || undefined;
-  const list = useIssueList(ws, view, sort, { q });
+  const filters: QueueFilters = Object.fromEntries(FILTER_KEYS.filter((k) => search[k]).map((k) => [k, search[k]]));
+  const list = useIssueList(ws, view, sort, { q, ...filters });
   const stats = useIssueStats(ws);
   const issues = useMemo(() => list.data?.pages.flatMap((p) => p.data) ?? [], [list.data]);
   const composerRef = useRef<ComposerHandle>(null);
 
-  const go = (patch: Partial<InboxSearch>) => void navigate({ to: "/inbox", search: { view, sort, ...(q ? { q } : {}), ...(selected ? { issue: selected } : {}), ...patch } as never });
+  const go = (patch: Partial<InboxSearch>) => void navigate({ to: "/inbox", search: { view, sort, ...filters, ...(q ? { q } : {}), ...(selected ? { issue: selected } : {}), ...patch } as never });
   const open = (key: string | undefined) => go({ issue: key });
+  const setFilters = (f: QueueFilters) => go({ ...Object.fromEntries(FILTER_KEYS.map((k) => [k, f[k]])) });
+  const [showFilters, setShowFilters] = useState(false);
+
+  // Multi-select for bulk actions (FR-3.10). Cleared whenever the list itself changes (view, filters, search).
+  const [checked, setChecked] = useState<string[]>([]);
+  const [bulkSummary, setBulkSummary] = useState<{ ok: number; failed: { key: string; message: string }[] } | null>(null);
+  const listKey = JSON.stringify([view, sort, q, filters]);
+  useEffect(() => { setChecked([]); setBulkSummary(null); }, [listKey]);
+  const toggleChecked = (id: string) => { setBulkSummary(null); setChecked((c) => (c.includes(id) ? c.filter((x) => x !== id) : [...c, id])); };
 
   // Keyboard (ux-spec §2.5): j/k move, r reply, n note, e resolve, Esc back.
   const resolveRef = useRef<() => void>(() => undefined);
@@ -49,6 +61,11 @@ export function Inbox({ defaultView = "open" }: { defaultView?: ViewId }) {
       } else if (selected && e.key === "e") {
         e.preventDefault();
         resolveRef.current();
+      } else if (e.key === "x" && idx >= 0) {
+        e.preventDefault();
+        toggleChecked(issues[idx]!.id);
+      } else if (e.key === "Escape" && checked.length && !selected) {
+        setChecked([]);
       } else if (e.key === "Escape" && selected) {
         open(undefined);
       }
@@ -65,6 +82,10 @@ export function Inbox({ defaultView = "open" }: { defaultView?: ViewId }) {
         <div className="flex flex-col gap-2 border-b border-line px-4 pb-3 pt-4">
           <div className="flex items-center justify-between gap-2">
             <span aria-hidden="true" className="text-xl font-semibold tracking-tight">Inbox</span>
+            <button type="button" aria-expanded={showFilters} aria-controls="queue-filters" onClick={() => setShowFilters((v) => !v)}
+              className={`${btn.secondary} ${btn.sm} ml-auto`}>
+              Filter{activeFilterCount(filters) > 0 && <><span aria-hidden="true" className="ml-1 rounded-full bg-primary px-1.5 text-[11px] text-primary-fg">{activeFilterCount(filters)}</span><span className="sr-only">, {activeFilterCount(filters)} active</span></>}
+            </button>
             <label className="flex items-center gap-1.5 text-xs text-muted">
               <span>Sort</span>
               <select aria-label="Sort issues" value={sort} onChange={(e) => go({ sort: e.target.value as SortId })} className="h-8 rounded-lg border border-line bg-surface-2 px-2 text-xs text-fg">
@@ -76,7 +97,7 @@ export function Inbox({ defaultView = "open" }: { defaultView?: ViewId }) {
             {VIEWS.map((v) => {
               const n = viewCount(stats.data, v.id);
               return (
-                <Link key={v.id} to="/inbox" search={{ view: v.id, sort, ...(q ? { q } : {}) } as never}
+                <Link key={v.id} to="/inbox" search={{ view: v.id, sort, ...filters, ...(q ? { q } : {}) } as never}
                   aria-current={v.id === view ? "page" : undefined}
                   className={`${segmented.item} ${v.id === view ? segmented.active : ""}`}>
                   {v.label}{n !== null && <span className={segmented.count}>{n}</span>}
@@ -84,6 +105,8 @@ export function Inbox({ defaultView = "open" }: { defaultView?: ViewId }) {
               );
             })}
           </nav>
+          {showFilters && <FilterPanel ws={ws} filters={filters} onChange={setFilters} />}
+          <FilterChips ws={ws} filters={filters} onChange={setFilters} />
           {q && (
             <p className="m-0 flex items-center gap-2 text-[13px] text-muted">
               Results for “<span className="font-semibold text-fg">{q}</span>”
@@ -91,17 +114,22 @@ export function Inbox({ defaultView = "open" }: { defaultView?: ViewId }) {
             </p>
           )}
         </div>
+        {checked.length > 0 && (
+          <BulkBar ws={ws} selected={checked} issues={issues} onSelectAll={() => setChecked(issues.map((i) => i.id))} onClear={() => setChecked([])}
+            onDone={(failed, summary) => { setChecked(failed); setBulkSummary(summary); }} />
+        )}
+        <p role="status" className={bulkSummary ? "m-0 border-b border-line px-4 py-2 text-[12px]" : "sr-only"}>{bulkSummary && <BulkSummary summary={bulkSummary} />}</p>
         <div className="min-h-0 flex-1 overflow-y-auto">
           {list.isPending && <p role="status" className="m-0 p-4 text-sm text-muted">Loading issues…</p>}
           {list.isError && <p role="alert" className="m-0 p-4 text-sm text-danger">{(list.error as Error).message}</p>}
           {list.isSuccess && issues.length === 0 && (
             <div className="p-6 text-center">
               <p className="m-0 text-sm font-semibold">Nothing here</p>
-              <p className="m-0 mt-1 text-[13px] text-muted">No issues in “{VIEWS.find((v) => v.id === view)!.label}”. Channels (Slack, email) arrive in M3; until then create issues with “New issue” or the API.</p>
+              <p className="m-0 mt-1 text-[13px] text-muted">{activeFilterCount(filters) > 0 ? "No issues match these filters. " : ""}No issues in “{VIEWS.find((v) => v.id === view)!.label}”. Channels (Slack, email) arrive in M3; until then create issues with “New issue” or the API.</p>
             </div>
           )}
           <ul className="m-0 list-none p-0">
-            {issues.map((i) => <QueueRow key={i.id} issue={i} active={i.key === selected} />)}
+            {issues.map((i) => <QueueRow key={i.id} issue={i} active={i.key === selected} checked={checked.includes(i.id)} selecting={checked.length > 0} onCheck={() => toggleChecked(i.id)} />)}
           </ul>
           {list.hasNextPage && (
             <div className="p-3">
@@ -111,7 +139,7 @@ export function Inbox({ defaultView = "open" }: { defaultView?: ViewId }) {
             </div>
           )}
         </div>
-        <p className="m-0 hidden border-t border-line px-4 py-2 text-[11px] text-muted md:block"><kbd>j</kbd>/<kbd>k</kbd> move · <kbd>r</kbd> reply · <kbd>n</kbd> note · <kbd>e</kbd> resolve · <kbd>Esc</kbd> close</p>
+        <p className="m-0 hidden border-t border-line px-4 py-2 text-[11px] text-muted md:block"><kbd>j</kbd>/<kbd>k</kbd> move · <kbd>r</kbd> reply · <kbd>n</kbd> note · <kbd>e</kbd> resolve · <kbd>x</kbd> select · <kbd>Esc</kbd> close</p>
       </section>
 
       {selected ? (
@@ -128,12 +156,15 @@ export function Inbox({ defaultView = "open" }: { defaultView?: ViewId }) {
   );
 }
 
-function QueueRow({ issue: i, active }: { issue: Issue; active: boolean }) {
+function QueueRow({ issue: i, active, checked, selecting, onCheck }: { issue: Issue; active: boolean; checked: boolean; selecting: boolean; onCheck: () => void }) {
   return (
-    <li>
+    <li className={`group relative border-b border-line ${checked ? "bg-accent-soft" : active ? "bg-surface-2 shadow-[inset_3px_0_0_var(--primary)]" : "hover:bg-surface-2/60"}`}>
+      {/* Checkbox sits beside the link (not inside it); always visible while selecting or on touch screens. */}
+      <input type="checkbox" checked={checked} onChange={onCheck} aria-label={`Select ${i.key}`}
+        className={`absolute left-1.5 top-3.5 z-10 h-4 w-4 accent-[var(--primary)] ${selecting || checked ? "opacity-100" : "opacity-0 focus:opacity-100 group-hover:opacity-100 [@media(hover:none)]:opacity-100"}`} />
       <Link to="/inbox" search={((prev: InboxSearch) => ({ ...prev, issue: i.key })) as never}
         aria-current={active ? "true" : undefined}
-        className={`flex flex-col gap-1 border-b border-line px-4 py-3 text-fg no-underline ${active ? "bg-surface-2 shadow-[inset_3px_0_0_var(--primary)]" : "hover:bg-surface-2/60"}`}>
+        className="flex flex-col gap-1 py-3 pl-7 pr-4 text-fg no-underline">
         <span className="flex items-center gap-2 text-[12px] text-muted">
           <Avatar name={i.requester?.name || i.account?.name || i.key} size={20} />
           <span className="font-semibold text-fg">{i.account?.name ?? "No account"}</span>
@@ -294,12 +325,8 @@ function Details({ issue: i, ws, update, memberName, collapsible }: {
             {assignable(members.data?.data ?? []).map((m) => <option key={m.id} value={m.id}>{memberName(m.id)}</option>)}
           </select>
         </label>
-        {i.labels.length > 0 && (
-          <div className="flex flex-col gap-1">
-            <span className="text-[12px] font-semibold text-muted">Labels</span>
-            <span className="flex flex-wrap gap-1">{i.labels.map((l) => <span key={l.id} className="rounded-full border border-line px-2 py-0.5 text-[11px]"><span className="mr-1 inline-block h-2 w-2 rounded-full" style={{ background: l.color }} />{l.name}</span>)}</span>
-          </div>
-        )}
+        <TeamField issue={i} ws={ws} update={update} className={select} />
+        <LabelsField issue={i} ws={ws} update={update} className={select} />
       </div>
     </div>
   );
@@ -309,6 +336,74 @@ function Details({ issue: i, ws, update, memberName, collapsible }: {
       <summary className="cursor-pointer px-4 py-2 text-[13px] font-semibold text-muted md:px-6">Details · {i.status.name} · {PRIORITY_LABEL[i.priority]}{i.assignee ? ` · ${i.assignee.name || i.assignee.email}` : ""}</summary>
       {body}
     </details>
+  );
+}
+
+function TeamField({ issue: i, ws, update, className }: { issue: Issue; ws: string | null; update: ReturnType<typeof useUpdateIssue>; className: string }) {
+  const teams = useTeams(ws);
+  const list = teams.data?.data ?? [];
+  return (
+    <label className="flex flex-col gap-1 text-[12px] font-semibold text-muted">
+      Team
+      <select className={className} value={i.team_id ?? ""} disabled={!list.length && !i.team_id} onChange={(e) => update.mutate({ team_id: e.target.value || null })}>
+        <option value="">{list.length ? "No team" : "No teams yet"}</option>
+        {list.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
+      </select>
+    </label>
+  );
+}
+
+/** Labels: remove with ×, add from the workspace list, or create a new one inline (FR-3.3). */
+function LabelsField({ issue: i, ws, update, className }: { issue: Issue; ws: string | null; update: ReturnType<typeof useUpdateIssue>; className: string }) {
+  const labels = useLabels(ws);
+  const create = useCreateLabel(ws);
+  const [naming, setNaming] = useState(false);
+  const [name, setName] = useState("");
+  const ids = i.labels.map((l) => l.id);
+  const available = (labels.data?.data ?? []).filter((l) => !ids.includes(l.id));
+  async function addNew(e: FormEvent) {
+    e.preventDefault();
+    if (!name.trim()) return;
+    try {
+      const l = await create.mutateAsync(name.trim());
+      update.mutate({ labels: [...ids, l.id] });
+      setName(""); setNaming(false);
+    } catch { /* shown below */ }
+  }
+  return (
+    <div className="flex flex-col gap-1">
+      <span id={`labels-${i.id}`} className="text-[12px] font-semibold text-muted">Labels</span>
+      {i.labels.length > 0 ? (
+        <ul aria-labelledby={`labels-${i.id}`} className="m-0 flex list-none flex-wrap gap-1 p-0">
+          {i.labels.map((l) => (
+            <li key={l.id} className="flex items-center gap-1 rounded-full border border-line py-0.5 pl-2 pr-0.5 text-[11px]">
+              <span className="inline-block h-2 w-2 rounded-full" style={{ background: l.color }} aria-hidden="true" />{l.name}
+              <button type="button" aria-label={`Remove label ${l.name}`} onClick={() => update.mutate({ labels: ids.filter((x) => x !== l.id) })}
+                className="grid h-4 w-4 place-items-center rounded-full text-muted hover:bg-surface-2 hover:text-fg">×</button>
+            </li>
+          ))}
+        </ul>
+      ) : <span className="text-[12px] font-normal text-muted">No labels</span>}
+      {naming ? (
+        <form onSubmit={addNew} className="flex gap-1.5">
+          <label className="sr-only" htmlFor={`new-label-${i.id}`}>New label name</label>
+          <input id={`new-label-${i.id}`} autoFocus value={name} maxLength={60} onChange={(e) => setName(e.target.value)} onKeyDown={(e) => { if (e.key === "Escape") { e.stopPropagation(); setNaming(false); } }}
+            placeholder="Label name" className="h-8 min-w-0 flex-1 rounded-lg border border-line bg-surface-2 px-2 text-[13px] text-fg" />
+          <button type="submit" disabled={create.isPending || !name.trim()} className={`${btn.primary} ${btn.sm}`}>Create</button>
+          <button type="button" onClick={() => setNaming(false)} className={`${btn.ghost} ${btn.sm}`}>Cancel</button>
+        </form>
+      ) : (
+        <select aria-label="Add label" className={className} value="" onChange={(e) => {
+          if (e.target.value === "__new") setNaming(true);
+          else if (e.target.value) update.mutate({ labels: [...ids, e.target.value] });
+        }}>
+          <option value="">Add label…</option>
+          {available.map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
+          <option value="__new">+ New label…</option>
+        </select>
+      )}
+      {create.isError && <p role="alert" className="m-0 text-[12px] text-danger">{(create.error as Error).message}</p>}
+    </div>
   );
 }
 

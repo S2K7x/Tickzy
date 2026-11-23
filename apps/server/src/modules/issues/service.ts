@@ -153,6 +153,61 @@ async function setLabels(tx: Tx, workspaceId: string, issueId: string, labels: s
   return { added, removed };
 }
 
+export type UpdateInput = IssueFields & {
+  status_id?: string | undefined; status?: StatusCategory | undefined; version?: number | undefined;
+  /** Bulk-friendly label edits, applied on top of the current set (after `labels` if both are given). */
+  add_labels?: string[] | undefined; remove_labels?: string[] | undefined;
+};
+export type BulkInput = Omit<UpdateInput, "version" | "title" | "custom" | "requester_contact_id" | "account_id" | "labels">;
+export type BulkResult = { ref: string; ok: true; issue: IssueDto } | { ref: string; ok: false; error: { code: string; message: string } };
+
+async function applyUpdate(tx: Tx, ctx: MemberContext, ref: string, input: UpdateInput): Promise<IssueDto> {
+  const found = await resolveIssueRef(tx, ref);
+  const [issue] = await tx.select().from(schema.issues).where(eq(schema.issues.id, found.id)).for("update");
+  if (input.version !== undefined && input.version !== issue!.version) throw new AppError("conflict", "The issue was changed by someone else. Reload and try again.");
+  await checkRefs(tx, input);
+  if (input.add_labels?.length) await checkRefs(tx, { labels: input.add_labels });
+  let current = issue!;
+  if (input.status_id || input.status) {
+    current = await changeStatus(tx, ctx.workspaceId, ctx.actor, current.id, { ...(input.status_id ? { statusId: input.status_id } : {}), ...(input.status ? { category: input.status } : {}) });
+  }
+  const set: Partial<typeof schema.issues.$inferInsert> = {};
+  const changes: Record<string, { from: unknown; to: unknown }> = {};
+  const field = <K extends keyof typeof current>(name: string, key: K, value: (typeof current)[K] | undefined) => {
+    if (value === undefined || value === current[key]) return;
+    changes[name] = { from: current[key], to: value };
+    (set as Record<string, unknown>)[key as string] = value;
+  };
+  field("title", "title", input.title);
+  field("priority", "priority", input.priority);
+  field("team_id", "teamId", input.team_id);
+  field("account_id", "accountId", input.account_id);
+  field("requester_contact_id", "requesterContactId", input.requester_contact_id);
+  field("product_area", "productArea", input.product_area);
+  if (input.custom !== undefined) {
+    const merged = validateCustom(await customDefs(tx), current.custom, input.custom);
+    if (JSON.stringify(merged) !== JSON.stringify(current.custom)) { changes.fields = { from: current.custom, to: merged }; set.custom = merged; }
+  }
+  const reassigned = input.assignee_membership_id !== undefined && input.assignee_membership_id !== current.assigneeMembershipId;
+  if (reassigned) set.assigneeMembershipId = input.assignee_membership_id;
+  let labelDiff: { added: string[]; removed: string[] } = { added: [], removed: [] };
+  if (input.labels !== undefined || input.add_labels?.length || input.remove_labels?.length) {
+  const base = input.labels ?? (await tx.select({ id: schema.issueLabels.labelId }).from(schema.issueLabels).where(eq(schema.issueLabels.issueId, current.id))).map((l) => l.id);
+  const remove = new Set(input.remove_labels ?? []);
+  labelDiff = await setLabels(tx, ctx.workspaceId, current.id, [...base, ...(input.add_labels ?? [])].filter((l) => !remove.has(l)));
+}
+  const touched = Object.keys(set).length > 0 || labelDiff.added.length + labelDiff.removed.length > 0;
+  if (touched) {
+    await tx.update(schema.issues).set({ ...set, updatedAt: new Date(), version: current.version + 1 }).where(eq(schema.issues.id, current.id));
+    if (reassigned) await recordEvent(tx, ctx.workspaceId, current.id, "issue.assigned", ctx.actor, { from: current.assigneeMembershipId, to: input.assignee_membership_id });
+    if (Object.keys(changes).length) await recordEvent(tx, ctx.workspaceId, current.id, "issue.updated", ctx.actor, { changes });
+    if (labelDiff.added.length + labelDiff.removed.length) await recordEvent(tx, ctx.workspaceId, current.id, "issue.labels_changed", ctx.actor, labelDiff);
+    await tx.insert(schema.outbox).values({ workspaceId: ctx.workspaceId, type: "issue.updated", payload: { issue_id: current.id, fields: [...Object.keys(changes), ...(reassigned ? ["assignee"] : []), ...(labelDiff.added.length + labelDiff.removed.length ? ["labels"] : [])] } });
+  }
+  const [fresh] = await tx.select().from(schema.issues).where(eq(schema.issues.id, current.id));
+  return (await toDtos(tx, [fresh!]))[0]!;
+}
+
 export interface IssueStats {
   counts: { open: number; waiting_on_us: number; waiting_on_customer: number; mine: number | null; unassigned: number; done: number };
   kpis: {
@@ -281,47 +336,27 @@ export function createIssuesService(db: Db) {
     get: (ctx: MemberContext, ref: string) => withWorkspace(db, ctx, async (tx) => (await toDtos(tx, [await resolveIssueRef(tx, ref)]))[0]!),
 
     /** Partial update; each kind of change is recorded on the timeline. `version` (optional) guards concurrent edits. */
-    async update(ctx: MemberContext, ref: string, input: IssueFields & { status_id?: string | undefined; status?: StatusCategory | undefined; version?: number | undefined }): Promise<IssueDto> {
+    update: (ctx: MemberContext, ref: string, input: UpdateInput): Promise<IssueDto> => withWorkspace(db, ctx, (tx) => applyUpdate(tx, ctx, ref, input)),
+
+    /**
+     * Same change applied to up to 100 issues (FR-3.10). Each issue runs in its own savepoint, so one refusal (e.g. a
+     * status move the lifecycle forbids, or an issue someone else deleted) is reported without undoing the others.
+     */
+    async bulkUpdate(ctx: MemberContext, refs: string[], input: BulkInput): Promise<{ results: BulkResult[] }> {
       return withWorkspace(db, ctx, async (tx) => {
-        const found = await resolveIssueRef(tx, ref);
-        const [issue] = await tx.select().from(schema.issues).where(eq(schema.issues.id, found.id)).for("update");
-        if (input.version !== undefined && input.version !== issue!.version) throw new AppError("conflict", "The issue was changed by someone else. Reload and try again.");
-        await checkRefs(tx, input);
-        let current = issue!;
-        if (input.status_id || input.status) {
-          current = await changeStatus(tx, ctx.workspaceId, ctx.actor, current.id, { ...(input.status_id ? { statusId: input.status_id } : {}), ...(input.status ? { category: input.status } : {}) });
+        // Request-wide problems (unknown label, unassignable member…) fail the whole request with a 422, not per issue.
+        await checkRefs(tx, { ...input, labels: input.add_labels });
+        const results: BulkResult[] = [];
+        for (const ref of [...new Set(refs)]) {
+          try {
+            const issue = await tx.transaction((sp) => applyUpdate(sp, ctx, ref, input));
+            results.push({ ref, ok: true, issue });
+          } catch (err) {
+            if (!(err instanceof AppError)) throw err;
+            results.push({ ref, ok: false, error: { code: err.code, message: err.message } });
+          }
         }
-        const set: Partial<typeof schema.issues.$inferInsert> = {};
-        const changes: Record<string, { from: unknown; to: unknown }> = {};
-        const field = <K extends keyof typeof current>(name: string, key: K, value: (typeof current)[K] | undefined) => {
-          if (value === undefined || value === current[key]) return;
-          changes[name] = { from: current[key], to: value };
-          (set as Record<string, unknown>)[key as string] = value;
-        };
-        field("title", "title", input.title);
-        field("priority", "priority", input.priority);
-        field("team_id", "teamId", input.team_id);
-        field("account_id", "accountId", input.account_id);
-        field("requester_contact_id", "requesterContactId", input.requester_contact_id);
-        field("product_area", "productArea", input.product_area);
-        if (input.custom !== undefined) {
-          const merged = validateCustom(await customDefs(tx), current.custom, input.custom);
-          if (JSON.stringify(merged) !== JSON.stringify(current.custom)) { changes.fields = { from: current.custom, to: merged }; set.custom = merged; }
-        }
-        const reassigned = input.assignee_membership_id !== undefined && input.assignee_membership_id !== current.assigneeMembershipId;
-        if (reassigned) set.assigneeMembershipId = input.assignee_membership_id;
-        let labelDiff: { added: string[]; removed: string[] } = { added: [], removed: [] };
-        if (input.labels !== undefined) labelDiff = await setLabels(tx, ctx.workspaceId, current.id, input.labels);
-        const touched = Object.keys(set).length > 0 || labelDiff.added.length + labelDiff.removed.length > 0;
-        if (touched) {
-          await tx.update(schema.issues).set({ ...set, updatedAt: new Date(), version: current.version + 1 }).where(eq(schema.issues.id, current.id));
-          if (reassigned) await recordEvent(tx, ctx.workspaceId, current.id, "issue.assigned", ctx.actor, { from: current.assigneeMembershipId, to: input.assignee_membership_id });
-          if (Object.keys(changes).length) await recordEvent(tx, ctx.workspaceId, current.id, "issue.updated", ctx.actor, { changes });
-          if (labelDiff.added.length + labelDiff.removed.length) await recordEvent(tx, ctx.workspaceId, current.id, "issue.labels_changed", ctx.actor, labelDiff);
-          await tx.insert(schema.outbox).values({ workspaceId: ctx.workspaceId, type: "issue.updated", payload: { issue_id: current.id, fields: [...Object.keys(changes), ...(reassigned ? ["assignee"] : []), ...(labelDiff.added.length + labelDiff.removed.length ? ["labels"] : [])] } });
-        }
-        const [fresh] = await tx.select().from(schema.issues).where(eq(schema.issues.id, current.id));
-        return (await toDtos(tx, [fresh!]))[0]!;
+        return { results };
       });
     },
 

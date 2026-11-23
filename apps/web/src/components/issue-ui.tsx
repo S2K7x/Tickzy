@@ -1,5 +1,5 @@
 import type { Priority, StatusCategory } from "@tickzy/shared/lifecycle";
-import { PRIORITY_LABEL, STATUS_LABEL, type Issue } from "../lib/issues.ts";
+import { CHANNEL_LABEL, PRIORITY_LABEL, STATUS_LABEL, type Issue } from "../lib/issues.ts";
 
 /** Design-system pieces for issues (ux-spec §2.4: Priority dot, Status pill, Channel badge). */
 const PRIORITY_COLOR: Record<Priority, string> = {
@@ -35,7 +35,6 @@ export function Avatar({ name, size = 32 }: { name: string; size?: number }) {
   );
 }
 
-const CHANNEL_LABEL: Record<Issue["channel"], string> = { slack: "Slack", email: "Email", widget: "Chat", api: "API", ui: "Web" };
 export function ChannelBadge({ channel }: { channel: Issue["channel"] }) {
   return <span className="inline-flex shrink-0 items-center rounded-md border border-line px-1.5 py-px text-[11px] font-medium text-muted">{CHANNEL_LABEL[channel]}</span>;
 }

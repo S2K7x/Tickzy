@@ -100,6 +100,27 @@ export function issueRoutes(db: Db) {
       },
     }, async (req) => service.update(await requireMember(db, req, "issues:write"), req.params.ref, req.body));
 
+    r.post("/v1/issues/bulk", {
+      schema: {
+        tags: ["issues"], headers: WorkspaceHeader,
+        summary: "Apply one change to up to 100 issues. Each issue succeeds or fails on its own (`results[].ok`); invalid references (label, assignee, team) fail the whole request with 422",
+        body: z.object({
+          issues: z.array(Id64).min(1).max(100),
+          changes: z.object({
+            status: z.enum(STATUS_CATEGORIES).optional(), status_id: Id64.optional(), priority: z.enum(PRIORITIES).optional(),
+            assignee_membership_id: Id64.nullable().optional(), team_id: Id64.nullable().optional(),
+            add_labels: z.array(Id64).max(20).optional(), remove_labels: z.array(Id64).max(20).optional(),
+          }).strict()
+            .refine((c) => Object.values(c).some((v) => v !== undefined && !(Array.isArray(v) && v.length === 0)), "no changes")
+            .refine((c) => !(c.status && c.status_id), "use either status or status_id"),
+        }),
+        response: { 200: z.object({ results: z.array(z.union([
+          z.object({ ref: z.string(), ok: z.literal(true), issue: IssueSchema }),
+          z.object({ ref: z.string(), ok: z.literal(false), error: z.object({ code: z.string(), message: z.string() }) }),
+        ])) }) },
+      },
+    }, async (req) => service.bulkUpdate(await requireMember(db, req, "issues:write"), req.body.issues, req.body.changes));
+
     r.get("/v1/issues/:ref/timeline", {
       schema: {
         tags: ["issues"], summary: "Messages and events in chronological order", headers: WorkspaceHeader, params: Ref,

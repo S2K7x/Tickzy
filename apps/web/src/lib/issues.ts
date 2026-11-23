@@ -56,16 +56,26 @@ export const PRIORITY_LABEL: Record<Priority, string> = { urgent: "Urgent", high
 const issuesKey = (ws: string | null) => ["issues", ws] as const;
 const REFRESH_MS = 15_000; // polling fallback while the realtime socket is down (T-208)
 
-/** Query string for a view plus optional text search and priority filter. */
-export function listQuery(view: ViewId, sort: SortId, extra: { q?: string | undefined; priority?: string | undefined } = {}): string {
+export const CHANNEL_LABEL: Record<Issue["channel"], string> = { slack: "Slack", email: "Email", widget: "Chat", api: "API", ui: "Web" };
+export const CHANNELS = Object.keys(CHANNEL_LABEL) as Issue["channel"][];
+
+/** Filters on top of a view (T-209b). Lists are comma-separated, as in the URL and the API. */
+export interface ListFilters {
+  q?: string | undefined; priority?: string | undefined; channel?: string | undefined; team?: string | undefined; label?: string | undefined;
+}
+const FILTER_KEYS = ["priority", "channel", "team", "label"] as const;
+
+/** Query string for a view plus filters and text search. */
+export function listQuery(view: ViewId, sort: SortId, extra: ListFilters = {}): string {
   const q = VIEWS.find((v) => v.id === view)!.query;
-  return `${q}&sort=${sort}${extra.priority ? `&priority=${extra.priority}` : ""}${extra.q ? `&q=${encodeURIComponent(extra.q)}` : ""}`;
+  const filters = FILTER_KEYS.map((k) => (extra[k] ? `&${k}=${encodeURIComponent(extra[k])}` : "")).join("");
+  return `${q}&sort=${sort}${filters}${extra.q ? `&q=${encodeURIComponent(extra.q)}` : ""}`;
 }
 
-export function useIssueList(ws: string | null, view: ViewId, sort: SortId, extra: { q?: string | undefined; priority?: string | undefined } = {}) {
+export function useIssueList(ws: string | null, view: ViewId, sort: SortId, extra: ListFilters = {}) {
   const q = listQuery(view, sort, extra);
   return useInfiniteQuery({
-    queryKey: [...issuesKey(ws), "list", view, sort, extra.q ?? "", extra.priority ?? ""],
+    queryKey: [...issuesKey(ws), "list", q],
     queryFn: ({ pageParam }) => api<{ data: Issue[]; next_cursor: string | null }>(`/v1/issues?${q}&limit=50${pageParam ? `&cursor=${encodeURIComponent(pageParam)}` : ""}`, { workspaceId: ws }),
     initialPageParam: null as string | null,
     getNextPageParam: (last) => last.next_cursor,
@@ -126,7 +136,7 @@ export function useTimeline(ws: string | null, ref: string | null) {
 }
 
 export interface IssuePatch {
-  status?: StatusCategory; priority?: Priority; assignee_membership_id?: string | null; title?: string;
+  status?: StatusCategory; priority?: Priority; assignee_membership_id?: string | null; title?: string; team_id?: string | null; labels?: string[];
 }
 
 /**
@@ -146,11 +156,26 @@ export function useUpdateIssue(ws: string | null, ref: string) {
           ...(patch.priority ? { priority: patch.priority } : {}),
           ...(patch.title ? { title: patch.title } : {}),
           ...(patch.status ? { status: { ...previous.status, category: patch.status, name: STATUS_LABEL[patch.status] } } : {}),
+          ...(patch.team_id !== undefined ? { team_id: patch.team_id } : {}),
+          ...(patch.labels ? { labels: previous.labels.filter((l) => patch.labels!.includes(l.id)) } : {}),
         });
       }
       return { previous };
     },
     onError: (_e, _p, ctx) => { if (ctx?.previous) qc.setQueryData(key, ctx.previous); },
+    onSettled: () => qc.invalidateQueries({ queryKey: issuesKey(ws) }),
+  });
+}
+
+/** One change applied to many issues (POST /v1/issues/bulk, FR-3.10). Each issue succeeds or fails on its own. */
+export interface BulkChanges {
+  status?: StatusCategory; priority?: Priority; assignee_membership_id?: string | null; team_id?: string | null; add_labels?: string[]; remove_labels?: string[];
+}
+export type BulkResult = { ref: string; ok: true; issue: Issue } | { ref: string; ok: false; error: { code: string; message: string } };
+export function useBulkUpdate(ws: string | null) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (v: { issues: string[]; changes: BulkChanges }) => api<{ results: BulkResult[] }>("/v1/issues/bulk", { method: "POST", body: v, workspaceId: ws }),
     onSettled: () => qc.invalidateQueries({ queryKey: issuesKey(ws) }),
   });
 }
