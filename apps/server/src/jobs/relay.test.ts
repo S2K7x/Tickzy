@@ -23,7 +23,7 @@ async function emit(ws: string, type: string, payload: Record<string, unknown> =
 }
 async function jobs(queueName: string) {
   const { rows } = await owner.query("SELECT id, data FROM pgboss.job WHERE name = $1 ORDER BY created_on", [queueName]);
-  return rows as { id: string; data: { event_id: number; workspace_id: string; type: string } }[];
+  return rows as { id: string; data: { event_id: number; workspace_id: string; type: string; created_at: string } }[];
 }
 async function unpublished() {
   const { rows } = await owner.query("SELECT count(*)::int AS n FROM outbox WHERE published_at IS NULL");
@@ -103,7 +103,7 @@ describe("outbox relay (T-009)", () => {
     await emit(wsA, "issue.created");
     await new OutboxRelay(database.pool, queue, subs).drain();
     const [job] = await jobs("ai.triage");
-    expect(job!.id).toBe(jobIdFor(job!.data.event_id, "ai.triage"));
+    expect(job!.id).toBe(jobIdFor(job!.data.event_id, job!.data.created_at, "ai.triage"));
     // simulate a crash after commit-but-before-ack by un-publishing and relaying again
     await owner.query("UPDATE outbox SET published_at = NULL");
     await new OutboxRelay(database.pool, queue, subs).drain();
@@ -142,11 +142,34 @@ describe("outbox relay (T-009)", () => {
   });
 });
 
+describe("outbox id reuse (regression: T-206 flaky delivery)", () => {
+  it("an event whose id was used before (sequence reset) still gets its job", async () => {
+    const subs = new Subscriptions().subscribe("issue.created", "ai.triage");
+    await queue.ensureQueue("ai.triage");
+    await owner.query("TRUNCATE outbox RESTART IDENTITY"); // first event gets id 1
+    await emit(wsA, "issue.created");
+    await new OutboxRelay(database.pool, queue, subs).drain();
+    expect(await jobs("ai.triage")).toHaveLength(1);
+    await owner.query("TRUNCATE outbox RESTART IDENTITY"); // the next event reuses id 1, like after a reset or restore
+    await new Promise((r) => setTimeout(r, 5)); // distinct created_at
+    await emit(wsA, "issue.created");
+    await new OutboxRelay(database.pool, queue, subs).drain();
+    const all = await jobs("ai.triage");
+    expect(all).toHaveLength(2);                        // with ids keyed on event id alone, this was 1: the job was dropped
+    expect(all[0]!.data.event_id).toBe(all[1]!.data.event_id);
+  });
+});
+
 describe("jobIdFor", () => {
   it("is a stable RFC-4122-shaped UUID per (event, queue)", () => {
-    const a = jobIdFor(42, "q1");
+    const at = new Date("2026-11-23T10:00:00.123Z");
+    const a = jobIdFor(42, at, "q1");
     expect(a).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-5[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/);
-    expect(jobIdFor(42, "q1")).toBe(a);
-    expect(jobIdFor(42, "q2")).not.toBe(a);
+    expect(jobIdFor(42, at.toISOString(), "q1")).toBe(a); // Date or its ISO string: same id
+    expect(jobIdFor(42, at, "q2")).not.toBe(a);
+  });
+
+  it("a reused event id (sequence reset, restored backup) does not collide with an older job", () => {
+    expect(jobIdFor(42, "2026-11-23T10:00:00.000Z", "q1")).not.toBe(jobIdFor(42, "2026-11-24T08:00:00.000Z", "q1"));
   });
 });

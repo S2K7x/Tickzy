@@ -29,9 +29,14 @@ export class Subscriptions {
   }
 }
 
-/** Deterministic UUID for (event, queue): replays of the same event can never create a duplicate job. */
-export function jobIdFor(eventId: number, queue: string): string {
-  const h = createHash("sha256").update(`outbox:${eventId}:${queue}`).digest("hex");
+/**
+ * Deterministic UUID for (event, queue): replays of the same event can never create a duplicate job.
+ * The event's creation time is part of the key, so an outbox id that is reused (sequence reset, database restored
+ * from a backup) can never collide with an older job and be silently dropped as a "duplicate".
+ */
+export function jobIdFor(eventId: number, createdAt: Date | string, queue: string): string {
+  const at = new Date(createdAt).toISOString();
+  const h = createHash("sha256").update(`outbox:${eventId}:${at}:${queue}`).digest("hex");
   return `${h.slice(0, 8)}-${h.slice(8, 12)}-5${h.slice(13, 16)}-${((parseInt(h.slice(16, 18), 16) & 0x3f) | 0x80).toString(16)}${h.slice(18, 20)}-${h.slice(20, 32)}`;
 }
 
@@ -84,7 +89,7 @@ export class OutboxRelay {
           await this.queue.send(
             q,
             { event_id: Number(ev.id), workspace_id: ev.workspace_id, type: ev.type, payload: ev.payload, created_at: ev.created_at },
-            { tx: client, id: jobIdFor(Number(ev.id), q) },
+            { tx: client, id: jobIdFor(Number(ev.id), ev.created_at, q) },
           );
         }
       }

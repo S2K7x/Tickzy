@@ -3,6 +3,7 @@ import { AppError, newId } from "@tickzy/shared";
 import { schema, withWorkspace, type ChannelKind, type Db, type Tx } from "@tickzy/db";
 import type { MemberContext } from "../../http/auth.ts";
 import { resolveIssueRef } from "../issues/service.ts";
+import { applyMessageToIssue } from "../issues/domain.ts";
 import { QUEUE_RETRY_LIMIT } from "../../jobs/queue.ts";
 import type { DeliveryRegistry } from "./delivery.ts";
 
@@ -79,6 +80,8 @@ export function createMessagesService(db: Db, channels: DeliveryRegistry) {
           deliveryState: deliverable ? "pending" : null, createdAt: now,
         }).returning();
         await tx.update(schema.conversations).set({ lastMessageAt: now }).where(eq(schema.conversations.id, conversation.id));
+        // T-206: a public reply hands the turn to the customer and stamps first response; notes change nothing.
+        await applyMessageToIssue(tx, ctx.workspaceId, issue.id, input.visibility === "public" ? "team_public" : "team_internal", m!.id, now);
         await tx.insert(schema.outbox).values({
           workspaceId: ctx.workspaceId, type: "message.created",
           payload: { message_id: m!.id, issue_id: issue.id, visibility: input.visibility, deliver: deliverable },

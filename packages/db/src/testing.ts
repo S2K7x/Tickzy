@@ -22,7 +22,8 @@ export function appUrlFrom(ownerUrl: string, password = TEST_APP_PASSWORD): stri
 export async function resetTestDatabase(ownerUrl = testOwnerUrl()): Promise<{ app: Database; owner: pg.Client; appUrl: string }> {
   const owner = new pg.Client({ connectionString: ownerUrl });
   await owner.connect();
-  await owner.query("DROP SCHEMA IF EXISTS public CASCADE; CREATE SCHEMA public; GRANT USAGE ON SCHEMA public TO PUBLIC;");
+  // Job-queue state must not survive between test runs either: migrate() reinstalls the pgboss schema.
+  await owner.query("DROP SCHEMA IF EXISTS pgboss CASCADE; DROP SCHEMA IF EXISTS public CASCADE; CREATE SCHEMA public; GRANT USAGE ON SCHEMA public TO PUBLIC;");
   await migrate(ownerUrl);
   await owner.query(`ALTER ROLE tickzy_app PASSWORD '${TEST_APP_PASSWORD}'`);
   const appUrl = appUrlFrom(ownerUrl);

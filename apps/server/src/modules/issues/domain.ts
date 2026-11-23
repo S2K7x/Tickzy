@@ -1,5 +1,5 @@
 import { and, eq, sql } from "drizzle-orm";
-import { AppError, canTransition, newId, timestampsForTransition, type Priority, type StatusCategory } from "@tickzy/shared";
+import { AppError, applyMessage, canTransition, newId, timestampsForTransition, type LifecycleOutcome, type MessageKind, type Priority, type StatusCategory } from "@tickzy/shared";
 import { schema, type ChannelKind, type Tx } from "@tickzy/db";
 import type { Actor } from "../../http/auth.ts";
 
@@ -104,4 +104,38 @@ export async function changeStatus(tx: Tx, workspaceId: string, actor: Actor, is
   });
   await tx.insert(schema.outbox).values({ workspaceId, type: "issue.updated", payload: { issue_id: issueId, fields: ["status"] } });
   return updated!;
+}
+
+/**
+ * Whose-turn automation (FR-3.2, T-206): applies the pure lifecycle rules for a message to its issue and persists the
+ * result — status (the category's default status), response timestamps, version — inside the caller's transaction.
+ * Automatic transitions are timeline events by the system with the rule's reason. A `new_issue` outcome (customer
+ * wrote on a closed issue) is returned for the caller to open a follow-up; nothing on the closed issue changes.
+ */
+export async function applyMessageToIssue(tx: Tx, workspaceId: string, issueId: string, kind: MessageKind, messageId: string, now: Date = new Date()): Promise<{ issue: Issue; outcome: LifecycleOutcome }> {
+  const [issue] = await tx.select().from(schema.issues).where(eq(schema.issues.id, issueId)).for("update");
+  if (!issue) throw new AppError("not_found", "Issue not found");
+  const { patch, outcome } = applyMessage({
+    status_category: issue.statusCategory, first_response_at: issue.firstResponseAt, resolved_at: issue.resolvedAt,
+    closed_at: issue.closedAt, last_customer_message_at: issue.lastCustomerMessageAt, last_team_message_at: issue.lastTeamMessageAt,
+  }, kind, now);
+  if (Object.keys(patch).length === 0) return { issue, outcome };
+  const set: Partial<typeof schema.issues.$inferInsert> = { updatedAt: now, version: issue.version + 1 };
+  if (patch.status_category && patch.status_category !== issue.statusCategory) {
+    set.statusCategory = patch.status_category;
+    set.statusId = await defaultStatusId(tx, patch.status_category);
+  }
+  if ("resolved_at" in patch) set.resolvedAt = patch.resolved_at ?? null;
+  if ("closed_at" in patch) set.closedAt = patch.closed_at ?? null;
+  if (patch.first_response_at) set.firstResponseAt = patch.first_response_at;
+  if (patch.last_customer_message_at) set.lastCustomerMessageAt = patch.last_customer_message_at;
+  if (patch.last_team_message_at) set.lastTeamMessageAt = patch.last_team_message_at;
+  const [updated] = await tx.update(schema.issues).set(set).where(eq(schema.issues.id, issueId)).returning();
+  if (outcome.action === "transition") {
+    await recordEvent(tx, workspaceId, issueId, "issue.status_changed", { type: "system", id: null }, {
+      from: { category: issue.statusCategory, status_id: issue.statusId }, to: { category: outcome.to, status_id: set.statusId }, reason: outcome.reason, message_id: messageId,
+    });
+    await tx.insert(schema.outbox).values({ workspaceId, type: "issue.status_changed", payload: { issue_id: issueId, from: issue.statusCategory, to: outcome.to, reason: outcome.reason } });
+  }
+  return { issue: updated!, outcome };
 }
