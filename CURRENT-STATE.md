@@ -1,6 +1,6 @@
 # CURRENT STATE — Tickzy
 
-_Last updated: 2026-11-19 (session 2)._ Read this first, then `docs/blueprint/backlog.md`.
+_Last updated: 2026-11-19 (session 2)._ Read this first, then `docs/blueprint/backlog.md`. Process: `docs/process/development-pipeline.md` (we are in **Stage 5 · Build**; status per stage in `docs/process/pipeline-checklist.md`).
 
 ## Phase
 Implementation: **M0 · Foundations complete** (except CI verification on GitHub); **M1 · Identity & access** started (T-104 done). Planning docs are complete and approved:

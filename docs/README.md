@@ -10,6 +10,9 @@ Tickzy is a planned B2B customer support & ticketing platform. **This repository
 - **UNVERIFIED** — single weak source, vendor claim without corroboration, or hypothesis.
 - **OUTDATED** — superseded by newer primary information.
 
+## Process (how we work)
+[Development pipeline](process/development-pipeline.md) · [Pipeline checklist](process/pipeline-checklist.md) · [Engineering workflow & Definition of Done](process/engineering-workflow.md) · agent rules in [`/CLAUDE.md`](../CLAUDE.md)
+
 ## Research
 ### Competitors (`research/competitors/`)
 - B2B-native: [Pylon](research/competitors/pylon.md) · [Plain](research/competitors/plain.md) · [ClearFeed](research/competitors/clearfeed.md) · [Foqal](research/competitors/foqal.md) · [Thena](research/competitors/thena.md)
