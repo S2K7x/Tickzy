@@ -1,6 +1,6 @@
 # Pipeline Checklist — Tickzy (live status)
 
-- **Last updated:** 2026-11-23 (T-206). Legend: ✅ done · 🟡 in progress / partial · ⬜ not started. Each item links to its evidence.
+- **Last updated:** 2026-11-23 (T-209a web inbox). Legend: ✅ done · 🟡 in progress / partial · ⬜ not started. Each item links to its evidence.
 - Rules: update this file whenever an item changes status; an item is ✅ only with linked evidence (document, test, or deployment).
 - Process definition: [`development-pipeline.md`](development-pipeline.md).
 
@@ -48,8 +48,8 @@
 
 ## 06 · QA & security (1/7)
 - ✅ Unit and integration tests — 149 tests incl. RLS isolation, auth security, invitation/membership, API-token authorization and rate-limit suites
-- 🟡 End-to-end testing — sign-in/onboarding (`apps/web/scripts/e2e-auth.cjs`, 18/18) two-user invite/members journey (`e2e-invite.cjs`, 23/23) API-token journey (`e2e-api-tokens.cjs`, 18/18) and Google/Microsoft sign-in with a mock provider (`e2e-oauth.cjs`, 15/15) against the real stack ✅; not yet in CI; support journeys from M3
-- 🟡 Accessibility & responsive checks — signed-in shell 8/8 (390/768/1024/1280 × light/dark) + all auth pages + Members and API tokens (light/dark, 1280/390) + invite page, 0 axe violations; repeat per new screen
+- 🟡 End-to-end testing — sign-in/onboarding (`apps/web/scripts/e2e-auth.cjs`, 18/18) two-user invite/members journey (`e2e-invite.cjs`, 23/23) API-token journey (`e2e-api-tokens.cjs`, 18/18) Google/Microsoft sign-in with a mock provider (`e2e-oauth.cjs`, 15/15) and the inbox (`e2e-inbox.cjs`, 25/25) against the real stack ✅; not yet in CI; support journeys from M3
+- 🟡 Accessibility & responsive checks — signed-in shell 8/8 (390/768/1024/1280 × light/dark) + all auth pages + Members and API tokens (light/dark, 1280/390) + invite page + inbox (1280 light/dark, 390 queue/issue), 0 axe violations; repeat per new screen
 - ⬜ AI evaluation sets & regression gates — from M5
 - 🟡 Security testing — authz, tenant-isolation, token and rate-limit tests ✅ (server suites); **SAST, dependency/secret scanning in CI, ASVS L2 review, pentest ⬜**
 - ⬜ Performance / load testing — before design partners

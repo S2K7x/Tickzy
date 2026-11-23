@@ -6,6 +6,7 @@ import { can } from "../../permissions.ts";
 import { validateCustom } from "../../lib/custom-fields.ts";
 import { after, decodeKeyset, encodeKeyset, type KeyColumn } from "../../lib/keyset.ts";
 import { changeStatus, createIssue, issueKey, recordEvent, type Issue } from "./domain.ts";
+import { authorName } from "../messages/service.ts";
 
 export interface IssueDto {
   id: string; key: string; number: number; title: string;
@@ -269,9 +270,14 @@ export function createIssuesService(db: Db) {
         const issue = await resolveIssueRef(tx, ref);
         const msgs = await tx.select().from(schema.messages).where(and(eq(schema.messages.issueId, issue.id), isNull(schema.messages.deletedAt))).orderBy(asc(schema.messages.createdAt)).limit(CAP + 1);
         const evts = await tx.select().from(schema.issueEvents).where(eq(schema.issueEvents.issueId, issue.id)).orderBy(asc(schema.issueEvents.id)).limit(CAP + 1);
+        const names = new Map<string, string | null>();
+        for (const m of msgs) {
+          const k = `${m.authorType}:${m.authorId}`;
+          if (!names.has(k)) names.set(k, await authorName(tx, m));
+        }
         const items = [
           ...msgs.map((m) => ({ kind: "message" as const, id: m.id, created_at: m.createdAt.toISOString(), message: {
-            id: m.id, visibility: m.visibility, direction: m.direction, author: { type: m.authorType, id: m.authorId }, body: { text: m.bodyText, ast: m.bodyAst },
+            id: m.id, visibility: m.visibility, direction: m.direction, author: { type: m.authorType, id: m.authorId, name: names.get(`${m.authorType}:${m.authorId}`) ?? null }, body: { text: m.bodyText, ast: m.bodyAst },
             source: m.source, delivery_state: m.deliveryState, edited_at: m.editedAt?.toISOString() ?? null,
           } })),
           ...evts.map((e) => ({ kind: "event" as const, id: String(e.id), created_at: e.createdAt.toISOString(), event: { type: e.type, actor: { type: e.actorType, id: e.actorId }, data: e.data } })),

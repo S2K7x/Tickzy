@@ -210,6 +210,6 @@ describe("timeline (T-204)", () => {
     const tl = (await t.app.inject({ url: "/v1/issues/ACME-6/timeline", headers: H(carl) })).json();
     expect(tl.truncated).toBe(false);
     expect(tl.data.map((i: { kind: string }) => i.kind)).toEqual(["event", "event", "message", "message"]);
-    expect(tl.data[3].message).toMatchObject({ visibility: "internal", body: { text: "easy fix" } });
+    expect(tl.data[3].message).toMatchObject({ visibility: "internal", body: { text: "easy fix" }, author: { type: "member", id: alice, name: "alice@example.com" } });
   });
 });

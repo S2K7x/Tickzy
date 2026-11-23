@@ -39,7 +39,8 @@
 | T-206 | P0 | M | T-202 | Whose-turn status automation & reopen rules | FR-3.2 | unit + integration ✅ done 2026-11-23 (ADR-027; 11 integration tests; inbound entry point for M3 channels) |
 | T-207 | P0 | M | T-204 | Search (tsvector + operators parser) | FR-3.8 | unit parser; integration; benchmark script |
 | T-208 | P0 | M | T-009 | Realtime gateway (WS, topic auth, NOTIFY fan-out) + presence | FR-3.9 | integration with ws client |
-| T-209 | P0 | L | T-010,T-204 | Web inbox: queue (virtualised, views, filters), conversation, details pane, composer, shortcuts, palette, mobile single-pane | UX S2; works at 390px | component tests; Playwright W1 (API-created issue) |
+| T-209 | P0 | L | T-010,T-204 | Web inbox: queue (virtualised, views, filters), conversation, details pane, composer, shortcuts, palette, mobile single-pane | UX S2; works at 390px | component tests; Playwright W1 (API-created issue) — **T-209a ✅ done 2026-11-23** (queue + views + sort + paging, conversation timeline with explained automatic changes, composer reply/note, details status/priority/assignee optimistic, New issue, j/k/r/n/e/Esc, 3/2/1-pane responsive; 11 jsdom + browser E2E 25/25) |
+| T-209b | P0 | M | T-209a, T-207, T-208 | Inbox completion: view counts, filter panel (priority, channel, account, team, label), bulk actions, virtualised list, labels/team editing, `⌘K` palette and `?` shortcut sheet, realtime updates instead of 15 s polling; SLA pills with T-403 | UX S2 | component tests + E2E |
 | T-210 | P0 | M | T-209 | Accounts list/profile UI | UX S4 | component tests |
 | T-211 | P0 | S | T-204 | Saved views API + UI | FR-3.7 | integration |
 

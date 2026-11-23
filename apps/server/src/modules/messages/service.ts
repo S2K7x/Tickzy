@@ -18,7 +18,8 @@ export interface MessageDto {
 
 type MessageRow = typeof schema.messages.$inferSelect;
 
-async function authorName(tx: Tx, m: MessageRow): Promise<string | null> {
+/** Display name of a message author (member, contact or API token). */
+export async function authorName(tx: Tx, m: Pick<MessageRow, "authorType" | "authorId">): Promise<string | null> {
   if (!m.authorId) return null;
   if (m.authorType === "member") {
     const [u] = await tx.select({ name: schema.users.name, email: schema.users.email }).from(schema.users).where(eq(schema.users.id, m.authorId));

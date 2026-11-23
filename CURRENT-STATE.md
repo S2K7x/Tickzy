@@ -3,7 +3,7 @@
 _Last updated: 2026-11-23 (session 5)._ Read this first, then `docs/blueprint/backlog.md`. Process: `docs/process/development-pipeline.md` (we are in **Stage 5 · Build**; status per stage in `docs/process/pipeline-checklist.md`).
 
 ## Phase
-Implementation: **M0 · Foundations complete** (CI green on GitHub since 2026-11-23); **M1 · Identity & access complete** (T-101, T-101b, T-102, T-103, T-104, T-105, T-106). **M2 · Core inbox** in progress (T-201–T-206 done; backend of the issue lifecycle complete). Planning docs are complete and approved:
+Implementation: **M0 · Foundations complete** (CI green on GitHub since 2026-11-23); **M1 · Identity & access complete** (T-101, T-101b, T-102, T-103, T-104, T-105, T-106). **M2 · Core inbox** in progress (T-201–T-206 done; T-209a web inbox done — the first support-work screen). Planning docs are complete and approved:
 strategy `docs/strategy/product-strategy.md` · architecture `docs/architecture/` · UX `docs/ux/ux-spec.md` + design canvas (https://claude.ai/artifact/BvvyCE24er29B2iYNqLVxg, source `design/canvas/`) · blueprint `docs/blueprint/`.
 
 ## Done (verified by tests)
@@ -46,9 +46,11 @@ strategy `docs/strategy/product-strategy.md` · architecture `docs/architecture/
 
 | T-206 | Whose-turn automation per **ADR-027**: `applyMessageToIssue()` (pure rules → status/default status, first response, last message times, version; system timeline event with reason + message id; outbox `issue.status_changed`) wired into replies/notes; **inbound entry point** `recordInboundMessage()` for M3 channels (dedupe by provider id, contact resolution, conversation by thread, issue of the thread or a new Triage issue titled from the message, reopen on resolved, **linked follow-up issue on closed**, ignored stays silent with `notify: false`). **Root-caused the T-205 flaky test:** job ids keyed on outbox id alone collided after an outbox id reset and pg-boss dropped the new job as a duplicate — a real risk after a database restore → ids now include the event's `created_at` (ADR-020 amendment) and test resets drop the `pgboss` schema | 11 integration tests (first reply → waiting on customer + first response as a system event with reason; later replies keep first response; notes change nothing; blocked stays blocked; new thread → Triage issue with requester/account/title; dedupe; full back-and-forth; resolved reopens and clears resolved_at; closed → linked follow-up, closed issue untouched, thread continues on follow-up; ignored silent; endpoint default account) + `titleFrom` unit test + **regression test that fails with the old job-id scheme** + repeated full-suite runs |
 
+| T-209a | **Web inbox** (`/inbox`, `/mine`; ux-spec S2 + design canvas): queue with views (All open, Waiting on us, Waiting on customer, Mine, Unassigned, Resolved), sort, load-more keyset paging, rows (priority dot, account, key, title, status chip, channel, assignee, relative time); conversation (header, Resolve, timeline bubbles for customer / team / internal note + system events that say *why*, e.g. "automatically, because the team replied"); composer Reply / Internal note with ⌘↵; details (account, requester, status, priority, assignee — optimistic with rollback + alert); **New issue** dialog in the top bar (was a disabled placeholder); keyboard j/k/r/n/e/Esc; URL holds view/sort/issue; 3 panes ≥1280, 2 panes + collapsible details 768–1279, single pane + back <768; 15 s refresh until realtime (T-208); shared `useMembers` (Settings › Members refactored to it); server timeline now includes author names | 11 jsdom tests (views/sort/URL, Mine query, open + explained events + notes, reply/note + ⌘↵, optimistic rollback on 409, assignee options, full keyboard, New issue create/Escape, helpers; axe) + **browser E2E `e2e-inbox.cjs` 25/25** (create via dialog, reply → Waiting on customer, note via `n` + Ctrl↵, priority/assignee, j/k, Resolve + Resolved view, axe light/dark, 1024 two-pane, 390 single-pane with back, no overflow) + all earlier browser suites re-run green. Bug found: on phones the open issue left the page without an `h1` (axe) → page-level heading |
+
 Bugs found by verification and fixed in T-105: verify page re-POSTed an empty token on remount; top bar overflowed at 768 px once the user block existed; onboarding showed prefix "XX" before typing.
 
-Total: **275 tests passing** locally (`pnpm test`): shared 36 · db 25 · server 175 · web 39 — plus five real-browser scripts (last run green after T-101b; shared helpers in `apps/web/scripts/e2e-lib.cjs`). CI (lint, typecheck, tests with Postgres) green on GitHub.
+Total: **286 tests passing** locally (`pnpm test`): shared 36 · db 25 · server 175 · web 50 — plus five real-browser scripts (last run green after T-101b; shared helpers in `apps/web/scripts/e2e-lib.cjs`). CI (lint, typecheck, tests with Postgres) green on GitHub.
 
 ## Written but NOT yet verified
 - Google/Microsoft sign-in against the **real** providers: needs OAuth apps registered by the founder (`docs/operations/sign-in-providers.md`); `xms_edov` availability on the Entra app is an open item.
@@ -56,7 +58,7 @@ Total: **275 tests passing** locally (`pnpm test`): shared 36 · db 25 · server
 T-011 CI is now verified: first GitHub Actions run (push to `main`, run #1) green on 2026-11-23.
 
 ## Not started (next, in order)
-1. **T-209 web inbox** is the next user-visible step (queue with views/filters, conversation, details pane, composer, keyboard shortcuts, mobile single-pane) — the API it needs exists. In parallel or before: T-207 (search with operators) and T-208 (realtime gateway). T-210 accounts UI, T-211 saved views.
+1. **T-207** search (full text with operators) and **T-208** realtime gateway (WebSocket + presence) — both unblock **T-209b** (counts, filter panel, bulk actions, palette, live updates). **T-210** accounts list/profile UI, **T-211** saved views. Then M3 (channels).
 2. Founder actions: review the auth / access-control / abuse-protection code (T-101, T-101b, T-102, T-103, T-106 — engineering-workflow §5); register Google/Microsoft OAuth apps (`docs/operations/sign-in-providers.md`).
 3. Discovery track (Stage 1 gate still open): interview guide and design-partner conversations.
 
@@ -71,6 +73,7 @@ Known limitations (T-102): invitation emails go through the console transport un
   node apps/web/scripts/e2e-auth.cjs /tmp/server.log /tmp/shots
   node apps/web/scripts/e2e-invite.cjs /tmp/server.log /tmp/shots
   node apps/web/scripts/e2e-api-tokens.cjs /tmp/server.log /tmp/shots
+  node apps/web/scripts/e2e-inbox.cjs /tmp/server.log /tmp/shots
   # OAuth: start the mock provider first and pass its URL as GOOGLE_ISSUER/MICROSOFT_ISSUER (+ *_CLIENT_ID=e2e-client, *_CLIENT_SECRET=e2e-secret) to the server
   (cd apps/server && node scripts/mock-oidc.ts e2e-client e2e-secret > /tmp/mock.log &)
   node apps/web/scripts/e2e-oauth.cjs /tmp/server.log /tmp/shots "$(head -1 /tmp/mock.log)"

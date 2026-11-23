@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api, ApiError, type Invitation, type Member, type Role } from "../../lib/api.ts";
 import { useCurrentWorkspace, useSession } from "../../lib/session.ts";
 import { ROLE_INFO, ROLE_ORDER } from "../../lib/roles.ts";
+import { useMembers } from "../../lib/members.ts";
 import { inputClass } from "../AuthLayout.tsx";
 
 const card = "rounded-2xl border border-line bg-surface";
@@ -34,11 +35,7 @@ export function Members() {
   const [notice, setNotice] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
 
-  const members = useQuery({
-    queryKey: ["members", wsId],
-    queryFn: () => api<{ data: Member[] }>("/v1/members", { workspaceId: wsId }),
-    enabled: !!wsId,
-  });
+  const members = useMembers(wsId);
   const invitations = useQuery({
     queryKey: ["invitations", wsId],
     queryFn: () => api<{ data: Invitation[] }>("/v1/invitations", { workspaceId: wsId }),

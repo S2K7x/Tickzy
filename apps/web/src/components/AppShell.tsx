@@ -1,9 +1,10 @@
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { Link, Outlet } from "@tanstack/react-router";
 import { NAV, type NavItem } from "./nav.ts";
 import { Logo, MenuIcon, MoonIcon, PlusIcon, SearchIcon, SunIcon } from "./icons.tsx";
 import type { Theme } from "../theme.ts";
 import type { SessionUser } from "../lib/api.ts";
+import { NewIssueDialog } from "./NewIssueDialog.tsx";
 
 export interface ShellUser {
   user: SessionUser;
@@ -89,7 +90,7 @@ function BottomTabs() {
   );
 }
 
-function TopBar({ theme, onToggleTheme, user, workspaceName, onSignOut }: { theme: Theme; onToggleTheme: () => void } & ShellUser) {
+function TopBar({ theme, onToggleTheme, user, workspaceName, onSignOut, onNewIssue }: { theme: Theme; onToggleTheme: () => void; onNewIssue: () => void } & ShellUser) {
   const iconBtn = "inline-flex h-10 w-10 items-center justify-center rounded-[11px] border border-line bg-surface text-fg";
   return (
     <header className="sticky top-0 z-10 flex min-h-[64px] items-center justify-between gap-3 border-b border-line bg-surface px-4 py-3 md:px-8">
@@ -106,9 +107,9 @@ function TopBar({ theme, onToggleTheme, user, workspaceName, onSignOut }: { them
         <button type="button" aria-label="Search" className={`${iconBtn} sm:hidden`}>
           <SearchIcon size={18} />
         </button>
-        <button type="button" disabled title="Creating issues arrives in M2" className="hidden h-10 cursor-not-allowed items-center gap-2 whitespace-nowrap rounded-[11px] bg-accent px-3.5 text-[13px] font-semibold text-white opacity-60 lg:inline-flex">
+        <button type="button" onClick={onNewIssue} aria-label="New issue" title="New issue" className="inline-flex h-10 items-center gap-2 whitespace-nowrap rounded-[11px] bg-accent px-3 text-[13px] font-semibold text-white lg:px-3.5">
           <PlusIcon size={16} />
-          New issue
+          <span className="hidden lg:inline">New issue</span>
         </button>
         <button type="button" onClick={onToggleTheme} aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"} className={iconBtn}>
           {theme === "dark" ? <SunIcon /> : <MoonIcon />}
@@ -129,18 +130,22 @@ function TopBar({ theme, onToggleTheme, user, workspaceName, onSignOut }: { them
   );
 }
 
-export function AppShell({ theme, onToggleTheme, children, ...shellUser }: { theme: Theme; onToggleTheme: () => void; children?: ReactNode } & ShellUser) {
+export function AppShell({ theme, onToggleTheme, children, workspaceId, fullBleed, ...shellUser }: {
+  theme: Theme; onToggleTheme: () => void; children?: ReactNode; workspaceId: string | null; /** Full-width, full-height main area (inbox). */ fullBleed?: boolean;
+} & ShellUser) {
+  const [creating, setCreating] = useState(false);
   return (
     <div className="flex min-h-screen bg-bg text-fg">
       <Sidebar compact={false} />
       <Sidebar compact />
       <div className="flex min-w-0 flex-1 flex-col">
-        <TopBar theme={theme} onToggleTheme={onToggleTheme} {...shellUser} />
-        <main id="main" className="mx-auto w-full max-w-[1280px] flex-1 px-4 pb-28 pt-6 md:px-8 md:pb-10">
+        <TopBar theme={theme} onToggleTheme={onToggleTheme} onNewIssue={() => setCreating(true)} {...shellUser} />
+        <main id="main" className={fullBleed ? "w-full min-w-0 flex-1 pb-24 md:pb-0" : "mx-auto w-full max-w-[1280px] flex-1 px-4 pb-28 pt-6 md:px-8 md:pb-10"}>
           {children ?? <Outlet />}
         </main>
       </div>
       <BottomTabs />
+      {creating && <NewIssueDialog workspaceId={workspaceId} onClose={() => setCreating(false)} />}
     </div>
   );
 }

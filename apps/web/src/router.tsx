@@ -7,6 +7,8 @@ import { VerifyLink } from "./pages/VerifyLink.tsx";
 import { Onboarding } from "./pages/Onboarding.tsx";
 import { Invite } from "./pages/Invite.tsx";
 import { More } from "./pages/More.tsx";
+import { Inbox, type InboxSearch } from "./pages/Inbox.tsx";
+import { SORTS, VIEWS } from "./lib/issues.ts";
 import { SettingsLayout } from "./pages/settings/SettingsLayout.tsx";
 import { Members } from "./pages/settings/Members.tsx";
 import { ApiTokens } from "./pages/settings/ApiTokens.tsx";
@@ -53,6 +55,8 @@ function Root() {
       onToggleTheme={toggle}
       user={data.user}
       workspaceName={workspace.current?.name ?? ""}
+      workspaceId={workspace.current?.workspace_id ?? null}
+      fullBleed={pathname === "/inbox" || pathname === "/mine"}
       onSignOut={() => void signOut()}
     />
   );
@@ -64,10 +68,19 @@ const page = <const P extends string>(path: P, component: () => React.JSX.Elemen
 
 const settingsRoute = page("/settings", SettingsLayout);
 
+/** Inbox URL state (ux-spec: URLs are the source of truth for view state). Unknown values are dropped. */
+function inboxSearch(s: Record<string, unknown>): InboxSearch {
+  const out: InboxSearch = {};
+  if (typeof s.view === "string" && VIEWS.some((v) => v.id === s.view)) out.view = s.view as InboxSearch["view"];
+  if (typeof s.sort === "string" && SORTS.some((x) => x.id === s.sort)) out.sort = s.sort as InboxSearch["sort"];
+  if (typeof s.issue === "string" && /^[\w-]{1,64}$/.test(s.issue)) out.issue = s.issue;
+  return out;
+}
+
 const routeTree = rootRoute.addChildren([
   page("/", Overview),
-  page("/inbox", () => <Placeholder title="Inbox" milestone="M2" description="Issues from Slack, email and chat in one queue, with SLA timers and AI drafts." />),
-  page("/mine", () => <Placeholder title="My issues" milestone="M2" description="Everything assigned to you, sorted by SLA due time." />),
+  createRoute({ getParentRoute: () => rootRoute, path: "/inbox", component: () => <Inbox />, validateSearch: inboxSearch }),
+  createRoute({ getParentRoute: () => rootRoute, path: "/mine", component: () => <Inbox defaultView="mine" />, validateSearch: inboxSearch }),
   page("/accounts", () => <Placeholder title="Accounts" milestone="M2" description="Customer accounts with their issues, contacts, channels and signals." />),
   page("/ai", () => <Placeholder title="AI agent" milestone="M5" description="Copilot drafts, shadow mode, backtests and spend limits." />),
   page("/knowledge", () => <Placeholder title="Knowledge" milestone="M5" description="Docs and resolved issues the AI answers from." />),
