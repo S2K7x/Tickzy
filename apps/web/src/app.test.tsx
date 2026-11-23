@@ -29,13 +29,20 @@ describe("app shell (T-010)", () => {
     expect(current.map((a) => a.textContent)).toEqual(["Inbox"]);
   });
 
-  it("shows the onboarding checklist instead of invented metrics", async () => {
-    mockApi({ "GET /v1/auth/session": { status: 200, body: SIGNED_IN } });
+  it("an empty workspace shows the setup checklist and real zero metrics — never invented numbers", async () => {
+    const zero = { counts: { open: 0, waiting_on_us: 0, waiting_on_customer: 0, mine: 0, unassigned: 0, done: 0 },
+      kpis: { new_today: 0, new_yesterday: 0, waiting_on_us: 0, avg_wait_seconds: null, waiting_on_customer: 0, resolved_7d: 0, resolved_prev_7d: 0, median_first_response_seconds_7d: null },
+      series: Array.from({ length: 14 }, (_, i) => ({ day: `2026-11-${String(10 + i)}`, created: 0, resolved: 0, first_responses: 0, customer_messages: 0, team_replies: 0 })) };
+    mockApi({ "GET /v1/auth/session": { status: 200, body: SIGNED_IN }, "GET /v1/issues/stats": { status: 200, body: zero } });
     await renderAt("/");
     expect(await screen.findByRole("heading", { name: "Overview" })).toBeTruthy();
-    expect(screen.getAllByRole("listitem").map((li) => li.querySelector("h2")?.textContent)).toEqual([
+    const setup = await screen.findByRole("region", { name: "Set up your workspace" });
+    expect(Array.from(setup.querySelectorAll("h3")).map((h) => h.textContent)).toEqual([
       "Connect Slack", "Connect email", "Invite your team", "Set business hours and SLAs",
     ]);
+    const kpis = screen.getByRole("region", { name: "Key numbers" });
+    expect(kpis.textContent).toContain("Waiting on us0");
+    expect(kpis.textContent).toContain("—"); // no first response yet: a dash, not a made-up time
   });
 
   it("shows the signed-in user and workspace", async () => {

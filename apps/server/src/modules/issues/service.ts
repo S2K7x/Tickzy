@@ -153,8 +153,70 @@ async function setLabels(tx: Tx, workspaceId: string, issueId: string, labels: s
   return { added, removed };
 }
 
+export interface IssueStats {
+  counts: { open: number; waiting_on_us: number; waiting_on_customer: number; mine: number | null; unassigned: number; done: number };
+  kpis: {
+    new_today: number; new_yesterday: number;
+    waiting_on_us: number; avg_wait_seconds: number | null;
+    waiting_on_customer: number;
+    resolved_7d: number; resolved_prev_7d: number;
+    median_first_response_seconds_7d: number | null;
+  };
+  /** Last 14 UTC days, oldest first. */
+  series: { day: string; created: number; resolved: number; first_responses: number; customer_messages: number; team_replies: number }[];
+}
+
 export function createIssuesService(db: Db) {
   return {
+    /** Real counts and 14-day series for the Overview and inbox tabs (UTC days until workspace time zones, M4). Ignored issues are excluded (FR-3.1). */
+    async stats(ctx: MemberContext): Promise<IssueStats> {
+      return withWorkspace(db, ctx, async (tx) => {
+        let mineId: string | null = null;
+        if (ctx.userId) {
+          const [m] = await tx.select({ id: schema.memberships.id }).from(schema.memberships).where(eq(schema.memberships.userId, ctx.userId));
+          mineId = m?.id ?? null;
+        }
+        const OPEN = sql`status_category IN ('triage','waiting_on_us','waiting_on_customer','blocked')`;
+        const c = (await tx.execute(sql`SELECT
+            count(*) FILTER (WHERE ${OPEN})::int AS open,
+            count(*) FILTER (WHERE status_category IN ('triage','waiting_on_us'))::int AS on_us,
+            count(*) FILTER (WHERE status_category = 'waiting_on_customer')::int AS on_customer,
+            count(*) FILTER (WHERE ${OPEN} AND assignee_membership_id = ${mineId ?? ""})::int AS mine,
+            count(*) FILTER (WHERE ${OPEN} AND assignee_membership_id IS NULL)::int AS unassigned,
+            count(*) FILTER (WHERE status_category IN ('resolved','closed'))::int AS done,
+            count(*) FILTER (WHERE status_category <> 'ignored' AND created_at >= date_trunc('day', now() AT TIME ZONE 'UTC') AT TIME ZONE 'UTC')::int AS new_today,
+            count(*) FILTER (WHERE status_category <> 'ignored' AND created_at >= (date_trunc('day', now() AT TIME ZONE 'UTC') - interval '1 day') AT TIME ZONE 'UTC'
+                             AND created_at < date_trunc('day', now() AT TIME ZONE 'UTC') AT TIME ZONE 'UTC')::int AS new_yesterday,
+            extract(epoch FROM avg(now() - coalesce(last_customer_message_at, created_at)) FILTER (WHERE status_category IN ('triage','waiting_on_us')))::float AS avg_wait,
+            count(*) FILTER (WHERE resolved_at >= now() - interval '7 days')::int AS resolved_7d,
+            count(*) FILTER (WHERE resolved_at >= now() - interval '14 days' AND resolved_at < now() - interval '7 days')::int AS resolved_prev_7d,
+            percentile_cont(0.5) WITHIN GROUP (ORDER BY extract(epoch FROM first_response_at - created_at))
+              FILTER (WHERE first_response_at >= now() - interval '7 days')::float AS median_frt
+          FROM issues`)).rows[0] as Record<string, number | null>;
+        const series = (await tx.execute(sql`
+          WITH days AS (SELECT generate_series(date_trunc('day', now() AT TIME ZONE 'UTC') - interval '13 days', date_trunc('day', now() AT TIME ZONE 'UTC'), interval '1 day') AS d)
+          SELECT to_char(d, 'YYYY-MM-DD') AS day,
+            (SELECT count(*) FROM issues i WHERE i.status_category <> 'ignored' AND (i.created_at AT TIME ZONE 'UTC') >= d AND (i.created_at AT TIME ZONE 'UTC') < d + interval '1 day')::int AS created,
+            (SELECT count(*) FROM issues i WHERE (i.resolved_at AT TIME ZONE 'UTC') >= d AND (i.resolved_at AT TIME ZONE 'UTC') < d + interval '1 day')::int AS resolved,
+            (SELECT count(*) FROM issues i WHERE (i.first_response_at AT TIME ZONE 'UTC') >= d AND (i.first_response_at AT TIME ZONE 'UTC') < d + interval '1 day')::int AS first_responses,
+            (SELECT count(*) FROM messages m WHERE m.direction = 'in' AND (m.created_at AT TIME ZONE 'UTC') >= d AND (m.created_at AT TIME ZONE 'UTC') < d + interval '1 day')::int AS customer_messages,
+            (SELECT count(*) FROM messages m WHERE m.direction = 'out' AND m.visibility = 'public' AND (m.created_at AT TIME ZONE 'UTC') >= d AND (m.created_at AT TIME ZONE 'UTC') < d + interval '1 day')::int AS team_replies
+          FROM days ORDER BY d`)).rows as IssueStats["series"];
+        const n = (v: unknown) => Number(v ?? 0);
+        return {
+          counts: { open: n(c.open), waiting_on_us: n(c.on_us), waiting_on_customer: n(c.on_customer), mine: mineId ? n(c.mine) : null, unassigned: n(c.unassigned), done: n(c.done) },
+          kpis: {
+            new_today: n(c.new_today), new_yesterday: n(c.new_yesterday),
+            waiting_on_us: n(c.on_us), avg_wait_seconds: c.avg_wait === null ? null : Math.round(Number(c.avg_wait)),
+            waiting_on_customer: n(c.on_customer),
+            resolved_7d: n(c.resolved_7d), resolved_prev_7d: n(c.resolved_prev_7d),
+            median_first_response_seconds_7d: c.median_frt === null ? null : Math.round(Number(c.median_frt)),
+          },
+          series: series.map((r) => ({ day: r.day, created: n(r.created), resolved: n(r.resolved), first_responses: n(r.first_responses), customer_messages: n(r.customer_messages), team_replies: n(r.team_replies) })),
+        };
+      });
+    },
+
     async create(ctx: MemberContext, input: IssueFields & { title: string; category?: StatusCategory | undefined }): Promise<IssueDto> {
       return withWorkspace(db, ctx, async (tx) => {
         await checkRefs(tx, input);

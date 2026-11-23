@@ -4,12 +4,13 @@ import { PRIORITIES, STATUS_CATEGORIES, canTransition, type Priority, type Statu
 import { useCurrentWorkspace, useSession } from "../lib/session.ts";
 import { assignable, useMembers } from "../lib/members.ts";
 import {
-  describeEvent, PRIORITY_LABEL, relativeTime, SORTS, STATUS_LABEL, useIssue, useIssueList, usePostMessage, useTimeline, useUpdateIssue, VIEWS,
+  describeEvent, PRIORITY_LABEL, relativeTime, SORTS, STATUS_LABEL, useIssue, useIssueList, useIssueStats, usePostMessage, useTimeline, useUpdateIssue, viewCount, VIEWS,
   type Issue, type SortId, type TimelineItem, type ViewId,
 } from "../lib/issues.ts";
-import { ChannelBadge, PriorityDot, StatusChip } from "../components/issue-ui.tsx";
+import { Avatar, ChannelBadge, PriorityDot, StatusChip } from "../components/issue-ui.tsx";
+import { btn, segmented } from "../components/ui.ts";
 
-export interface InboxSearch { view?: ViewId; sort?: SortId; issue?: string }
+export interface InboxSearch { view?: ViewId; sort?: SortId; issue?: string; q?: string }
 
 const isTyping = (t: EventTarget | null) => t instanceof HTMLElement && (t.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(t.tagName));
 
@@ -23,11 +24,13 @@ export function Inbox({ defaultView = "open" }: { defaultView?: ViewId }) {
   const view = search.view ?? defaultView;
   const sort = search.sort ?? "updated";
   const selected = search.issue ?? null;
-  const list = useIssueList(ws, view, sort);
+  const q = search.q?.trim() || undefined;
+  const list = useIssueList(ws, view, sort, { q });
+  const stats = useIssueStats(ws);
   const issues = useMemo(() => list.data?.pages.flatMap((p) => p.data) ?? [], [list.data]);
   const composerRef = useRef<ComposerHandle>(null);
 
-  const go = (patch: Partial<InboxSearch>) => void navigate({ to: "/inbox", search: { view, sort, ...(selected ? { issue: selected } : {}), ...patch } as never });
+  const go = (patch: Partial<InboxSearch>) => void navigate({ to: "/inbox", search: { view, sort, ...(q ? { q } : {}), ...(selected ? { issue: selected } : {}), ...patch } as never });
   const open = (key: string | undefined) => go({ issue: key });
 
   // Keyboard (ux-spec §2.5): j/k move, r reply, n note, e resolve, Esc back.
@@ -54,7 +57,7 @@ export function Inbox({ defaultView = "open" }: { defaultView?: ViewId }) {
   });
 
   return (
-    <div className="flex flex-col gap-3 md:h-[calc(100dvh-64px)] md:flex-row md:gap-0">
+    <div className="flex flex-col gap-3 md:h-full md:flex-row md:gap-0">
       {/* One page heading in every layout (on phones the queue, and its title, is hidden while an issue is open). */}
       <h1 className="sr-only">Inbox</h1>
       <section aria-label="Issue queue" className={`${selected ? "hidden md:flex" : "flex"} min-h-0 flex-col border-line md:w-[340px] md:shrink-0 md:border-r xl:w-[380px]`}>
@@ -68,15 +71,24 @@ export function Inbox({ defaultView = "open" }: { defaultView?: ViewId }) {
               </select>
             </label>
           </div>
-          <nav aria-label="Inbox views" className="-mx-1 flex gap-1 overflow-x-auto pb-1">
-            {VIEWS.map((v) => (
-              <Link key={v.id} to="/inbox" search={{ view: v.id, sort } as never}
-                aria-current={v.id === view ? "page" : undefined}
-                className={`whitespace-nowrap rounded-lg px-2.5 py-1.5 text-[13px] font-medium no-underline ${v.id === view ? "bg-accent-soft text-accent-fg" : "text-muted hover:bg-surface-2"}`}>
-                {v.label}
-              </Link>
-            ))}
+          <nav aria-label="Inbox views" className={segmented.bar}>
+            {VIEWS.map((v) => {
+              const n = viewCount(stats.data, v.id);
+              return (
+                <Link key={v.id} to="/inbox" search={{ view: v.id, sort, ...(q ? { q } : {}) } as never}
+                  aria-current={v.id === view ? "page" : undefined}
+                  className={`${segmented.item} ${v.id === view ? segmented.active : ""}`}>
+                  {v.label}{n !== null && <span className={segmented.count}>{n}</span>}
+                </Link>
+              );
+            })}
           </nav>
+          {q && (
+            <p className="m-0 flex items-center gap-2 text-[13px] text-muted">
+              Results for “<span className="font-semibold text-fg">{q}</span>”
+              <button type="button" onClick={() => go({ q: undefined })} className="font-semibold text-accent-fg">Clear</button>
+            </p>
+          )}
         </div>
         <div className="min-h-0 flex-1 overflow-y-auto">
           {list.isPending && <p role="status" className="m-0 p-4 text-sm text-muted">Loading issues…</p>}
@@ -120,10 +132,11 @@ function QueueRow({ issue: i, active }: { issue: Issue; active: boolean }) {
     <li>
       <Link to="/inbox" search={((prev: InboxSearch) => ({ ...prev, issue: i.key })) as never}
         aria-current={active ? "true" : undefined}
-        className={`flex flex-col gap-1 border-b border-line px-4 py-3 text-fg no-underline ${active ? "bg-accent-soft/60 shadow-[inset_3px_0_0_var(--accent)]" : "hover:bg-surface-2"}`}>
+        className={`flex flex-col gap-1 border-b border-line px-4 py-3 text-fg no-underline ${active ? "bg-surface-2 shadow-[inset_3px_0_0_var(--primary)]" : "hover:bg-surface-2/60"}`}>
         <span className="flex items-center gap-2 text-[12px] text-muted">
-          <PriorityDot priority={i.priority} />
+          <Avatar name={i.requester?.name || i.account?.name || i.key} size={20} />
           <span className="font-semibold text-fg">{i.account?.name ?? "No account"}</span>
+          <PriorityDot priority={i.priority} />
           <span>{i.key}</span>
           <span className="ml-auto">{relativeTime(i.updated_at)}</span>
         </span>
@@ -174,7 +187,7 @@ function IssueView({ ws, issueRef, onBack, composerRef, resolveRef }: {
             <span className="font-semibold">{i.key}</span><span>·</span><ChannelBadge channel={i.channel} />
             <span className="ml-auto flex gap-2">
               {canTransition(i.status.category, "resolved") && (
-                <button type="button" onClick={() => update.mutate({ status: "resolved" })} title="Resolve (e)" className="h-8 rounded-lg bg-accent px-3 text-[12px] font-semibold text-white">Resolve</button>
+                <button type="button" onClick={() => update.mutate({ status: "resolved" })} title="Resolve (e)" className={`${btn.primary} ${btn.sm}`}>Resolve</button>
               )}
             </span>
           </div>
@@ -216,7 +229,7 @@ function TimelineRow({ item, memberName }: { item: TimelineItem; memberName: (id
         <span className="ml-1.5">{relativeTime(item.created_at)}</span>
         {m.delivery_state === "failed" && <span className="ml-1.5 font-semibold text-danger">Not delivered</span>}
       </span>
-      <div className={`max-w-[85%] whitespace-pre-wrap rounded-2xl px-3.5 py-2.5 text-sm ${internal ? "border border-dashed border-warn bg-warn-soft text-fg" : customer ? "bg-surface-2 text-fg" : "bg-accent text-white"}`}>
+      <div className={`max-w-[85%] whitespace-pre-wrap rounded-2xl px-3.5 py-2.5 text-sm ${internal ? "border border-dashed border-warn bg-warn-soft text-fg" : customer ? "border border-line bg-surface-2 text-fg" : "bg-primary text-primary-fg"}`}>
         {m.body.text}
       </div>
     </li>
@@ -301,10 +314,10 @@ const Composer = ({ ref, ws, issue }: { ref: React.Ref<ComposerHandle>; ws: stri
   const internal = mode === "internal";
   return (
     <form onSubmit={send} aria-label="Composer" className={`flex flex-col gap-2 border-t border-line p-3 md:px-6 ${internal ? "bg-warn-soft" : "bg-surface"}`}>
-      <div role="radiogroup" aria-label="Message type" className="flex gap-1">
+      <div role="radiogroup" aria-label="Message type" className={`${segmented.bar} self-start`}>
         {(["public", "internal"] as const).map((m) => (
           <button key={m} type="button" role="radio" aria-checked={mode === m} onClick={() => setMode(m)}
-            className={`rounded-lg px-2.5 py-1 text-[12px] font-semibold ${mode === m ? (m === "internal" ? "bg-warn text-white" : "bg-accent text-white") : "text-muted hover:bg-surface-2"}`}>
+            className={`${segmented.item} ${mode === m ? segmented.active : ""}`}>
             {m === "public" ? "Reply" : "Internal note"}
           </button>
         ))}
@@ -316,7 +329,7 @@ const Composer = ({ ref, ws, issue }: { ref: React.Ref<ComposerHandle>; ws: stri
       {post.isError && <p role="alert" className="m-0 text-[13px] text-danger">{(post.error as Error).message}</p>}
       <div className="flex items-center justify-between gap-2">
         <span className="text-[12px] text-muted">{internal ? "Never sent to the customer." : issue.channel === "api" || issue.channel === "ui" ? "Visible to the customer through the API." : "Sent to the customer's conversation."} ⌘↵ to send</span>
-        <button type="submit" disabled={!body.trim() || post.isPending} className={`h-9 shrink-0 whitespace-nowrap rounded-lg px-4 text-[13px] font-semibold text-white disabled:opacity-60 ${internal ? "bg-warn" : "bg-accent"}`}>
+        <button type="submit" disabled={!body.trim() || post.isPending} className={`${btn.primary} ${btn.md} shrink-0`}>
           {post.isPending ? "Sending…" : internal ? "Add note" : "Send"}
         </button>
       </div>

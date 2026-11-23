@@ -71,7 +71,7 @@ async function waitForLink(email, timeoutMs = 10000) {
   await page.getByLabel("Workspace URL").fill(slug);
   await page.getByRole("button", { name: "Create workspace" }).click();
   await page.getByRole("heading", { name: "Overview" }).waitFor({ timeout: 10000 });
-  check(await page.getByText("E2E Support Co").isVisible(), "workspace created and shown in the app");
+  check(await page.getByText("E2E Support Co").first().isVisible(), "workspace created and shown in the app");
 
   const reused = await page.context().newPage();
   await reused.goto(link);
@@ -87,7 +87,8 @@ async function waitForLink(email, timeoutMs = 10000) {
   await axeCheck(page, "overview (dark, signed in)");
   await page.screenshot({ path: path.join(shots, "overview-dark-1280.png") });
 
-  await page.getByRole("button", { name: "Sign out" }).click();
+  await page.getByRole("button", { name: "Account menu" }).click();
+  await page.getByRole("menuitem", { name: "Sign out" }).click();
   await page.getByRole("heading", { name: "Sign in to Tickzy" }).waitFor();
   const after = await page.request.get(`${BASE}/v1/auth/session`);
   check(after.status() === 401, "after sign-out the session is gone server-side");

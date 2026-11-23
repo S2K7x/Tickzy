@@ -206,7 +206,7 @@ function CreateTokenForm({ workspaceId, onCreated }: { workspaceId: string; onCr
       </p>
       {error && <p role="alert" className="m-0 text-sm text-danger">{error}</p>}
       <button type="submit" disabled={busy || name.trim() === "" || scopes.size === 0}
-        className="inline-flex h-11 items-center justify-center self-start rounded-[10px] bg-accent px-5 text-sm font-semibold text-white disabled:opacity-60">
+        className="inline-flex h-11 items-center justify-center self-start rounded-[10px] bg-primary px-5 text-sm font-semibold text-primary-fg hover:opacity-90 disabled:opacity-50">
         {busy ? "Creating…" : "Create token"}
       </button>
     </form>

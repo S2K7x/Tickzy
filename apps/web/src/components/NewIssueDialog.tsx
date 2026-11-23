@@ -51,7 +51,7 @@ export function NewIssueDialog({ workspaceId, onClose }: { workspaceId: string |
         {create.isError && <p role="alert" className="m-0 text-sm text-danger">{(create.error as Error).message}</p>}
         <div className="flex justify-end gap-2">
           <button type="button" onClick={onClose} className="h-10 rounded-[10px] border border-line bg-surface px-4 text-sm font-semibold text-fg">Cancel</button>
-          <button type="submit" disabled={!title.trim() || create.isPending} className="h-10 rounded-[10px] bg-accent px-4 text-sm font-semibold text-white disabled:opacity-60">
+          <button type="submit" disabled={!title.trim() || create.isPending} className="h-10 rounded-[10px] bg-primary px-4 text-sm font-semibold text-primary-fg hover:opacity-90 disabled:opacity-50">
             {create.isPending ? "Creating…" : "Create issue"}
           </button>
         </div>

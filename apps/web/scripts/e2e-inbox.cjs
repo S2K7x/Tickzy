@@ -76,7 +76,7 @@ const { check, axeCheck, noOverflow, signUpWithWorkspace, finish } = createRun(l
   await page.getByRole("button", { name: "Resolve" }).click();
   await page.waitForFunction(() => document.querySelector('[aria-label="Issue details"] select')?.value === "resolved", null, { timeout: 10000 });
   check(true, "Resolve sets the status to Resolved");
-  await page.getByRole("link", { name: "Resolved", exact: true }).click();
+  await page.getByRole("navigation", { name: "Inbox views" }).getByRole("link", { name: /^Resolved/ }).click();
   await page.getByRole("region", { name: "Issue queue" }).getByText("CSV export times out").waitFor();
   check(true, "resolved issue appears in the Resolved view");
 

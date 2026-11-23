@@ -28,23 +28,31 @@ Workspace
 **Navigation:** left sidebar (≥1280px full, 1024–1279 icon rail, <768 bottom tab bar: Home, Inbox, Mine, Accounts, More). Top bar: global search (⌘K palette), New issue, theme toggle, notifications, profile. URLs are the source of truth for view state (`/inbox?view=on-us&sort=sla&issue=iss_…`).
 
 ## 2. Design system
-### 2.1 Tokens (CSS variables; light / dark)
+### 2.0 Design system v2 (founder direction, 2026-11-23)
+Supersedes the v1 visual language (indigo accent, cards on a tinted background) and the visuals of the design canvas in `design/canvas/` (structure and flows still apply). Reference: founder-supplied mock-ups — calm neutral canvas, one white content panel, near-black primary actions, outlined status pills, colour used only in data.
+- **Layout:** sidebar sits on the canvas (`--bg`); all content lives in one white panel (`--panel`, radius 16, 1px border) beside it. Sidebar sections: logo + collapse toggle (remembered), *Quick actions* (search), *Menu*, *AI & insights*, *Workspace*, *Help & support* (keyboard shortcuts), user card at the bottom. 768–1279px: icon rail; <768px: bottom tabs.
+- **Top bar:** breadcrumb `Workspace ▾ / Page` (the workspace name is a real switcher), search pill ("Search issues or press /", `/` and `⌘K` focus it, Enter opens the inbox filtered by text), icon buttons (theme, New issue), account menu (avatar → keyboard shortcuts, sign out). No bell or chat icons until notifications exist (no fake UI).
+- **Page header:** large title (32px, weight 500) + subtitle; secondary (white, bordered) and primary (near-black) actions on the right.
+- **KPI strip:** one card split into equal cells (icon + label, big number, delta or caption, 14-day mini chart as dot-matrix or thin bars). Every number comes from `GET /v1/issues/stats`; missing values render "—".
+- **Table card:** title + subtitle, segmented tabs with counts, search field, Filter; table header on `--surface-2`; rows with initials avatar + two-line cells; outlined status pills; row actions right-aligned (primary for the main action); Previous / Next paging. Fixed column layout so actions never clip; secondary columns fold into the second line below 1536px; phones get stacked cards.
+- **Status pills:** outlined (border + text in the tone, no fill). Priority: coloured dot.
+- **Avatars:** initials only (no photos are stored; never invented).
+- **Accessibility:** a control's accessible name always contains its visible text (WCAG 2.5.3); screen-reader-only context (e.g. ", ACME-12") is appended inside the same text run.
+
+### 2.1 Tokens (CSS variables; light / dark) — v2
 | Token | Light | Dark | Use |
 |---|---|---|---|
-| `--bg` | #F3F5F8 | #0B0D14 | app background |
-| `--surface` | #FFFFFF | #13161F | cards, panes |
-| `--surface-2` | #F6F7FA | #1A1E2A | inputs, table headers, selected rows |
-| `--border` | #E5E7ED | #262B38 | 1px borders (borders over shadows) |
-| `--text` | #111427 | #ECEEF5 | primary text |
-| `--muted` | #5B6273 | #A0A7B8 | secondary text (≥4.5:1 on surface) |
-| `--accent` | #5347CE | #6B60EA | primary actions, focus ring, selection |
-| `--accent-soft` / `--accent-text` | #EEEDFB / #4A3FC0 | #25224A / #B9B3FF | AI surfaces, chips |
-| `--success(-bg)` | #0B7468 / #E2F7F3 | #4FD8C6 / #0F2E2B | met, positive delta |
-| `--warn(-bg)` | #8A5300 / #FFF3DE | #F5B85A / #3A2A10 | at-risk, internal notes |
-| `--danger(-bg)` | #B4233A / #FDECEE | #FF8E9C / #3A1720 | breaching, errors |
-| `--note` | #FFF8E8 | #2E2410 | internal note background |
-| data `--c1..c5` | #5347CE, #887CFD, #4896FE, #16C8C7, #8EE6E5 | lifted variants | charts (channels) |
-Theme: system default, user override persisted; `data-theme` on `<html>`.
+| `--bg` | #F1F1F3 | #0C0C0E | canvas (behind the panel; sidebar) |
+| `--panel` | #FFFFFF | #131316 | main content panel |
+| `--surface` | #FFFFFF | #18181B | cards |
+| `--surface-2` | #F6F6F7 | #1F1F23 | inputs, table header, hovers, segmented control |
+| `--border` | #E6E6E9 | #2A2A30 | 1px borders |
+| `--text` / `--muted` | #17171A / #6B6B74 | #F2F2F4 / #A1A1AA | text |
+| `--primary` / `--primary-text` | #111113 / #FFFFFF | #F2F2F4 / #111113 | primary buttons, logo tile, agent message bubbles |
+| `--accent` / `--accent-soft` / `--accent-text` | #4F46E5 / #EFEFFD / #4338CA | #8B85FF / #23213F / #BCB8FF | focus ring, links, selection only |
+| `--success`, `--warn`, `--danger`, `--info` (+ `-bg`) | green / amber / red / blue | lifted variants | status tones, deltas |
+| `--chart-1..5`, `--chart-empty` | #F97316, #7C3AED, #DC2626, #16A34A, #2563EB, #DCDCE0 | lifted variants | KPI mini charts |
+Theme: system default, user override persisted; `data-theme` on `<html>`. Primitives (buttons, inputs, cards, segmented control) live in `apps/web/src/components/ui.ts`.
 
 ### 2.2 Typography (Inter; system fallback)
 Metric 30/36 600 · Page title 24/32 600 · Section/card title 15/22 600 · Body 14/21 400 · Secondary 13/20 · Caption 12/16 · Label caps 11/16 600 +0.08em. Tabular numbers for metrics/SLA timers.

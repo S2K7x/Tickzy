@@ -55,16 +55,55 @@ export const PRIORITY_LABEL: Record<Priority, string> = { urgent: "Urgent", high
 const issuesKey = (ws: string | null) => ["issues", ws] as const;
 const REFRESH_MS = 15_000; // until realtime (T-208)
 
-export function useIssueList(ws: string | null, view: ViewId, sort: SortId) {
+/** Query string for a view plus optional text search and priority filter. */
+export function listQuery(view: ViewId, sort: SortId, extra: { q?: string | undefined; priority?: string | undefined } = {}): string {
   const q = VIEWS.find((v) => v.id === view)!.query;
+  return `${q}&sort=${sort}${extra.priority ? `&priority=${extra.priority}` : ""}${extra.q ? `&q=${encodeURIComponent(extra.q)}` : ""}`;
+}
+
+export function useIssueList(ws: string | null, view: ViewId, sort: SortId, extra: { q?: string | undefined; priority?: string | undefined } = {}) {
+  const q = listQuery(view, sort, extra);
   return useInfiniteQuery({
-    queryKey: [...issuesKey(ws), "list", view, sort],
-    queryFn: ({ pageParam }) => api<{ data: Issue[]; next_cursor: string | null }>(`/v1/issues?${q}&sort=${sort}&limit=50${pageParam ? `&cursor=${encodeURIComponent(pageParam)}` : ""}`, { workspaceId: ws }),
+    queryKey: [...issuesKey(ws), "list", view, sort, extra.q ?? "", extra.priority ?? ""],
+    queryFn: ({ pageParam }) => api<{ data: Issue[]; next_cursor: string | null }>(`/v1/issues?${q}&limit=50${pageParam ? `&cursor=${encodeURIComponent(pageParam)}` : ""}`, { workspaceId: ws }),
     initialPageParam: null as string | null,
     getNextPageParam: (last) => last.next_cursor,
     enabled: !!ws,
     refetchInterval: REFRESH_MS,
   });
+}
+
+export interface IssueStats {
+  counts: { open: number; waiting_on_us: number; waiting_on_customer: number; mine: number | null; unassigned: number; done: number };
+  kpis: {
+    new_today: number; new_yesterday: number; waiting_on_us: number; avg_wait_seconds: number | null; waiting_on_customer: number;
+    resolved_7d: number; resolved_prev_7d: number; median_first_response_seconds_7d: number | null;
+  };
+  series: { day: string; created: number; resolved: number; first_responses: number; customer_messages: number; team_replies: number }[];
+}
+/** Real counts and 14-day series (GET /v1/issues/stats). */
+export function useIssueStats(ws: string | null) {
+  return useQuery({
+    queryKey: [...issuesKey(ws), "stats"],
+    queryFn: () => api<IssueStats>("/v1/issues/stats", { workspaceId: ws }),
+    enabled: !!ws,
+    refetchInterval: 30_000,
+  });
+}
+/** Count shown on a view tab, from stats. */
+export function viewCount(stats: IssueStats | undefined, view: ViewId): number | null {
+  if (!stats) return null;
+  const c = stats.counts;
+  return ({ open: c.open, "on-us": c.waiting_on_us, "on-customer": c.waiting_on_customer, mine: c.mine, unassigned: c.unassigned, done: c.done } as Record<ViewId, number | null>)[view];
+}
+
+/** "42s", "5 min", "3.2 h", "1.8 days" — durations in KPI captions. */
+export function formatDuration(seconds: number | null): string {
+  if (seconds === null) return "—";
+  if (seconds < 60) return `${Math.round(seconds)}s`;
+  if (seconds < 3600) return `${Math.round(seconds / 60)} min`;
+  if (seconds < 86400) return `${(seconds / 3600).toFixed(1)} h`;
+  return `${(seconds / 86400).toFixed(1)} days`;
 }
 
 export function useIssue(ws: string | null, ref: string | null) {

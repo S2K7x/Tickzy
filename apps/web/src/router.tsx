@@ -56,6 +56,8 @@ function Root() {
       user={data.user}
       workspaceName={workspace.current?.name ?? ""}
       workspaceId={workspace.current?.workspace_id ?? null}
+      workspaces={workspace.workspaces}
+      onSelectWorkspace={workspace.select}
       fullBleed={pathname === "/inbox" || pathname === "/mine"}
       onSignOut={() => void signOut()}
     />
@@ -74,6 +76,7 @@ function inboxSearch(s: Record<string, unknown>): InboxSearch {
   if (typeof s.view === "string" && VIEWS.some((v) => v.id === s.view)) out.view = s.view as InboxSearch["view"];
   if (typeof s.sort === "string" && SORTS.some((x) => x.id === s.sort)) out.sort = s.sort as InboxSearch["sort"];
   if (typeof s.issue === "string" && /^[\w-]{1,64}$/.test(s.issue)) out.issue = s.issue;
+  if (typeof s.q === "string" && s.q.trim()) out.q = s.q.slice(0, 200);
   return out;
 }
 

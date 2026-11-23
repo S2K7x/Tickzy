@@ -177,7 +177,8 @@ describe("sign-out", () => {
       "POST /v1/auth/sign-out": () => { signedIn = false; return { status: 204 }; },
     });
     const { router } = await renderAt("/");
-    await userEvent.click(await screen.findByRole("button", { name: "Sign out" }));
+    await userEvent.click(await screen.findByRole("button", { name: "Account menu" }));
+    await userEvent.click(screen.getByRole("menuitem", { name: "Sign out" }));
     await waitFor(() => expect(router.state.location.pathname).toBe("/sign-in"));
     expect(calls.some((c) => c.method === "POST" && c.url === "/v1/auth/sign-out")).toBe(true);
   });

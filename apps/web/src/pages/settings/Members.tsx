@@ -206,7 +206,7 @@ function InviteForm({ workspaceId, onInvited }: { workspaceId: string; onInvited
           </select>
         </div>
         <button type="submit" disabled={busy || email.trim() === ""}
-          className="inline-flex h-11 items-center justify-center rounded-[10px] bg-accent px-5 text-sm font-semibold text-white disabled:opacity-60">
+          className="inline-flex h-11 items-center justify-center rounded-[10px] bg-primary px-5 text-sm font-semibold text-primary-fg hover:opacity-90 disabled:opacity-50">
           {busy ? "Sending…" : "Send invite"}
         </button>
       </div>

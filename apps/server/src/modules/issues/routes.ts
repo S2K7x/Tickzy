@@ -65,6 +65,20 @@ export function issueRoutes(db: Db) {
       },
     }, async (req) => service.list(await requireMember(db, req, "issues:read"), req.query));
 
+    r.get("/v1/issues/stats", {
+      schema: {
+        tags: ["issues"], summary: "Counts per view, KPIs and 14-day daily series (UTC) for dashboards and inbox tabs", headers: WorkspaceHeader,
+        response: { 200: z.object({
+          counts: z.object({ open: z.number(), waiting_on_us: z.number(), waiting_on_customer: z.number(), mine: z.number().nullable(), unassigned: z.number(), done: z.number() }),
+          kpis: z.object({
+            new_today: z.number(), new_yesterday: z.number(), waiting_on_us: z.number(), avg_wait_seconds: z.number().nullable(),
+            waiting_on_customer: z.number(), resolved_7d: z.number(), resolved_prev_7d: z.number(), median_first_response_seconds_7d: z.number().nullable(),
+          }),
+          series: z.array(z.object({ day: z.string(), created: z.number(), resolved: z.number(), first_responses: z.number(), customer_messages: z.number(), team_replies: z.number() })),
+        }) },
+      },
+    }, async (req) => service.stats(await requireMember(db, req, "issues:read")));
+
     r.post("/v1/issues", {
       schema: {
         tags: ["issues"], summary: "Create an issue (starts in Triage unless `category` is given)", headers: WorkspaceHeader,

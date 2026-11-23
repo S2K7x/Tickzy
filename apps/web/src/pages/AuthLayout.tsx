@@ -25,4 +25,4 @@ export function AuthLayout({ title, subtitle, children }: { title: string; subti
 export const inputClass =
   "h-11 w-full rounded-[10px] border border-line bg-surface-2 px-3 text-[15px] text-fg outline-none focus:border-accent";
 export const primaryButtonClass =
-  "inline-flex h-11 w-full items-center justify-center rounded-[10px] bg-accent px-4 text-sm font-semibold text-white disabled:opacity-60";
+  "inline-flex h-11 w-full items-center justify-center rounded-[10px] bg-primary px-4 text-sm font-semibold text-primary-fg hover:opacity-90 disabled:opacity-50";
