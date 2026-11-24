@@ -72,7 +72,7 @@ Total: **375 tests passing** locally (`pnpm test`): shared 43 · db 25 · server
 T-011 CI is now verified: first GitHub Actions run (push to `main`, run #1) green on 2026-11-23.
 
 ## Not started (next, in order)
-1. **M2 complete.** Before M3 code (pipeline-checklist): written threat model for ingestion/auth/AI; Slack ToS legal review (founder). Then M3 channels: T-301 Slack app/OAuth, T-302 inbound email, …
+1. **M2 complete; threat model v1 written** (`docs/security/threat-model.md`, 2026-11-24: STRIDE for auth, tenancy, web/API/realtime, channels, SSRF, AI, operations; risk register TM-1…12). It found two gaps in what exists — **no security headers** (TM-4) and **no CI dependency/secret scanning** (TM-10) — now tasks **T-110** and **T-112**, done next; then **T-111** (SSRF-guarded client) and M3 (T-301 ingestion core, T-302/T-303 email, T-304…T-307 Slack, T-308 widget), each with its threat-model controls as acceptance criteria. Slack ToS legal review (founder) before the Slack channel goes public.
 2. Deployment prerequisite (ADR-028): the production migration role must be able to create `tickzy_system` (BYPASSRLS) for indexed search; otherwise search works in a slower fallback and the server warns at startup.
 2. Founder actions: review the auth / access-control / abuse-protection code (T-101, T-101b, T-102, T-103, T-106 — engineering-workflow §5); register Google/Microsoft OAuth apps (`docs/operations/sign-in-providers.md`).
 3. Discovery track (Stage 1 gate still open): interview guide and design-partner conversations.

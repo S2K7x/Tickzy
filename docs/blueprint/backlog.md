@@ -29,6 +29,9 @@
 | T-104 | P0 | S | T-007 | Audit log API `GET /v1/audit-log` with filters | FR-1.7 | integration |
 | T-105 | P0 | M | T-010,T-101 | Web: sign-in, onboarding step 1 (create workspace), current workspace, sign-out (settings › members moved to T-102) | UX S11 step 1 | Playwright smoke ✅ done 2026-11-23 |
 | T-106 | P0 | S | T-005 | Rate limiting (per token/IP, Postgres-backed counter or in-memory per node) | 429 envelope + headers | integration ✅ done 2026-11-23 (in-memory per node, ADR-023; 9 server tests + 1 web) |
+| T-110 | P0 | S | T-005 | Security headers: CSP (`default-src 'self'`, no inline script), `frame-ancestors 'none'`, HSTS, `X-Content-Type-Options: nosniff`, `Referrer-Policy`, `Cache-Control: no-store` on authenticated API responses; web app served with the same policy | threat-model TM-4 | header tests + real-browser check that the app still works under the CSP |
+| T-111 | P0 | M | T-005 | Guarded outbound HTTP client (SSRF, SEC-8): resolve-then-pin IP, refuse private/loopback/link-local/CGNAT/ULA/metadata ranges, re-check redirects (≤3), https only, timeouts, size caps; the only client for customer-supplied URLs | threat-model §7, TM-9; required by T-303, T-504, webhooks | unit tests per range + DNS-rebinding and redirect tests |
+| T-112 | P0 | S | T-011 | CI security scanning (SEC-13): dependency audit (fail on high/critical), secret scanning on every push, SAST | threat-model TM-10 | CI shows the jobs; a planted test secret is caught |
 
 ### M2 · Core inbox (Epics E2 accounts, E3 issues, E4 realtime)
 | T-201 | P0 | M | T-004 | Schema: accounts, contacts, contact_identities, teams, statuses, labels, custom_field_defs | migrations + RLS | isolation suite extended ✅ done 2026-11-23 (migration 0007, ADR-025; 11 db tests + non-superuser migration test) |
@@ -46,16 +49,16 @@
 | T-211 | P0 | S | T-204 | Saved views API + UI | FR-3.7 | integration ✅ done 2026-11-24 (8 integration incl. RLS, 6 jsdom, browser `e2e-views.cjs` with two users) |
 
 ### M3 · Channels (Epics E5 email, E6 Slack, E7 widget)
-| T-301 | P0 | M | T-202 | Channel adapter interface + inbound_events table + ingest process role | persist-before-ack; dedupe | integration |
-| T-302 | P0 | L | T-301 | Email inbound (Postmark webhook): parse, thread, strip quotes, attachments → R2, auto-reply detection | FR-2.7 | fixture corpus tests (≥20 real-world samples) |
-| T-303 | P0 | M | T-302 | Email outbound: domain verification (DKIM/Return-Path), send replies with threading headers, bounce webhook | FR-2.7 | integration with fake transport |
-| T-304 | P0 | L | T-301 | Slack OAuth install, token encryption, channel listing & endpoint config | FR-2.1 | integration with Slack fake |
-| T-305 | P0 | L | T-304 | Slack events ingestion + ingestion modes (time, thread, emoji) + identity mapping | FR-2.2, FR-2.3 | unit segmentation table; replay fixtures |
-| T-306 | P0 | M | T-305 | Slack outbound delivery (bot/as-user), rate-limit budget, retries | FR-2.4 | integration |
-| T-307 | P0 | M | T-305 | Internal triage threads sync | FR-2.5 | integration |
-| T-308 | P0 | L | T-301 | Chat widget (separate bundle, identity verification, WS) | FR-2.8 | Playwright |
+| T-301 | P0 | M | T-202 | Channel adapter interface + inbound_events table + ingest process role | persist-before-ack; dedupe; security: threat-model §6.1 (signature before parsing, 5-min window, dedupe, persist-then-ack, tenant from server-side mapping, log redaction TM-5) | integration |
+| T-302 | P0 | L | T-301 | Email inbound (Postmark webhook): parse, thread, strip quotes, attachments → R2, auto-reply detection | FR-2.7; security: threat-model §6.3 (DMARC verdicts → unverified sender TM-6, reply tokens, HTML sanitise + sandbox + remote images off TM-7, attachment scan/separate domain, loop guard) | fixture corpus tests (≥20 real-world samples) |
+| T-303 | P0 | M | T-302 | Email outbound: domain verification (DKIM/Return-Path), send replies with threading headers, bounce webhook | FR-2.7; security: threat-model §6.3 + §7 (verified domains only, signed bounce webhooks, outbound via T-111) | integration with fake transport |
+| T-304 | P0 | L | T-301 | Slack OAuth install, token encryption, channel listing & endpoint config | FR-2.1; security: threat-model §6.2 (OAuth state bound to admin session, envelope-encrypted tokens SEC-6, minimal scopes) | integration with Slack fake |
+| T-305 | P0 | L | T-304 | Slack events ingestion + ingestion modes (time, thread, emoji) + identity mapping | FR-2.2, FR-2.3; security: threat-model §6.2 (team_id+api_app_id → installation mapping, edits/deletes, uninstall → revoke + delete tokens) | unit segmentation table; replay fixtures |
+| T-306 | P0 | M | T-305 | Slack outbound delivery (bot/as-user), rate-limit budget, retries | FR-2.4; security: threat-model §6.2 (rate budget, Retry-After, member user tokens only) | integration |
+| T-307 | P0 | M | T-305 | Internal triage threads sync | FR-2.5; security: threat-model §6.2 (internal notes only to internal, non-shared channels, checked at post time) | integration |
+| T-308 | P0 | L | T-301 | Chat widget (separate bundle, identity verification, WS) | FR-2.8; security: threat-model §6.5 (HMAC identity, unsigned = anonymous TM-11, per-conversation token, allowed origins, rate limits, separate origin) | Playwright |
 | T-309 | P0 | M | T-305,T-302 | Onboarding steps 2–3 (connect Slack, email) UI | UX S11 | Playwright |
-| T-310 | P0 | S | T-305 | Slack Marketplace submission package (scopes justification, privacy, security answers) | doc ready | — |
+| T-310 | P0 | S | T-305 | Slack Marketplace submission package (scopes justification, privacy, security answers) | doc ready; security: threat-model §6.4 (provenance, retention, deletion on uninstall; Slack ToS legal review before Slack GA) | — |
 
 ### M4 · SLA, routing, analytics (Epics E8, E9)
 | T-401 | P0 | L | T-202 | SLA engine pure functions (schedules, holidays, pause, multi-schedule) | ADR-011 semantics | property-based tests |
@@ -66,14 +69,14 @@
 | T-406 | P0 | M | T-405,T-209 | Overview dashboard UI (desktop + mobile) | UX S1 | component tests |
 
 ### M5 · AI copilot & knowledge (Epics E10, E11)
-| T-501 | P0 | M | T-009 | LLM gateway (routes, provider adapters Anthropic/OpenAI, fake provider, metering, spend cap) | ADR-013 | unit with fake; cost accounting tests |
+| T-501 | P0 | M | T-009 | LLM gateway (routes, provider adapters Anthropic/OpenAI, fake provider, metering, spend cap) | ADR-013; security: threat-model §8 (spend cap hard stop, redaction hook, zero-retention providers, ai_actions log) | unit with fake; cost accounting tests |
 | T-502 | P0 | M | T-501,T-202 | AI triage job (title, priority rubric, labels, area) + ai_actions log | FR-7.1 | golden-set eval (fake + recorded) |
 | T-503 | P0 | M | T-501 | Summaries | FR-7.2 | |
 | T-504 | P0 | L | T-201 | Knowledge sources: URL crawler (sitemap, robots), chunking, embeddings, pgvector (requires pgvector-enabled Postgres) | FR-8.1 | integration (pgvector in CI image) |
-| T-505 | P0 | L | T-504,T-501 | Hybrid retrieval + rerank + draft replies with citations + validator | FR-7.3, FR-8.2 | retrieval eval; validator unit tests |
+| T-505 | P0 | L | T-504,T-501 | Hybrid retrieval + rerank + draft replies with citations + validator | FR-7.3, FR-8.2; security: threat-model §8 (untrusted content in data position SEC-11, tenant-scoped retrieval, validator blocks internal-only content) | retrieval eval; validator unit tests |
 | T-506 | P0 | M | T-505 | Similar issues | FR-7.4 | |
 | T-507 | P0 | M | T-502,T-209 | AI UI: suggestion card, AI log tab, settings (toggles, cap) | UX S2/S6 | component tests |
-| T-508 | P0 | L | T-505 | Customer agent shadow mode (would-have-replied entries, handoff policy config) | FR-7.7 (shadow) | scenario tests |
+| T-508 | P0 | L | T-505 | Customer agent shadow mode (would-have-replied entries, handoff policy config) | FR-7.7 (shadow); security: threat-model §8 (no acting tools; shadow only) | scenario tests |
 
 ### M6 · Engineering loop, developer platform, hardening (Epics E12–E14)
 | T-601 | P0 | L | T-204 | Linear integration (OAuth, create/link, webhook status sync → Blocked / close-the-loop) | FR-9.1 | integration with fake |

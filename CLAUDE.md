@@ -8,7 +8,7 @@ All work follows the **Tickzy Development Pipeline** — read it before starting
 - [`docs/process/pipeline-checklist.md`](docs/process/pipeline-checklist.md) — live status of every stage item. Keep it accurate.
 - [`docs/process/engineering-workflow.md`](docs/process/engineering-workflow.md) — the per-task loop, branching, review rules, Definition of Ready and **Definition of Done**.
 
-**Current position:** Stage 5 (Build), milestone **M3 · Channels** next (M0, M1 and M2 complete); before M3 code: written threat model for ingestion/auth/AI and the Slack ToS review (pipeline-checklist). Stage 1 user research / design-partner validation is still open on the discovery track — treat MVP scope as a validated-by-research hypothesis, not as customer-confirmed.
+**Current position:** Stage 5 (Build), milestone **M3 · Channels** next (M0, M1 and M2 complete); threat model written (`docs/security/threat-model.md`) — next T-110 security headers and T-112 CI scanning, then M3; each M3/M5 task must meet its threat-model controls; Slack ToS legal review (founder) before the Slack channel goes public. Stage 1 user research / design-partner validation is still open on the discovery track — treat MVP scope as a validated-by-research hypothesis, not as customer-confirmed.
 
 ## Start of every session
 1. Read [`CURRENT-STATE.md`](CURRENT-STATE.md) (what is done, verified, next, blocked).
@@ -24,6 +24,7 @@ All work follows the **Tickzy Development Pipeline** — read it before starting
 | API contract | `docs/blueprint/api-spec.md` |
 | Architecture, decisions, database | `docs/architecture/architecture.md`, `docs/architecture/adr.md`, `docs/architecture/database.md` |
 | UX, design system, responsive & accessibility rules | `docs/ux/ux-spec.md`, `design/` |
+| Threat model (STRIDE per component, required security controls per task, risk register) | `docs/security/threat-model.md` |
 | Research evidence | `docs/research/`, index `docs/README.md` |
 
 ## Non-negotiable rules

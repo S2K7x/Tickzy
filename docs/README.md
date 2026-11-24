@@ -38,5 +38,8 @@ Tickzy is a planned B2B customer support & ticketing platform. **This repository
 ## Tickzy (drafts for decision)
 [Vision](tickzy/product-vision.md) · [Opportunities](tickzy/product-opportunities.md) · [Proposed features](tickzy/proposed-features.md) · [Recommended architecture](tickzy/recommended-architecture.md)
 
+## Security
+[Threat model](security/threat-model.md) (STRIDE per component, risk register TM-1…12)
+
 ## Roadmap & progress
 [Master roadmap](roadmap/master-roadmap.md) · [Development checklist](roadmap/development-checklist.md) · [Status](progress/research-status.md) · [Completed](progress/completed-research.md) · [Next tasks](progress/next-research-tasks.md)

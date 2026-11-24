@@ -4,7 +4,7 @@
 - Rules: update this file whenever an item changes status; an item is ✅ only with linked evidence (document, test, or deployment).
 - Process definition: [`development-pipeline.md`](development-pipeline.md).
 
-**Overall:** 21 ✅ · 13 🟡 · 22 ⬜ (of 56). **Current position:** Stage 5 (Build), M2 complete → before M3 (channels): threat model + Slack ToS review, while Stage 1 user research/validation remains open on the discovery track.
+**Overall:** 22 ✅ · 12 🟡 · 22 ⬜ (of 56). **Current position:** Stage 5 (Build), M2 complete; threat model v1 written → T-110/T-112 then M3 (channels); Slack ToS legal review (founder) open, while Stage 1 user research/validation remains open on the discovery track.
 
 ## 01 · Discovery (3/6)
 - ✅ Define the idea and problem — `docs/strategy/product-strategy.md` §1
@@ -29,12 +29,12 @@
 - 🟡 Interactive prototype — canvas prototype ✅; **usability test with users ⬜**
 - ✅ Design system — `ux-spec.md` §2; tokens implemented in `apps/web/src/styles.css`
 
-## 04 · Technical planning (4/7)
+## 04 · Technical planning (5/7)
 - 🟡 Feasibility study — research + cost estimate (`architecture.md` §11); **spikes S1–S7 ⬜** (`recommended-architecture.md` §4)
 - ✅ Tech stack & system architecture — `docs/architecture/architecture.md`, `adr.md`
 - ✅ Database schema and ERD — `docs/architecture/database.md`
 - ✅ API specifications — `docs/blueprint/api-spec.md`
-- 🟡 Security & privacy planning — requirements SEC-1…14 ✅; **written threat model ⬜**
+- ✅ Security & privacy planning — requirements SEC-1…14; **threat model v1** (`docs/security/threat-model.md`, STRIDE per component, 2026-11-24) with risk register TM-1…12; new tasks T-110 (security headers), T-111 (SSRF-guarded client), T-112 (CI scanning); security ACs added to M3/M5 tasks
 - 🟡 Infrastructure, observability & cost plan — plan ✅; **SLO definitions ⬜**
 - ✅ Test strategy — `requirements.md` (TEST-1…9), `adr.md` ADR-017
 
@@ -85,5 +85,5 @@
 ## Recommended next steps (in priority order)
 1. M2 is complete (accounts/contacts/issues/messages APIs, whose-turn automation, search with a 1M-message benchmark within target, web inbox, realtime + presence, filters/bulk/palette, accounts UI, saved views). Register real Google/Microsoft OAuth apps before the first deployment (docs/operations/sign-in-providers.md).
 2. In parallel on the discovery track: write the interview guide and start design-partner conversations (Stage 1 gate is still open; the MVP scope is a hypothesis until then).
-3. Before M3 (channels): written threat model for ingestion/auth/AI, and the Slack ToS legal review.
+3. Before M3 (channels): ~~written threat model~~ ✅ (`docs/security/threat-model.md`); T-110 security headers and T-112 CI scanning first; Slack ToS legal review (founder) before the Slack channel goes public.
 4. Before first deploy: staging + preview environments, Sentry/OTel, SLO draft, backup/restore drill.
