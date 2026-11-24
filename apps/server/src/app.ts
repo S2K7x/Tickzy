@@ -22,6 +22,7 @@ import { apiTokenRoutes } from "./modules/api-tokens/routes.ts";
 import { customerRoutes } from "./modules/customers/routes.ts";
 import { issueRoutes } from "./modules/issues/routes.ts";
 import { searchRoutes } from "./modules/search/routes.ts";
+import { registerSecurityHeaders } from "./http/security-headers.ts";
 import { taxonomyRoutes } from "./modules/taxonomy/routes.ts";
 import { viewRoutes } from "./modules/views/routes.ts";
 import { realtimeGateway } from "./modules/realtime/gateway.ts";
@@ -70,6 +71,7 @@ export async function buildApp({ config, database, email, rateLimitStore = new M
   await app.register(websocket, { options: { maxPayload: 8192 } });
   const auth = createAuthService({ db: database.db, email, appOrigin: new URL(config.APP_ORIGIN).origin });
   const limits = { perPrincipal: config.RATE_LIMIT_PER_MIN, perIp: config.RATE_LIMIT_IP_PER_MIN, authPerIp: config.RATE_LIMIT_AUTH_PER_MIN };
+  registerSecurityHeaders(app, { https: config.COOKIE_SECURE });
   registerRateLimitBeforeAuth(app, limits, rateLimitStore, now);
   const apiTokens = createApiTokenService(database.db);
   registerAuth(app, { devMode: config.AUTH_DEV_MODE, sessions: auth, apiTokens, cookieSecure: config.COOKIE_SECURE, allowedOrigins: allowedOrigins(config) });

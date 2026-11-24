@@ -9,7 +9,8 @@ function createRun(logPath) {
   let failures = 0;
   const check = (ok, label) => { console.log(`${ok ? "PASS" : "FAIL"} ${label}`); if (!ok) failures++; };
   async function axeCheck(page, label) {
-    await page.addScriptTag({ content: axeSrc });
+    // Evaluated through the DevTools protocol: an injected <script> would be (rightly) blocked by the app's CSP.
+    if (!(await page.evaluate(() => typeof window.axe !== "undefined"))) await page.evaluate(axeSrc);
     const v = await page.evaluate(async () => (await axe.run()).violations.map((x) => `${x.id}(${x.impact})`));
     check(v.length === 0, `axe ${label} ${v.length ? JSON.stringify(v) : ""}`);
   }

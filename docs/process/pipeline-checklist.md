@@ -51,7 +51,7 @@
 - 🟡 End-to-end testing — sign-in/onboarding (`apps/web/scripts/e2e-auth.cjs`, 18/18) two-user invite/members journey (`e2e-invite.cjs`, 23/23) API-token journey (`e2e-api-tokens.cjs`, 18/18) Google/Microsoft sign-in with a mock provider (`e2e-oauth.cjs`, 15/15) the inbox (`e2e-inbox.cjs`), the v2 Overview/shell (`e2e-overview.cjs`), realtime with two users (`e2e-realtime.cjs`), filters/bulk (`e2e-bulk.cjs`), palette + virtualised queue (`e2e-palette.cjs`), accounts (`e2e-accounts.cjs`) and saved views with two users (`e2e-views.cjs`) against the real stack ✅; not yet in CI (run each against a fresh server: back-to-back sign-ups trip the sign-in rate limit by design); support journeys from M3
 - 🟡 Accessibility & responsive checks — signed-in shell 8/8 (390/768/1024/1280 × light/dark) + all auth pages + Members and API tokens (light/dark, 1280/390) + invite page + inbox (1280 light/dark, 390 queue/issue) + v2 Overview (1440 light/dark, 1024, 768, 390), 0 axe violations; repeat per new screen
 - ⬜ AI evaluation sets & regression gates — from M5
-- 🟡 Security testing — authz, tenant-isolation, token and rate-limit tests ✅ (server suites); **SAST, dependency/secret scanning in CI, ASVS L2 review, pentest ⬜**
+- 🟡 Security testing — authz, tenant-isolation, token and rate-limit tests ✅ (server suites); security headers + strict CSP verified in a real browser (`e2e-csp.cjs`, T-110) ✅; **SAST, dependency/secret scanning in CI (T-112), ASVS L2 review, pentest ⬜**
 - 🟡 Performance / load testing — search benchmark (`apps/server/scripts/bench-search.ts`, ADR-028) ✅; API load tests before design partners ⬜
 - ⬜ User acceptance testing — design partners
 
@@ -85,5 +85,5 @@
 ## Recommended next steps (in priority order)
 1. M2 is complete (accounts/contacts/issues/messages APIs, whose-turn automation, search with a 1M-message benchmark within target, web inbox, realtime + presence, filters/bulk/palette, accounts UI, saved views). Register real Google/Microsoft OAuth apps before the first deployment (docs/operations/sign-in-providers.md).
 2. In parallel on the discovery track: write the interview guide and start design-partner conversations (Stage 1 gate is still open; the MVP scope is a hypothesis until then).
-3. Before M3 (channels): ~~written threat model~~ ✅ (`docs/security/threat-model.md`); T-110 security headers and T-112 CI scanning first; Slack ToS legal review (founder) before the Slack channel goes public.
+3. Before M3 (channels): ~~written threat model~~ ✅ (`docs/security/threat-model.md`); ~~T-110 security headers~~ ✅; T-112 CI scanning next; Slack ToS legal review (founder) before the Slack channel goes public.
 4. Before first deploy: staging + preview environments, Sentry/OTel, SLO draft, backup/restore drill.

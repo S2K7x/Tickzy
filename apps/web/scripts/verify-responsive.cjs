@@ -47,7 +47,8 @@ async function signedInStorage(browser) {
       for (const id of ["sidebar", "icon-rail", "bottom-tabs"]) visible[id] = await page.locator(`[data-testid=${id}]`).isVisible();
       const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth);
       const applied = await page.evaluate(() => document.documentElement.dataset.theme);
-      await page.addScriptTag({ content: axeSrc });
+      // Through DevTools: an injected <script> is blocked by the app CSP (T-110).
+  if (!(await page.evaluate(() => typeof window.axe !== "undefined"))) await page.evaluate(axeSrc);
       const v = await page.evaluate(async () => (await axe.run()).violations.map((x) => `${x.id}(${x.impact}):${x.nodes.length}`));
       const ok = visible[expect] && Object.entries(visible).filter(([k, s]) => s && k !== expect).length === 0 && !overflow && applied === theme && v.length === 0;
       if (!ok) failed++;

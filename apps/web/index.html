@@ -5,16 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="color-scheme" content="light dark" />
     <title>Tickzy</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" />
-    <script>
-      // Apply the theme before first paint to avoid a flash (see src/theme.ts).
-      try {
-        var t = localStorage.getItem("tickzy.theme");
-        var dark = t === "dark" || (t !== "light" && matchMedia("(prefers-color-scheme: dark)").matches);
-        document.documentElement.dataset.theme = dark ? "dark" : "light";
-      } catch (e) {}
-    </script>
+    <script src="/theme-init.js"></script>
   </head>
   <body>
     <div id="root"></div>

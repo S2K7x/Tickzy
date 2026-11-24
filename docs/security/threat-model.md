@@ -117,7 +117,7 @@ RLS) · **B6** Tickzy → third parties (secrets leave, untrusted responses come
 | STRIDE | Threat | Control | Status |
 |---|---|---|---|
 | T/I | **Stored XSS** from customer-supplied text (message bodies, names, subjects) | React escapes all text; no `dangerouslySetInnerHTML` anywhere; search snippets use control-character markers, never HTML | existing |
-| T/I | Clickjacking, MIME sniffing, mixed content, injected scripts if XSS ever lands | **Security headers are not set yet**: CSP (`default-src 'self'`, no inline script), `frame-ancestors 'none'`, HSTS, `X-Content-Type-Options: nosniff`, `Referrer-Policy`, `Cache-Control: no-store` on authenticated API responses | **gap → TM-4 / T-110** |
+| T/I | Clickjacking, MIME sniffing, mixed content, injected scripts if XSS ever lands | Strict CSP on the web app (no `unsafe-inline`/`unsafe-eval`, same-origin only, `frame-ancestors 'none'`), deny-all CSP + `nosniff` + `no-store` on every API response, HSTS over https; fonts self-hosted (no third-party requests) (ADR-029) | existing (T-110: header tests + `e2e-csp.cjs`: zero violations across the main screens) |
 | T | Mass assignment / malformed input | zod schema on every route body/query/params; strict objects where extra keys matter (SEC-4) | existing |
 | I | Secrets in logs | Logger redacts `authorization` and `cookie` headers; tokens never logged | existing — extend redaction to provider signatures and webhook bodies (**TM-5**, T-301) |
 | D | Request floods; huge bodies; WebSocket abuse | Per-IP and per-principal limits; WebSocket: 8 KB frames, 50 subscriptions, 20 messages/s, Origin check | existing |
@@ -206,7 +206,7 @@ RLS) · **B6** Tickzy → third parties (secrets leave, untrusted responses come
 | TM-1 | In-memory rate limits allow N× limits on N nodes | Low now · Medium | Shared store before a second API node (ADR-023) |
 | TM-2 | In-house auth code not yet reviewed by a second person | Medium · High | Founder review before design partners; external pentest before GA |
 | TM-3 | Workspace chosen by client header | Low · High | Keep `requireMember` the only entry; tests exist |
-| TM-4 | No security headers (CSP, HSTS, frame-ancestors, nosniff, no-store) | Medium · Medium | **T-110** (before any customer data arrives through M3) |
+| TM-4 | No security headers (CSP, HSTS, frame-ancestors, nosniff, no-store) | — | **Mitigated 2026-11-24** (T-110, ADR-029); production hosting must send the web headers (`docs/operations/security-headers.md`) |
 | TM-5 | Webhook bodies / provider signatures could be logged | Medium · Medium | Redaction list + log review in T-301 |
 | TM-6 | Email sender spoofing | High · High | DMARC-verdict handling + reply tokens in T-302 |
 | TM-7 | Malicious/tracking email HTML | High · Medium | Sanitise + sandbox + remote images off in T-302 |

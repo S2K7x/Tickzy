@@ -9,6 +9,7 @@ import { assignable, useMembers } from "../lib/members.ts";
 import { useLabels } from "../lib/taxonomy.ts";
 import { useSavedViews } from "../lib/views.ts";
 import { PriorityDot, StatusChip } from "./issue-ui.tsx";
+import { Modal } from "./Modal.tsx";
 
 /** Sub-pages of the palette; `a`/`s`/`p`/`l` in the inbox open the matching one for the open issue (ux-spec §2.5). */
 export type PalettePage = "root" | "assign" | "status" | "priority" | "label";
@@ -63,9 +64,10 @@ export function CommandPalette({ ws, userId, issueRef, initialPage = "root", onC
   const me = members.data?.data.find((m) => m.status === "active" && i && m.id !== i.assignee?.membership_id && m.user_id === userId);
 
   return (
-    <Command.Dialog open onOpenChange={(o) => { if (!o) onClose(); }} label="Command palette" loop value={active} onValueChange={setActive}
-      overlayClassName="fixed inset-0 z-40 bg-black/40"
-      contentClassName="fixed left-1/2 top-[12vh] z-50 w-[min(640px,calc(100vw-32px))] -translate-x-1/2 overflow-hidden rounded-2xl border border-line bg-surface text-fg shadow-xl"
+    // Our Modal, not cmdk's Radix dialog: Radix's scroll lock injects <style> elements, which the CSP blocks (T-110).
+    <Modal label="Command palette" onClose={onClose} top="pt-[12vh]"
+      panelClassName="flex w-[min(640px,calc(100vw-32px))] flex-col overflow-hidden rounded-2xl border border-line bg-surface text-fg shadow-xl">
+    <Command label="Command palette" loop value={active} onValueChange={setActive}
       onKeyDown={(e) => { if (e.key === "Backspace" && !search && page !== "root") { e.preventDefault(); setPage("root"); } }}>
       <div className="flex items-center gap-2 border-b border-line px-4">
         {page !== "root" && i && <span className="shrink-0 rounded-md border border-line px-1.5 py-0.5 text-[12px] text-muted">{i.key} · {PAGE_TITLE[page]}</span>}
@@ -164,7 +166,8 @@ export function CommandPalette({ ws, userId, issueRef, initialPage = "root", onC
       <p className="m-0 border-t border-line px-4 py-2 text-[11px] text-muted">
         <Kbd>↑</Kbd> <Kbd>↓</Kbd> move · <Kbd>↵</Kbd> run · {page !== "root" ? <><Kbd>⌫</Kbd> back · </> : null}<Kbd>Esc</Kbd> close
       </p>
-    </Command.Dialog>
+    </Command>
+    </Modal>
   );
 }
 

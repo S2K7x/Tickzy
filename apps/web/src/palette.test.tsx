@@ -67,8 +67,10 @@ describe("command palette (⌘K)", () => {
     await waitFor(() => expect(router.state.location.pathname).toBe("/settings/members"));
     fireEvent.keyDown(window, { key: "k", metaKey: true });
     await palette();
+    expect(document.body.style.overflow).toBe("hidden"); // scroll lock without injected <style> (CSP, T-110)
     await userEvent.keyboard("{Escape}");
     await waitFor(() => expect(screen.queryByRole("dialog", { name: "Command palette" })).toBeNull());
+    expect(document.body.style.overflow).toBe("");
   });
 
   it("runs commands on the open issue: Assign to me, and p → priority page → Urgent", async () => {
