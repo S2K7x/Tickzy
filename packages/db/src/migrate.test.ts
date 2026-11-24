@@ -31,6 +31,7 @@ describe("migrations", () => {
       "memberships",
       "messages",
       "outbox",
+      "saved_views",
       "sessions",
       "statuses",
       "team_members",

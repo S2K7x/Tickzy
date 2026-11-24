@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, ilike, inArray, isNull, or, sql, type SQL, type SQLWrapper } from "drizzle-orm";
+import { and, asc, count, desc, eq, ilike, inArray, isNull, or, sql, type SQL, type SQLWrapper } from "drizzle-orm";
 import { AppError, type Priority, type StatusCategory } from "@tickzy/shared";
 import { schema, withWorkspace, type ChannelKind, type Db, type Tx } from "@tickzy/db";
 import type { MemberContext } from "../../http/auth.ts";
@@ -153,6 +153,36 @@ async function setLabels(tx: Tx, workspaceId: string, issueId: string, labels: s
   return { added, removed };
 }
 
+/** WHERE conditions for an issue list (shared by the list and by saved-view counts, so both mean the same thing). */
+async function listConditions(tx: Tx, ctx: MemberContext, q: ListQuery): Promise<(SQL | undefined)[]> {
+  const conds: (SQL | undefined)[] = [];
+  if (q.status?.length) conds.push(inArray(schema.issues.statusCategory, q.status));
+  if (q.status_id) conds.push(eq(schema.issues.statusId, q.status_id));
+  if (q.assignee === "none") conds.push(isNull(schema.issues.assigneeMembershipId));
+  else if (q.assignee === "me") {
+    if (!ctx.userId) throw new AppError("validation_failed", "assignee=me needs a signed-in user", [{ path: "assignee", issue: "not available to API tokens" }]);
+    const [m] = await tx.select({ id: schema.memberships.id }).from(schema.memberships).where(eq(schema.memberships.userId, ctx.userId));
+    conds.push(eq(schema.issues.assigneeMembershipId, m?.id ?? ""));
+  } else if (q.assignee) conds.push(eq(schema.issues.assigneeMembershipId, q.assignee));
+  if (q.team) conds.push(eq(schema.issues.teamId, q.team));
+  if (q.account) conds.push(eq(schema.issues.accountId, q.account));
+  if (q.priority?.length) conds.push(inArray(schema.issues.priority, q.priority));
+  if (q.channel?.length) conds.push(inArray(schema.issues.channelKind, q.channel));
+  if (q.label) conds.push(sql`EXISTS (SELECT 1 FROM issue_labels il WHERE il.issue_id = ${schema.issues.id} AND il.label_id = ${q.label})`);
+  const term = q.q?.trim();
+  if (term) {
+    const key = /^(?:[A-Za-z]{2,5}-)?(\d{1,9})$/.exec(term);
+    conds.push(or(ilike(schema.issues.title, `%${likeEscape(term)}%`), key ? eq(schema.issues.number, Number(key[1])) : undefined));
+  }
+  return conds;
+}
+
+/** Number of issues matching a list query (saved-view counts, T-211). */
+export async function countIssues(tx: Tx, ctx: MemberContext, q: ListQuery): Promise<number> {
+  const [row] = await tx.select({ n: count() }).from(schema.issues).where(and(...(await listConditions(tx, ctx, q))));
+  return Number(row?.n ?? 0);
+}
+
 export type UpdateInput = IssueFields & {
   status_id?: string | undefined; status?: StatusCategory | undefined; version?: number | undefined;
   /** Bulk-friendly label edits, applied on top of the current set (after `labels` if both are given). */
@@ -297,25 +327,7 @@ export function createIssuesService(db: Db) {
       const sort = q.sort ?? "updated";
       const cols = sortColumns(sort);
       return withWorkspace(db, ctx, async (tx) => {
-        const conds: (SQL | undefined)[] = [];
-        if (q.status?.length) conds.push(inArray(schema.issues.statusCategory, q.status));
-        if (q.status_id) conds.push(eq(schema.issues.statusId, q.status_id));
-        if (q.assignee === "none") conds.push(isNull(schema.issues.assigneeMembershipId));
-        else if (q.assignee === "me") {
-          if (!ctx.userId) throw new AppError("validation_failed", "assignee=me needs a signed-in user", [{ path: "assignee", issue: "not available to API tokens" }]);
-          const [m] = await tx.select({ id: schema.memberships.id }).from(schema.memberships).where(eq(schema.memberships.userId, ctx.userId));
-          conds.push(eq(schema.issues.assigneeMembershipId, m?.id ?? ""));
-        } else if (q.assignee) conds.push(eq(schema.issues.assigneeMembershipId, q.assignee));
-        if (q.team) conds.push(eq(schema.issues.teamId, q.team));
-        if (q.account) conds.push(eq(schema.issues.accountId, q.account));
-        if (q.priority?.length) conds.push(inArray(schema.issues.priority, q.priority));
-        if (q.channel?.length) conds.push(inArray(schema.issues.channelKind, q.channel));
-        if (q.label) conds.push(sql`EXISTS (SELECT 1 FROM issue_labels il WHERE il.issue_id = ${schema.issues.id} AND il.label_id = ${q.label})`);
-        const term = q.q?.trim();
-        if (term) {
-          const key = /^(?:[A-Za-z]{2,5}-)?(\d{1,9})$/.exec(term);
-          conds.push(or(ilike(schema.issues.title, `%${likeEscape(term)}%`), key ? eq(schema.issues.number, Number(key[1])) : undefined));
-        }
+        const conds = await listConditions(tx, ctx, q);
         const cursor = decodeKeyset(q.cursor, cols.length);
         if (cursor) conds.push(after(cols, cursor));
         const rows = await tx.select({ issue: schema.issues, updatedText: UPDATED_TEXT, rank: PRIORITY_RANK })

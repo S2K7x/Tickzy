@@ -7,6 +7,7 @@ import { api } from "../lib/api.ts";
 import { PRIORITY_LABEL, STATUS_LABEL, useIssue, useUpdateIssue, type Issue } from "../lib/issues.ts";
 import { assignable, useMembers } from "../lib/members.ts";
 import { useLabels } from "../lib/taxonomy.ts";
+import { useSavedViews } from "../lib/views.ts";
 import { PriorityDot, StatusChip } from "./issue-ui.tsx";
 
 /** Sub-pages of the palette; `a`/`s`/`p`/`l` in the inbox open the matching one for the open issue (ux-spec §2.5). */
@@ -41,6 +42,7 @@ export function CommandPalette({ ws, userId, issueRef, initialPage = "root", onC
   const update = useUpdateIssue(ws, issueRef ?? "");
   const members = useMembers(ws);
   const labels = useLabels(ws);
+  const views = useSavedViews(ws);
   const found = useQuery({
     queryKey: ["issues", ws, "palette", q],
     queryFn: () => api<{ data: Issue[] }>(`/v1/issues?q=${encodeURIComponent(q)}&limit=8`, { workspaceId: ws }),
@@ -104,6 +106,15 @@ export function CommandPalette({ ws, userId, issueRef, initialPage = "root", onC
             <Command.Group heading="Create" className={group}>
               <Command.Item onSelect={run(onNewIssue)} className={item}>New issue <Kbd>c</Kbd></Command.Item>
             </Command.Group>
+            {!!views.data?.data.length && (
+              <Command.Group heading="Saved views" className={group}>
+                {views.data.data.map((v) => (
+                  <Command.Item key={v.id} value={`view ${v.name}`} onSelect={go("/inbox", { view: v.base, sort: v.sort, ...v.filters, saved: v.id } as Record<string, string>)} className={item}>
+                    {v.name}<span className="ml-auto text-[12px] text-muted">{v.shared ? "Shared · " : ""}{v.count}</span>
+                  </Command.Item>
+                ))}
+              </Command.Group>
+            )}
             <Command.Group heading="Navigate" className={group}>
               {NAV_TARGETS.map((n) => <Command.Item key={n.to} onSelect={go(n.to)} className={item}>{n.label}</Command.Item>)}
             </Command.Group>

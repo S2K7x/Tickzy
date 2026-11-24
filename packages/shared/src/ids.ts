@@ -24,6 +24,7 @@ export const ID_PREFIXES = {
   attachment: "att",
   conversation: "cnv",
   event: "evt",
+  savedView: "vw",
   request: "req",
 } as const;
 

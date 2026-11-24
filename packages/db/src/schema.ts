@@ -287,3 +287,18 @@ export const issueEvents = pgTable("issue_events", {
   data: jsonb("data").$type<Record<string, unknown>>().notNull().default({}),
   createdAt: ts("created_at").notNull().defaultNow(),
 });
+
+/** Saved inbox views (T-211, 0012): personal to their owner unless shared with the workspace (RLS enforces both). */
+export const savedViews = pgTable("saved_views", {
+  id: text("id").primaryKey(),
+  workspaceId: text("workspace_id").notNull(),
+  ownerUserId: text("owner_user_id").notNull(),
+  shared: boolean("shared").notNull().default(false),
+  name: text("name").notNull(),
+  base: text("base").notNull(),
+  filters: jsonb("filters").$type<Record<string, string>>().notNull().default({}),
+  sort: text("sort").notNull().default("updated"),
+  position: integer("position").notNull().default(0),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});

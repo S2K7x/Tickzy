@@ -2,6 +2,7 @@ import * as client from "openid-client";
 import { sql } from "drizzle-orm";
 import { AppError, newId } from "@tickzy/shared";
 import type { Db } from "@tickzy/db";
+import { pgMessage } from "../../lib/pg-errors.ts";
 
 /**
  * Google & Microsoft sign-in (T-101b, ADR-024) with openid-client (OpenID-certified relying party):
@@ -40,11 +41,6 @@ const isLocal = (url: URL) => url.protocol === "http:" && (url.hostname === "loc
 export function safeReturnTo(value: unknown): string {
   if (typeof value !== "string" || !value.startsWith("/") || value.startsWith("//") || value.includes("\\") || value.length > 200) return "/";
   return value;
-}
-
-function pgMessage(err: unknown): string {
-  const e = err as { message?: string; cause?: { message?: string } };
-  return `${e.message ?? ""} ${e.cause?.message ?? ""}`;
 }
 
 /**

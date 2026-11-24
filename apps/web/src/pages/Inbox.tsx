@@ -13,10 +13,12 @@ import { useShell } from "../components/AppShell.tsx";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { useIssuePresence, type Viewer } from "../lib/realtime.ts";
 import { useCreateLabel, useLabels, useTeams } from "../lib/taxonomy.ts";
+import { SavedViewsBar } from "./inbox-views.tsx";
+import type { SavedView } from "../lib/views.ts";
 import { activeFilterCount, BulkBar, BulkSummary, FILTER_KEYS, FilterChips, FilterPanel, type QueueFilters } from "./inbox-tools.tsx";
 import { errorMessage } from "../lib/api.ts";
 
-export interface InboxSearch extends QueueFilters { view?: ViewId; sort?: SortId; issue?: string; q?: string }
+export interface InboxSearch extends QueueFilters { view?: ViewId; sort?: SortId; issue?: string; q?: string; saved?: string }
 
 const isTyping = (t: EventTarget | null) => t instanceof HTMLElement && (t.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(t.tagName));
 
@@ -54,7 +56,10 @@ export function Inbox({ defaultView = "open" }: { defaultView?: ViewId }) {
   const selectedIndex = issues.findIndex((i) => i.key === selected);
   useEffect(() => { if (selectedIndex >= 0) virt.scrollToIndex(selectedIndex, { align: "auto" }); }, [selectedIndex, virt]);
 
-  const go = (patch: Partial<InboxSearch>) => void navigate({ to: "/inbox", search: { view, sort, ...filters, ...(q ? { q } : {}), ...(selected ? { issue: selected } : {}), ...patch } as never });
+  const saved = search.saved;
+  const go = (patch: Partial<InboxSearch>) => void navigate({ to: "/inbox", search: { view, sort, ...filters, ...(q ? { q } : {}), ...(saved ? { saved } : {}), ...(selected ? { issue: selected } : {}), ...patch } as never });
+  // Opening a saved view replaces the whole queue state with what it stores (T-211).
+  const openView = (v: SavedView) => void navigate({ to: "/inbox", search: { view: v.base, sort: v.sort, ...v.filters, saved: v.id } as never });
   const open = (key: string | undefined) => go({ issue: key });
   const setFilters = (f: QueueFilters) => go({ ...Object.fromEntries(FILTER_KEYS.map((k) => [k, f[k]])) });
   const [showFilters, setShowFilters] = useState(false);
@@ -120,14 +125,17 @@ export function Inbox({ defaultView = "open" }: { defaultView?: ViewId }) {
             {VIEWS.map((v) => {
               const n = viewCount(stats.data, v.id);
               return (
-                <Link key={v.id} to="/inbox" search={{ view: v.id, sort, ...filters, ...(q ? { q } : {}) } as never}
-                  aria-current={v.id === view ? "page" : undefined}
-                  className={`${segmented.item} ${v.id === view ? segmented.active : ""}`}>
+                // saved: undefined + explicitUndefined: a system tab is not "current" while a saved view is open.
+                <Link key={v.id} to="/inbox" search={{ view: v.id, sort, ...filters, ...(q ? { q } : {}), saved: undefined } as never} activeOptions={{ explicitUndefined: true }}
+                  aria-current={v.id === view && !saved ? "page" : undefined}
+                  className={`${segmented.item} ${v.id === view && !saved ? segmented.active : ""}`}>
                   {v.label}{n !== null && <span className={segmented.count}>{n}</span>}
                 </Link>
               );
             })}
           </nav>
+          <SavedViewsBar ws={ws} role={current?.role} state={{ base: view, sort, filters: { ...filters, q } }} savedId={saved}
+            onOpen={openView} onSaved={(v) => go({ saved: v.id })} onDeleted={() => go({ saved: undefined })} />
           {showFilters && <FilterPanel ws={ws} filters={filters} onChange={setFilters} />}
           <FilterChips ws={ws} filters={filters} onChange={setFilters} />
           {q && (

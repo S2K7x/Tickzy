@@ -4,6 +4,7 @@ import { schema, withWorkspace, type Db, type Tx } from "@tickzy/db";
 import type { MemberContext } from "../../http/auth.ts";
 import { validateCustom, type FieldDef } from "../../lib/custom-fields.ts";
 import { accountForEmail, mapContactsToDomains, normalizeIdentityKey, type IdentityKind } from "./resolution.ts";
+import { pgMessage } from "../../lib/pg-errors.ts";
 
 const OPEN_CATEGORIES = ["triage", "waiting_on_us", "waiting_on_customer", "blocked"] as const;
 const PAGE_MAX = 100;
@@ -37,11 +38,6 @@ function decodeCursor(c: string | undefined): [string, string] | null {
     if (Array.isArray(v) && v.length === 2 && v.every((x) => typeof x === "string")) return v as [string, string];
   } catch { /* fallthrough */ }
   throw new AppError("validation_failed", "Invalid cursor", [{ path: "cursor", issue: "invalid" }]);
-}
-
-function pgMessage(err: unknown): string {
-  const e = err as { message?: string; cause?: { message?: string; constraint?: string } };
-  return `${e.message ?? ""} ${e.cause?.message ?? ""} ${e.cause?.constraint ?? ""}`;
 }
 
 async function audit(tx: Tx, ctx: MemberContext, action: string, targetType: string, targetId: string, metadata: Record<string, unknown>) {

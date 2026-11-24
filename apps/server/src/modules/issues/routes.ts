@@ -9,7 +9,7 @@ import { createIssuesService, SORTS } from "./service.ts";
 const Ref = z.object({ ref: z.string().max(64) });
 const Id64 = z.string().max(64);
 /** Comma-separated list of enum values in a query string (`status=triage,waiting_on_us`). */
-const csv = <T extends readonly [string, ...string[]]>(values: T) =>
+export const csv = <T extends readonly [string, ...string[]]>(values: T) =>
   z.string().max(500).transform((s) => s.split(",").map((x) => x.trim()).filter(Boolean)).pipe(z.array(z.enum(values)).max(values.length));
 
 export const IssueSchema = z.object({

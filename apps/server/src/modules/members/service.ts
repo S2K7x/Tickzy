@@ -4,6 +4,7 @@ import { schema, withWorkspace, type Db, type Role, type Tx } from "@tickzy/db";
 import type { EmailTransport } from "../../lib/email.ts";
 import type { MemberContext } from "../../http/auth.ts";
 import { newToken, parseToken, sha256 } from "../../lib/tokens.ts";
+import { pgMessage } from "../../lib/pg-errors.ts";
 
 export const INVITE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -26,11 +27,6 @@ export interface InvitationDto {
 }
 
 type Ctx = MemberContext;
-
-function pgMessage(err: unknown): string {
-  const e = err as { message?: string; cause?: { message?: string } };
-  return `${e.message ?? ""} ${e.cause?.message ?? ""}`;
-}
 
 async function audit(tx: Tx, ctx: Ctx, action: string, targetType: string, targetId: string, metadata: Record<string, unknown> = {}) {
   await tx.insert(schema.auditLog).values({ id: newId("auditLog"), workspaceId: ctx.workspaceId, actorType: ctx.actor.type, actorId: ctx.actor.id, action, targetType, targetId, metadata });

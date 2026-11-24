@@ -72,6 +72,7 @@ erDiagram
 | `statuses` (0007) | id `sts_`, workspace_id, category (7 FR-3.1 categories), name, position, is_default, archived_at; one default per category; unique name | seeded by `seed_workspace_defaults()` |
 | `teams`, `team_members` (0007) | team: id `tm_`, name, assignment_strategy (manual, round_robin), round_robin_cursor, archived_at; member: (team_id, membership_id) | |
 | `custom_field_defs` (0007) | id `cfd_`, workspace_id, entity (issue, account, contact), key `^[a-z][a-z0-9_]{0,39}$` (never reused), label, type (text, number, boolean, date, select, multi_select, url), options (select types only), required, position, archived_at | values in the entity's `custom` jsonb, validated by the API |
+| `saved_views` (0012) | id `vw_`, workspace_id, owner_user_id, shared bool, name (1–60; unique per owner for personal, per workspace for shared, case-insensitive), base (system view id), filters jsonb (priority, channel, team, label, account, q — the inbox URL state; ≤2 KB), sort, position | RLS policy = tenant isolation **and** visibility (`shared OR owner_user_id = app_user_id()`), so personal views are private at the database level |
 | `external_links` | id, workspace_id, issue_id, provider(linear,jira,github), external_id, url, title, status, synced_at | |
 | `problems` (GA) | id `prb_`, workspace_id, title, status, external_link_id | |
 

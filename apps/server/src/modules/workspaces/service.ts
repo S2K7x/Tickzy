@@ -2,6 +2,7 @@ import { eq, sql } from "drizzle-orm";
 import type { Actor, MemberContext } from "../../http/auth.ts";
 import { AppError, newId } from "@tickzy/shared";
 import { schema, withUser, withWorkspace, type Db, type Tx } from "@tickzy/db";
+import { isUniqueViolation } from "../../lib/pg-errors.ts";
 
 export interface WorkspaceDto {
   id: string;
@@ -14,11 +15,6 @@ export interface WorkspaceDto {
 
 function toDto(w: typeof schema.workspaces.$inferSelect): WorkspaceDto {
   return { id: w.id, name: w.name, slug: w.slug, issue_prefix: w.issuePrefix, region: w.region, created_at: w.createdAt.toISOString() };
-}
-
-function isUniqueViolation(err: unknown, constraint?: string): boolean {
-  const cause = (err as { cause?: { code?: string; constraint?: string } }).cause ?? (err as { code?: string; constraint?: string });
-  return cause?.code === "23505" && (constraint === undefined || cause.constraint === constraint);
 }
 
 async function audit(tx: Tx, ws: string, actor: Actor, action: string, metadata: Record<string, unknown> = {}): Promise<void> {

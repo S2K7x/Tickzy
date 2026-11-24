@@ -43,7 +43,7 @@
 | T-209b | P0 | M | T-209a, T-207, T-208 | Inbox completion: ~~view counts~~ ✅, ~~filter panel (priority, channel, team, label)~~ ✅ (account filter with T-210), ~~bulk actions~~ ✅ (assign, status, priority, labels; merge with M3 dedupe), ~~virtualised list~~ ✅, ~~labels/team editing~~ ✅, ~~`⌘K` palette~~ ✅ (+ `a`/`s`/`p`/`l`) and ~~`?` shortcut sheet~~ ✅, ~~text search~~ ✅ (title/key), ~~realtime updates instead of polling~~ ✅ (T-208), ~~presence~~ ✅; SLA pills with T-403 | UX S2 | component tests + E2E ✅ done 2026-11-23 except SLA pills (with T-403) |
 | T-212 | P0 | M | T-209a | **Design system v2** (founder direction 2026-11-23): neutral canvas + white panel, near-black primary actions, outlined pills; new shell (sidebar sections, collapse, workspace breadcrumb switcher, working search, account menu, shortcuts sheet); Overview with real KPI strip (`GET /v1/issues/stats`) + "All issues" table with actions; inbox restyled with tab counts and `?q=` | ux-spec §2.0–2.1 | ✅ done 2026-11-23 (4 server + 10 jsdom tests; browser E2E `e2e-overview.cjs` 25/25; all browser suites re-run) |
 | T-210 | P0 | M | T-209 | Accounts list/profile UI | UX S4 | component tests ✅ done 2026-11-23 (8 jsdom + browser `e2e-accounts.cjs`; health/SLA/channels tabs with M3–M4) |
-| T-211 | P0 | S | T-204 | Saved views API + UI | FR-3.7 | integration |
+| T-211 | P0 | S | T-204 | Saved views API + UI | FR-3.7 | integration ✅ done 2026-11-24 (8 integration incl. RLS, 6 jsdom, browser `e2e-views.cjs` with two users) |
 
 ### M3 · Channels (Epics E5 email, E6 Slack, E7 widget)
 | T-301 | P0 | M | T-202 | Channel adapter interface + inbound_events table + ingest process role | persist-before-ack; dedupe | integration |

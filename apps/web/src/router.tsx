@@ -80,6 +80,7 @@ function inboxSearch(s: Record<string, unknown>): InboxSearch {
   if (typeof s.sort === "string" && SORTS.some((x) => x.id === s.sort)) out.sort = s.sort as InboxSearch["sort"];
   if (typeof s.issue === "string" && /^[\w-]{1,64}$/.test(s.issue)) out.issue = s.issue;
   if (typeof s.q === "string" && s.q.trim()) out.q = s.q.slice(0, 200);
+  if (typeof s.saved === "string" && /^vw_[0-9A-HJKMNP-TV-Z]{26}$/.test(s.saved)) out.saved = s.saved;
   // Filters: comma lists of plain tokens / ids only (the API validates values again).
   for (const k of ["priority", "channel", "team", "label", "account"] as const) {
     if (typeof s[k] === "string" && /^[\w,-]{1,300}$/.test(s[k])) out[k] = s[k];

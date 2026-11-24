@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient, useInfiniteQuery } from "@tansta
 import type { Priority, StatusCategory } from "@tickzy/shared/lifecycle";
 import { api } from "./api.ts";
 import { pollUnlessLive } from "./realtime.ts";
+import { SYSTEM_VIEWS, type SystemViewId } from "@tickzy/shared/views";
 
 /** Issues API client (api-spec §1, T-204/T-205). */
 export interface Issue {
@@ -29,16 +30,12 @@ export interface TimelineEvent {
 }
 export type TimelineItem = TimelineMessage | TimelineEvent;
 
-/** Inbox views (ux-spec S2). Counts arrive with T-209b. */
-export const VIEWS = [
-  { id: "open", label: "All open", query: "status=triage,waiting_on_us,waiting_on_customer,blocked" },
-  { id: "on-us", label: "Waiting on us", query: "status=triage,waiting_on_us" },
-  { id: "on-customer", label: "Waiting on customer", query: "status=waiting_on_customer" },
-  { id: "mine", label: "Mine", query: "assignee=me&status=triage,waiting_on_us,waiting_on_customer,blocked" },
-  { id: "unassigned", label: "Unassigned", query: "assignee=none&status=triage,waiting_on_us,waiting_on_customer,blocked" },
-  { id: "done", label: "Resolved", query: "status=resolved,closed" },
-] as const;
-export type ViewId = (typeof VIEWS)[number]["id"];
+/** Inbox system views (ux-spec S2), defined once in @tickzy/shared/views (the server counts saved views with them). */
+export const VIEWS = SYSTEM_VIEWS.map((v) => ({
+  id: v.id, label: v.label,
+  query: `${"assignee" in v ? `assignee=${v.assignee}&` : ""}status=${v.status.join(",")}`,
+}));
+export type ViewId = SystemViewId;
 export const SORTS = [
   { id: "updated", label: "Recently updated" },
   { id: "newest", label: "Newest" },

@@ -4,7 +4,7 @@
 - Rules: update this file whenever an item changes status; an item is ✅ only with linked evidence (document, test, or deployment).
 - Process definition: [`development-pipeline.md`](development-pipeline.md).
 
-**Overall:** 21 ✅ · 13 🟡 · 22 ⬜ (of 56). **Current position:** Stage 5 (Build), M1 complete → milestone M2, while Stage 1 user research/validation remains open on the discovery track.
+**Overall:** 21 ✅ · 13 🟡 · 22 ⬜ (of 56). **Current position:** Stage 5 (Build), M2 complete → before M3 (channels): threat model + Slack ToS review, while Stage 1 user research/validation remains open on the discovery track.
 
 ## 01 · Discovery (3/6)
 - ✅ Define the idea and problem — `docs/strategy/product-strategy.md` §1
@@ -40,15 +40,15 @@
 
 ## 05 · Build (3/6)
 - ✅ Repository and project setup — monorepo, CI file (`CURRENT-STATE.md`)
-- 🟡 Implement frontend and backend — M0 done; M1 **complete** (T-101 auth core ✅, T-101b Google/Microsoft ✅, T-102 invitations & members ✅, T-103 API tokens ✅, T-106 rate limiting ✅, T-104 ✅, T-105 web sign-in/onboarding ✅)
-- 🟡 Implement database and integrations — migrations 0001–0010 with RLS and composite foreign keys ✅; migrations verified under a non-superuser owner; integrations from M3
+- 🟡 Implement frontend and backend — M0 ✅; M1 ✅ (auth, members, API tokens, rate limiting, sign-in/onboarding); **M2 ✅ 2026-11-24** (accounts/contacts, issues/messages, whose-turn, search, inbox, realtime + presence, filters/bulk/palette, accounts UI, saved views); M3 (channels) next
+- 🟡 Implement database and integrations — migrations 0001–0012 with forced RLS and composite foreign keys ✅; migrations verified under a non-superuser owner; integrations from M3
 - 🟡 Code reviews — automated gates + self-review in place; CI green on GitHub ✅ (run #1, 2026-11-23); **founder review of auth/access code pending**
 - ✅ Documentation kept current — `CURRENT-STATE.md`, ADRs, checklists
 - ✅ Feature flags / trunk-based workflow defined — `engineering-workflow.md` (flags implemented when first needed)
 
 ## 06 · QA & security (1/7)
-- ✅ Unit and integration tests — 149 tests incl. RLS isolation, auth security, invitation/membership, API-token authorization and rate-limit suites
-- 🟡 End-to-end testing — sign-in/onboarding (`apps/web/scripts/e2e-auth.cjs`, 18/18) two-user invite/members journey (`e2e-invite.cjs`, 23/23) API-token journey (`e2e-api-tokens.cjs`, 18/18) Google/Microsoft sign-in with a mock provider (`e2e-oauth.cjs`, 15/15) the inbox (`e2e-inbox.cjs`, 25/25) and the v2 Overview/shell (`e2e-overview.cjs`, 25/25) against the real stack ✅; not yet in CI; support journeys from M3
+- ✅ Unit and integration tests — 375 tests (shared 43 · db 25 · server 218 · web 89) incl. RLS isolation, auth security, members, API tokens, rate limits, issues, bulk, search, realtime, saved views
+- 🟡 End-to-end testing — sign-in/onboarding (`apps/web/scripts/e2e-auth.cjs`, 18/18) two-user invite/members journey (`e2e-invite.cjs`, 23/23) API-token journey (`e2e-api-tokens.cjs`, 18/18) Google/Microsoft sign-in with a mock provider (`e2e-oauth.cjs`, 15/15) the inbox (`e2e-inbox.cjs`), the v2 Overview/shell (`e2e-overview.cjs`), realtime with two users (`e2e-realtime.cjs`), filters/bulk (`e2e-bulk.cjs`), palette + virtualised queue (`e2e-palette.cjs`), accounts (`e2e-accounts.cjs`) and saved views with two users (`e2e-views.cjs`) against the real stack ✅; not yet in CI (run each against a fresh server: back-to-back sign-ups trip the sign-in rate limit by design); support journeys from M3
 - 🟡 Accessibility & responsive checks — signed-in shell 8/8 (390/768/1024/1280 × light/dark) + all auth pages + Members and API tokens (light/dark, 1280/390) + invite page + inbox (1280 light/dark, 390 queue/issue) + v2 Overview (1440 light/dark, 1024, 768, 390), 0 axe violations; repeat per new screen
 - ⬜ AI evaluation sets & regression gates — from M5
 - 🟡 Security testing — authz, tenant-isolation, token and rate-limit tests ✅ (server suites); **SAST, dependency/secret scanning in CI, ASVS L2 review, pentest ⬜**
@@ -83,7 +83,7 @@
 - ⬜ Deprecation policy and customer data export path defined (export also needed for GDPR — planned in database.md §4)
 
 ## Recommended next steps (in priority order)
-1. Finish M2 — done: accounts/contacts/issues/messages APIs, whose-turn automation, search (1M-message benchmark within target), web inbox, realtime + presence; remaining: T-211 saved views. Register real Google/Microsoft OAuth apps before the first deployment (docs/operations/sign-in-providers.md).
+1. M2 is complete (accounts/contacts/issues/messages APIs, whose-turn automation, search with a 1M-message benchmark within target, web inbox, realtime + presence, filters/bulk/palette, accounts UI, saved views). Register real Google/Microsoft OAuth apps before the first deployment (docs/operations/sign-in-providers.md).
 2. In parallel on the discovery track: write the interview guide and start design-partner conversations (Stage 1 gate is still open; the MVP scope is a hypothesis until then).
 3. Before M3 (channels): written threat model for ingestion/auth/AI, and the Slack ToS legal review.
 4. Before first deploy: staging + preview environments, Sentry/OTel, SLO draft, backup/restore drill.

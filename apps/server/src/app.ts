@@ -23,6 +23,7 @@ import { customerRoutes } from "./modules/customers/routes.ts";
 import { issueRoutes } from "./modules/issues/routes.ts";
 import { searchRoutes } from "./modules/search/routes.ts";
 import { taxonomyRoutes } from "./modules/taxonomy/routes.ts";
+import { viewRoutes } from "./modules/views/routes.ts";
 import { realtimeGateway } from "./modules/realtime/gateway.ts";
 import { messageRoutes } from "./modules/messages/routes.ts";
 import { createDeliveryRegistry, type DeliveryRegistry } from "./modules/messages/delivery.ts";
@@ -102,6 +103,7 @@ export async function buildApp({ config, database, email, rateLimitStore = new M
   await app.register(issueRoutes(database.db));
   await app.register(searchRoutes(database.db));
   await app.register(taxonomyRoutes(database.db));
+  await app.register(viewRoutes(database.db));
   const realtime = realtimeGateway({
     db: database.db, pool: database.pool, sessions: auth, allowedOrigins: allowedOrigins(config),
     log: (msg, err) => app.log.error({ err }, msg), ...(realtimeSweepMs ? { sweepMs: realtimeSweepMs } : {}),
