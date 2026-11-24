@@ -1,3 +1,9 @@
 packages:
   - "apps/*"
   - "packages/*"
+
+# Security overrides (T-112): force patched versions of transitive dependencies. Remove an entry once every
+# dependant's own range resolves to a patched version. Pin versions released ≥ 2 weeks ago.
+overrides:
+  # GHSA-96hv-2xvq-fx4p (high, memory-exhaustion DoS) and GHSA-58qx-3vcg-4xpx — via @fastify/websocket (realtime).
+  ws: 8.22.2

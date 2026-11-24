@@ -27,6 +27,12 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      # Security scanning (T-112, SEC-13): secrets in any tracked file, known-vulnerable dependencies (high/critical
+      # fail the build), and the SAST rules that run as part of lint (eslint-plugin-security, zero warnings allowed).
+      - name: Secret scanning
+        run: pnpm secrets
+      - name: Dependency audit
+        run: pnpm audit:deps
       - run: pnpm lint
       - run: pnpm typecheck
       - run: pnpm test

@@ -24,11 +24,14 @@ export async function migrate(ownerUrl: string, dir: string = MIGRATIONS_DIR): P
     await client.query("SELECT pg_advisory_lock($1)", [LOCK_KEY]);
     await client.query(`CREATE TABLE IF NOT EXISTS _migrations (
       name text PRIMARY KEY, checksum text NOT NULL, applied_at timestamptz NOT NULL DEFAULT now())`);
+    // The migrations directory comes from the operator's command line / code, never from a request.
+    // eslint-disable-next-line security/detect-non-literal-fs-filename
     const files = (await readdir(dir)).filter((f) => f.endsWith(".sql")).sort();
     const { rows } = await client.query<{ name: string; checksum: string }>("SELECT name, checksum FROM _migrations");
     const done = new Map(rows.map((r) => [r.name, r.checksum]));
     const result: MigrationResult = { applied: [], skipped: [] };
     for (const file of files) {
+      // eslint-disable-next-line security/detect-non-literal-fs-filename -- file names listed from that directory
       const sql = await readFile(path.join(dir, file), "utf8");
       const checksum = createHash("sha256").update(sql).digest("hex");
       const previous = done.get(file);

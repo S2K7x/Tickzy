@@ -8,7 +8,7 @@ All work follows the **Tickzy Development Pipeline** — read it before starting
 - [`docs/process/pipeline-checklist.md`](docs/process/pipeline-checklist.md) — live status of every stage item. Keep it accurate.
 - [`docs/process/engineering-workflow.md`](docs/process/engineering-workflow.md) — the per-task loop, branching, review rules, Definition of Ready and **Definition of Done**.
 
-**Current position:** Stage 5 (Build), milestone **M3 · Channels** next (M0, M1 and M2 complete); threat model written (`docs/security/threat-model.md`) — T-110 security headers ✅ (strict CSP, ADR-029 — no inline scripts/styles or third-party assets), next T-112 CI scanning, then M3; each M3/M5 task must meet its threat-model controls; Slack ToS legal review (founder) before the Slack channel goes public. Stage 1 user research / design-partner validation is still open on the discovery track — treat MVP scope as a validated-by-research hypothesis, not as customer-confirmed.
+**Current position:** Stage 5 (Build), milestone **M3 · Channels** next (M0, M1 and M2 complete); threat model written (`docs/security/threat-model.md`) — T-110 security headers ✅ (strict CSP, ADR-029 — no inline scripts/styles or third-party assets), T-112 CI security scanning ✅ (ADR-030), next T-111 SSRF-guarded client and T-301 ingestion core (M3); each M3/M5 task must meet its threat-model controls; Slack ToS legal review (founder) before the Slack channel goes public. Stage 1 user research / design-partner validation is still open on the discovery track — treat MVP scope as a validated-by-research hypothesis, not as customer-confirmed.
 
 ## Start of every session
 1. Read [`CURRENT-STATE.md`](CURRENT-STATE.md) (what is done, verified, next, blocked).
@@ -43,7 +43,8 @@ All work follows the **Tickzy Development Pipeline** — read it before starting
 ```bash
 service postgresql start                      # local Postgres ≥16 (tests drop/recreate the test DB)
 pnpm install
-pnpm lint && pnpm typecheck && pnpm test      # required before every commit
+pnpm lint && pnpm typecheck && pnpm test      # required before every commit (lint includes SAST, zero warnings)
+pnpm secrets && pnpm audit:deps               # secret scan + dependency audit (also in CI, ADR-030)
 DATABASE_OWNER_URL=postgres://tickzy_owner:tickzy@localhost:5432/tickzy_dev pnpm db:migrate
 cd apps/server && DATABASE_URL=postgres://tickzy_app:tickzy_app@localhost:5432/tickzy_dev AUTH_DEV_MODE=true node src/main.ts --role=all
 pnpm --filter @tickzy/web dev                 # web app (proxies /v1 to :3000)

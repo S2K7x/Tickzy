@@ -10,11 +10,14 @@ export const PUBLIC_EMAIL_DOMAINS: ReadonlySet<string> = new Set([
   "orange.fr", "free.fr", "laposte.net", "sfr.fr", "wanadoo.fr", "libero.it", "t-online.de", "comcast.net", "att.net", "verizon.net",
 ]);
 
+// Linear in practice (measured: 1 ms on 50k-char adversarial inputs, T-112) and only run on ≤253 characters.
+// eslint-disable-next-line security/detect-unsafe-regex
 const DOMAIN_RE = /^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/;
 
 export function normalizeDomain(input: string): string | null {
   const d = input.trim().toLowerCase().replace(/^https?:\/\//, "").replace(/^www\./, "").replace(/\/.*$/, "");
-  return DOMAIN_RE.test(d) && d.length <= 253 ? d : null;
+  // Length first (defence in depth: the regex only ever sees ≤253 characters).
+  return d.length <= 253 && DOMAIN_RE.test(d) ? d : null;
 }
 
 /** The domain of an email address, or null when it is malformed or a public provider. */

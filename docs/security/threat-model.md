@@ -193,8 +193,8 @@ RLS) · **B6** Tickzy → third parties (secrets leave, untrusted responses come
 ## 9. Platform & operations
 | Area | Threat | Control | Status |
 |---|---|---|---|
-| Secrets | Secrets in the repository or images | Env/secret manager only (SEC-12); `.env` git-ignored; **secret scanning in CI** | scanning **gap → T-112** |
-| Supply chain | Vulnerable or malicious dependencies | Lockfile; pinned versions ≥ 2 weeks old for new security-relevant deps; **dependency audit + SAST in CI** (SEC-13) | **gap → T-112** |
+| Secrets | Secrets in the repository or images | Env/secret manager only (SEC-12); `.env` git-ignored; secret scanning of every tracked file on every push (`pnpm secrets`, ADR-030) | existing (T-112; history scan not yet — ADR-030 limits) |
+| Supply chain | Vulnerable or malicious dependencies | Lockfile; pinned versions ≥ 2 weeks old; dependency audit failing on high/critical + SAST lint rules in CI (SEC-13, ADR-030); first audit found and fixed a high DoS advisory in `ws` (realtime) | existing (T-112) |
 | Backups | Backups leak or cannot restore | Provider-encrypted backups; restore drill before design partners (pipeline 7) | planned (Stage 7) |
 | Logging | PII in logs | Structured logs with ids, not message bodies; redaction list kept with new providers | existing / extend (TM-5) |
 | Deletion | Data kept after a customer leaves | Workspace deletion and export (database.md §4) | planned (GA) |
@@ -212,7 +212,7 @@ RLS) · **B6** Tickzy → third parties (secrets leave, untrusted responses come
 | TM-7 | Malicious/tracking email HTML | High · Medium | Sanitise + sandbox + remote images off in T-302 |
 | TM-8 | Slack ToS: training / cross-org benefit / retention | Medium · High (platform ban) | Provenance + per-tenant AI + retention; **legal review (founder) before Slack GA** |
 | TM-9 | SSRF through any outbound URL | Medium · High | **T-111** shared guarded client, required by T-303/T-504/webhooks |
-| TM-10 | No dependency/secret scanning or SAST in CI | Medium · Medium | **T-112** |
+| TM-10 | No dependency/secret scanning or SAST in CI | — | **Mitigated 2026-11-24** (T-112, ADR-030); git-history scan and CodeQL not in place (ADR-030 limits) |
 | TM-11 | Widget impersonation of end users | Medium · High | HMAC identity in T-308; unsigned = anonymous |
 | TM-12 | Prompt injection / AI cost abuse | High · Medium | SEC-11 + no acting tools in MVP + spend caps (T-501, T-505) |
 

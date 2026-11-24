@@ -62,6 +62,8 @@ export async function resolveIssueRef(tx: Tx, ref: string): Promise<Issue> {
   let where: SQL;
   if (ref.startsWith("iss_")) where = eq(schema.issues.id, ref);
   else {
+    // Anchored, bounded quantifiers, no nesting: linear (T-112 review).
+    // eslint-disable-next-line security/detect-unsafe-regex
     const m = /^(?:([A-Za-z]{2,5})-)?(\d{1,9})$/.exec(ref);
     if (!m) throw new AppError("not_found", "Issue not found");
     if (m[1] && m[1].toUpperCase() !== (await workspacePrefix(tx))) throw new AppError("not_found", "Issue not found");
@@ -171,6 +173,7 @@ async function listConditions(tx: Tx, ctx: MemberContext, q: ListQuery): Promise
   if (q.label) conds.push(sql`EXISTS (SELECT 1 FROM issue_labels il WHERE il.issue_id = ${schema.issues.id} AND il.label_id = ${q.label})`);
   const term = q.q?.trim();
   if (term) {
+    // eslint-disable-next-line security/detect-unsafe-regex -- anchored, bounded, linear (T-112 review)
     const key = /^(?:[A-Za-z]{2,5}-)?(\d{1,9})$/.exec(term);
     conds.push(or(ilike(schema.issues.title, `%${likeEscape(term)}%`), key ? eq(schema.issues.number, Number(key[1])) : undefined));
   }
