@@ -114,9 +114,34 @@ describe("migrations", () => {
         const { rows } = await appClient.query("SELECT count(*)::int AS n FROM statuses WHERE is_default");
         await appClient.query("COMMIT");
         expect(rows[0].n).toBe(7);
+
+        // ADR-031 regression: SECURITY DEFINER entry points must see rows although the owner is not a superuser
+        // (FORCE RLS applies to owners; before 0013 these returned nothing on managed Postgres).
+        await appClient.query("BEGIN");
+        await appClient.query("SELECT set_config('app.workspace_id', 'ws_01M83TJAQ8E484QYFY3QS2B7VM', true)");
+        await appClient.query(
+          "INSERT INTO api_tokens (id, workspace_id, token_id, name, secret_hash, scopes) VALUES ('tok_01M83TJAQ8E484QYFY3QS2B7VM', 'ws_01M83TJAQ8E484QYFY3QS2B7VM', 'tokid', 'ci', '\\x00', ARRAY['issues:read'])",
+        );
+        await appClient.query("COMMIT");
+        const lookup = await appClient.query("SELECT workspace_id FROM api_token_lookup('tokid')");
+        expect(lookup.rows).toEqual([{ workspace_id: "ws_01M83TJAQ8E484QYFY3QS2B7VM" }]);
+        const u1 = await appClient.query("SELECT upsert_user('usr_01M83TJAQ8E484QYFY3QS2B7VA', 'Owner@Example.com', 'A') AS id");
+        const u2 = await appClient.query("SELECT upsert_user('usr_01M83TJAQ8E484QYFY3QS2B7VB', 'owner@example.com', 'B') AS id");
+        expect(u2.rows[0].id).toBe(u1.rows[0].id); // the second call had to READ the existing user
+        // …while the application role itself still sees nothing without a tenant context.
+        const isolated = await appClient.query("SELECT count(*)::int AS n FROM api_tokens");
+        expect(isolated.rows[0].n).toBe(0);
       } finally {
         await appClient.end();
       }
+      const missing = await admin.query(
+        `SELECT c.relname FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
+         WHERE n.nspname = 'public' AND c.relkind = 'r' AND c.relrowsecurity
+           AND NOT EXISTS (SELECT 1 FROM pg_policy p WHERE p.polrelid = c.oid AND p.polname = 'definer_owner_access')`,
+      );
+      expect(missing.rows.map((r) => r.relname)).toEqual([]); // every RLS table admits the definer owner (ADR-031)
+      const member = await admin.query("SELECT pg_has_role('tickzy_app', 'tz_owner_nonsuper', 'MEMBER') AS m");
+      expect(member.rows[0].m).toBe(false); // so the owner policy never applies to the application role
       const forced = await admin.query(
         `SELECT bool_and(relforcerowsecurity) AS all_forced FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
          WHERE n.nspname = 'public' AND c.relkind = 'r' AND c.relrowsecurity`,

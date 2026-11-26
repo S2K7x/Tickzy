@@ -105,6 +105,7 @@ RLS) · **B6** Tickzy → third parties (secrets leave, untrusted responses come
 | T | Cross-tenant reference by a leaked id (FKs bypass RLS) | Composite FKs `(workspace_id, x_id)` between tenant tables (ADR-025) | existing |
 | E | Privilege escalation via role or token scope | One permission matrix in `@tickzy/shared/permissions` enforced on every route; tokens cannot hold `developers:manage`; last-admin guard | existing |
 | E | SECURITY DEFINER functions as a cross-tenant back door | Closed registry of definer functions (ADR-022 list) each with tests; search functions owned by `tickzy_system` with explicit `workspace_id = app_workspace_id()` filter (ADR-028) | existing — **any new definer function must be added to the registry and tested** |
+| D | Definer entry points silently see nothing on a non-superuser owner (forced RLS applies to owners) → auth broken in production | `definer_owner_access` policy for the owner role on every RLS table (ADR-031, 0013); non-superuser migration test exercises the entry points | existing (bug found and fixed 2026-11-26) |
 | I | Personal data visible to other members (e.g. personal saved views) | Visibility in the RLS policy itself (0012) | existing |
 | I | Realtime events leak other tenants' activity | Topic authorisation (active membership; issue visible under RLS); NOTIFY payload carries ids only; clients refetch through the API; periodic revalidation drops removed members | existing (realtime suites) |
 

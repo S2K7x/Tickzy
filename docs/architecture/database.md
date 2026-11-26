@@ -1,7 +1,7 @@
 # Database Design (PostgreSQL) — v1.0
 
 - **Conventions:** snake_case; PK `id text` = prefixed ULID (ADR-018); every tenant table has `workspace_id text not null references workspaces(id)` and RLS enabled; timestamps `timestamptz not null default now()`; soft delete via `deleted_at` where user-deletable; JSONB only for genuinely schemaless data (custom field values, workflow definitions, raw payloads).
-- **RLS policy template:** `CREATE POLICY tenant_isolation ON <t> USING (workspace_id = current_setting('app.workspace_id', true)) WITH CHECK (workspace_id = current_setting('app.workspace_id', true));` + `ALTER TABLE <t> ENABLE ROW LEVEL SECURITY; ALTER TABLE <t> FORCE ROW LEVEL SECURITY;`
+- **RLS policy template:** `CREATE POLICY tenant_isolation ON <t> USING (workspace_id = current_setting('app.workspace_id', true)) WITH CHECK (workspace_id = current_setting('app.workspace_id', true));` + `ALTER TABLE <t> ENABLE ROW LEVEL SECURITY; ALTER TABLE <t> FORCE ROW LEVEL SECURITY;` + **`CREATE POLICY definer_owner_access ON <t> FOR ALL TO current_user USING (true) WITH CHECK (true);`** (ADR-031: SECURITY DEFINER entry points run as the owner, and forced RLS applies to owners on non-superuser managed databases; a migration test fails if any RLS table lacks it)
 - **Cross-table references** between tenant tables are composite foreign keys `(workspace_id, x_id) → x (workspace_id, id)` (ADR-025): FK checks bypass RLS, so a plain FK could point across workspaces.
 - **Roles:** `tickzy_owner` (migrations; needs CREATEROLE and must be able to act as `tickzy_app` — the runner grants itself membership, ADR-025), `tickzy_app` (NOBYPASSRLS, runtime), `tickzy_system` (BYPASSRLS, audited platform jobs only).
 
