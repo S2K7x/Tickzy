@@ -55,7 +55,7 @@ const AUTH_ROUTES = new Set([
   "GET /v1/auth/oauth/microsoft/callback",
 ]);
 
-function apply(reply: FastifyReply, limit: number, count: number, resetAt: number, now: number, message: string) {
+export function apply(reply: FastifyReply, limit: number, count: number, resetAt: number, now: number, message: string) {
   const resetSeconds = Math.max(1, Math.ceil((resetAt - now) / 1000));
   void reply.header("ratelimit-limit", String(limit));
   void reply.header("ratelimit-remaining", String(Math.max(0, limit - count)));

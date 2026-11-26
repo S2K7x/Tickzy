@@ -7,7 +7,7 @@
 ```json
 { "error": { "code": "validation_failed", "message": "…", "details": [{"path":"title","issue":"too_long"}], "request_id": "req_…" } }
 ```
-Codes: `unauthenticated` 401, `forbidden` 403, `not_found` 404, `validation_failed` 422, `conflict` 409, `rate_limited` 429, `internal` 500. Rate limit headers `RateLimit-Limit/Remaining/Reset` on every response; 429 adds `Retry-After`. Defaults (ADR-023): 600 req/min per API token or user, 1200 req/min per client IP, 20 req/min per IP on sign-in and invitation endpoints.
+Codes: `unauthenticated` 401, `forbidden` 403, `not_found` 404, `validation_failed` 422, `payload_too_large` 413, `conflict` 409, `rate_limited` 429, `internal` 500. Rate limit headers `RateLimit-Limit/Remaining/Reset` on every response; 429 adds `Retry-After`. Defaults (ADR-023): 600 req/min per API token or user, 1200 req/min per client IP, 20 req/min per IP on sign-in and invitation endpoints.
 
 ## 1. Endpoints
 | Method & path | Purpose | Permission | Milestone |
@@ -47,6 +47,7 @@ Codes: `unauthenticated` 401, `forbidden` 403, `not_found` 404, `validation_fail
 | GET/POST `/v1/knowledge/sources` · POST `/{id}/sync` · GET `/v1/knowledge/search` | knowledge | `knowledge:manage` | M5 |
 | POST `/v1/issues/{id}/links` (create or link Linear/Jira) · DELETE | engineering links | `issues:write` | M6 |
 | GET/POST/PATCH/DELETE `/v1/webhooks` · GET `/v1/webhooks/{id}/deliveries` · POST `/deliveries/{id}/replay` | webhooks | `developers:manage` | M6 |
+| POST `/ingest/{channel}` (provider webhooks; not under `/v1`, no session/token — authenticated by the provider's signature over the raw body) → `200 {ok, duplicate?}` or the provider handshake; 401 bad signature/stale timestamp, 422 malformed, 413 too large, 429 per-workspace budget | ingestion (ADR-032) | provider signature | M3 ✅ (core; channels from T-302/T-305) |
 | WS `/v1/realtime` ✅ | signed-in users (session cookie, Origin allow-list). Client → `{op:'sub'\|'unsub', topic}` (`workspace:{id}:inbox`, `issue:{id}`), `{op:'presence', issue_id, state:'viewing'\|'typing'\|'left'}` (after `subscribed`), `{op:'ping'}`. Server → `ready`, `subscribed`, `error {error}`, `event {topic, type, issue_id, message_id}` (ids only — refetch via REST), `presence {issue_id, viewers[]}`, `pong`. Messages handled in order; limits 50 subs, 4 KB/msg, 20 msg/s | per-topic auth (active member; issue visible under RLS) | M2 |
 
 ## 2. Permission matrix

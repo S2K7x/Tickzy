@@ -24,6 +24,8 @@ import { issueRoutes } from "./modules/issues/routes.ts";
 import { searchRoutes } from "./modules/search/routes.ts";
 import { registerSecurityHeaders } from "./http/security-headers.ts";
 import { taxonomyRoutes } from "./modules/taxonomy/routes.ts";
+import { ingestRoutes } from "./modules/ingest/routes.ts";
+import { createIngestRegistry, type IngestRegistry } from "./modules/ingest/channel.ts";
 import { viewRoutes } from "./modules/views/routes.ts";
 import { realtimeGateway } from "./modules/realtime/gateway.ts";
 import { messageRoutes } from "./modules/messages/routes.ts";
@@ -32,20 +34,28 @@ import { createApiTokenService } from "./modules/api-tokens/service.ts";
 
 export interface AppDeps {
   config: Pick<Config, "LOG_LEVEL" | "AUTH_DEV_MODE" | "APP_ORIGIN" | "ALLOWED_ORIGINS" | "COOKIE_SECURE" | "TRUST_PROXY" | "RATE_LIMIT_PER_MIN" | "RATE_LIMIT_IP_PER_MIN" | "RATE_LIMIT_AUTH_PER_MIN"> &
+    Partial<Pick<Config, "INGEST_PER_WORKSPACE_PER_MIN">> &
     Partial<Pick<Config, "GOOGLE_CLIENT_ID" | "GOOGLE_CLIENT_SECRET" | "GOOGLE_ISSUER" | "MICROSOFT_CLIENT_ID" | "MICROSOFT_CLIENT_SECRET" | "MICROSOFT_ISSUER">>;
   database: Database;
   email: EmailTransport;
   rateLimitStore?: RateLimitStore;
   /** Outbound channel adapters (ADR-012); none until the first channel ships (M3). */
   channels?: DeliveryRegistry;
+  /** Inbound channels (T-301); none until the first channel ships (email T-302, Slack T-305). */
+  ingest?: IngestRegistry;
+  /** Which surfaces this process serves (process roles, architecture §3). Default: both. */
+  surfaces?: { api?: boolean; ingest?: boolean };
   /** Realtime revalidation interval (tests use a short one). */
   realtimeSweepMs?: number;
   now?: () => number;
 }
 
-export async function buildApp({ config, database, email, rateLimitStore = new MemoryRateLimitStore(), now, channels = createDeliveryRegistry(), realtimeSweepMs }: AppDeps): Promise<FastifyInstance> {
+export async function buildApp({ config, database, email, rateLimitStore = new MemoryRateLimitStore(), now, channels = createDeliveryRegistry(), ingest = createIngestRegistry(), surfaces = {}, realtimeSweepMs }: AppDeps): Promise<FastifyInstance> {
+  const serveApi = surfaces.api ?? true;
+  const serveIngest = surfaces.ingest ?? true;
   const app = Fastify({
-    logger: config.LOG_LEVEL === "silent" ? false : { level: config.LOG_LEVEL, redact: ["req.headers.authorization", "req.headers.cookie"] },
+    // Never log credentials or provider signatures (threat model TM-5); request bodies are not logged at all.
+    logger: config.LOG_LEVEL === "silent" ? false : { level: config.LOG_LEVEL, redact: ["req.headers.authorization", "req.headers.cookie", 'req.headers["x-slack-signature"]', 'req.headers["x-tickzy-signature"]'] },
     genReqId: () => newId("request"),
     requestIdHeader: false,
     trustProxy: trustProxySetting(config.TRUST_PROXY),
@@ -86,6 +96,10 @@ export async function buildApp({ config, database, email, rateLimitStore = new M
       return reply.code(503).send({ status: "unavailable" });
     }
   });
+  if (serveIngest) {
+    await app.register(ingestRoutes(database.db, ingest, { store: rateLimitStore, perWorkspacePerMin: config.INGEST_PER_WORKSPACE_PER_MIN ?? 600, ...(now ? { now } : {}) }));
+  }
+  if (!serveApi) return app;
   app.get("/v1/openapi.json", { schema: { hide: true } }, async () => app.swagger());
 
   await app.register(authRoutes(database.db, auth, { cookieSecure: config.COOKIE_SECURE }));

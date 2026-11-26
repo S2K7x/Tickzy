@@ -27,6 +27,10 @@ const ConfigSchema = z
     RATE_LIMIT_PER_MIN: z.coerce.number().int().min(1).default(600),
     RATE_LIMIT_IP_PER_MIN: z.coerce.number().int().min(1).default(1200),
     RATE_LIMIT_AUTH_PER_MIN: z.coerce.number().int().min(1).default(20),
+    /** Provider webhooks accepted per workspace per minute (T-301; one noisy customer cannot starve the others). */
+    INGEST_PER_WORKSPACE_PER_MIN: z.coerce.number().int().min(1).default(600),
+    /** Days raw provider payloads (inbound_events) are kept once handled (threat model §6.1). */
+    INBOUND_RETENTION_DAYS: z.coerce.number().int().min(1).max(365).default(30),
     /** Google / Microsoft sign-in (T-101b, ADR-024). A provider is offered only when its client id and secret are set. */
     GOOGLE_CLIENT_ID: z.string().optional(),
     GOOGLE_CLIENT_SECRET: z.string().optional(),

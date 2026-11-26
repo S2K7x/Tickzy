@@ -25,6 +25,9 @@ export const ID_PREFIXES = {
   conversation: "cnv",
   event: "evt",
   savedView: "vw",
+  channelConnection: "chc",
+  channelEndpoint: "che",
+  inboundEvent: "ine",
   request: "req",
 } as const;
 

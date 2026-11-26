@@ -127,6 +127,7 @@ RLS) · **B6** Tickzy → third parties (secrets leave, untrusted responses come
 ## 6. Channels — M3 (planned; controls are acceptance criteria)
 
 ### 6.1 Ingestion pipeline (T-301) — common to all channels
+_Status 2026-11-26: the shared pipeline is **built** (ADR-032) — verify-before-parse hook, dedupe, persist-then-ack, server-side routing, size limits, per-workspace budget, retention and log redaction exist and are tested; each channel (T-302, T-305) supplies its own signature check and payload limits._
 | STRIDE | Threat | Required control |
 |---|---|---|
 | S | Forged webhook pretending to be Slack/Postmark | Verify signature **before parsing** (Slack: HMAC-SHA256 over `v0:{ts}:{raw body}` with the signing secret, constant-time compare; Postmark: Basic auth credentials + allow-listed source IPs or signed URL token); reject timestamps older than 5 minutes (SEC-7) |
@@ -208,7 +209,7 @@ RLS) · **B6** Tickzy → third parties (secrets leave, untrusted responses come
 | TM-2 | In-house auth code not yet reviewed by a second person | Medium · High | Founder review before design partners; external pentest before GA |
 | TM-3 | Workspace chosen by client header | Low · High | Keep `requireMember` the only entry; tests exist |
 | TM-4 | No security headers (CSP, HSTS, frame-ancestors, nosniff, no-store) | — | **Mitigated 2026-11-24** (T-110, ADR-029); production hosting must send the web headers (`docs/operations/security-headers.md`) |
-| TM-5 | Webhook bodies / provider signatures could be logged | Medium · Medium | Redaction list + log review in T-301 |
+| TM-5 | Webhook bodies / provider signatures could be logged | Low · Medium | **Partly mitigated** (T-301): request bodies are never logged, signature headers redacted, processing errors stored as messages only; extend the redaction list with each provider (T-302/T-305) |
 | TM-6 | Email sender spoofing | High · High | DMARC-verdict handling + reply tokens in T-302 |
 | TM-7 | Malicious/tracking email HTML | High · Medium | Sanitise + sandbox + remote images off in T-302 |
 | TM-8 | Slack ToS: training / cross-org benefit / retention | Medium · High (platform ban) | Provenance + per-tenant AI + retention; **legal review (founder) before Slack GA** |

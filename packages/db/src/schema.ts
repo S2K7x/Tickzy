@@ -302,3 +302,50 @@ export const savedViews = pgTable("saved_views", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
+
+/** Provider channels (T-301, 0014). Inbound-capable channels; `api`/`ui` are not channels you connect. */
+export const INBOUND_CHANNELS = ["slack", "email", "widget"] as const;
+export type InboundChannelKind = (typeof INBOUND_CHANNELS)[number];
+
+export const channelConnections = pgTable("channel_connections", {
+  id: text("id").primaryKey(),
+  workspaceId: text("workspace_id").notNull(),
+  kind: text("kind", { enum: INBOUND_CHANNELS }).notNull(),
+  externalTenantId: text("external_tenant_id"),
+  credentialsEnc: customBytea("credentials_enc"),
+  status: text("status", { enum: ["active", "disabled", "revoked"] }).notNull().default("active"),
+  settings: jsonb("settings").$type<Record<string, unknown>>().notNull().default({}),
+  createdAt: ts("created_at").notNull().defaultNow(),
+  updatedAt: ts("updated_at").notNull().defaultNow(),
+});
+
+export const channelEndpoints = pgTable("channel_endpoints", {
+  id: text("id").primaryKey(),
+  workspaceId: text("workspace_id").notNull(),
+  connectionId: text("connection_id").notNull(),
+  kind: text("kind", { enum: ["slack_channel", "email_address", "widget"] }).notNull(),
+  externalId: text("external_id").notNull(),
+  name: text("name").notNull(),
+  endpointType: text("endpoint_type", { enum: ["customer", "community", "internal", "triage"] }).notNull().default("customer"),
+  defaultAccountId: text("default_account_id"),
+  ingestionMode: text("ingestion_mode", { enum: ["thread", "time", "emoji", "ai"] }).notNull().default("thread"),
+  settings: jsonb("settings").$type<Record<string, unknown>>().notNull().default({}),
+  status: text("status", { enum: ["active", "disabled"] }).notNull().default("active"),
+  createdAt: ts("created_at").notNull().defaultNow(),
+  updatedAt: ts("updated_at").notNull().defaultNow(),
+});
+
+export const inboundEvents = pgTable("inbound_events", {
+  id: text("id").primaryKey(),
+  workspaceId: text("workspace_id").notNull(),
+  channel: text("channel", { enum: INBOUND_CHANNELS }).notNull(),
+  connectionId: text("connection_id"),
+  endpointId: text("endpoint_id"),
+  providerEventId: text("provider_event_id").notNull(),
+  payload: jsonb("payload").notNull(),
+  status: text("status", { enum: ["received", "processed", "ignored", "failed"] }).notNull().default("received"),
+  attempts: integer("attempts").notNull().default(0),
+  lastError: text("last_error"),
+  receivedAt: ts("received_at").notNull().defaultNow(),
+  processedAt: ts("processed_at"),
+});

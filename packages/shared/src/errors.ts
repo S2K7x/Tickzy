@@ -4,6 +4,7 @@ export const ERROR_STATUS = {
   forbidden: 403,
   not_found: 404,
   conflict: 409,
+  payload_too_large: 413,
   validation_failed: 422,
   rate_limited: 429,
   internal: 500,

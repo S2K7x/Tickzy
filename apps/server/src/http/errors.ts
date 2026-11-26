@@ -23,6 +23,10 @@ export function registerErrorHandling(app: FastifyInstance): void {
       }));
       return reply.code(422).send(envelope("validation_failed", "Request validation failed", req.id, details));
     }
+    if (err.statusCode === 413) {
+      // Body over the route's limit (e.g. a provider webhook larger than its channel allows) — not a server error.
+      return reply.code(413).send(envelope("payload_too_large", "Request body too large", req.id));
+    }
     if (err.statusCode === 415 || err.statusCode === 400) {
       return reply.code(422).send(envelope("validation_failed", err.message, req.id));
     }
