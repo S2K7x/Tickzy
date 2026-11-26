@@ -176,7 +176,7 @@ RLS) · **B6** Tickzy → third parties (secrets leave, untrusted responses come
 ## 7. Outbound requests & SSRF (SEC-8; affects T-303, T-504, customer webhooks at GA, Slack file downloads)
 | STRIDE | Threat | Required control |
 |---|---|---|
-| I/E | SSRF: a customer-supplied URL (webhook endpoint, knowledge crawler URL, image proxy, Slack `url_private` redirect) reaches internal services or cloud metadata (169.254.169.254) | One shared outbound HTTP client (**T-111**): resolve DNS first and refuse private, loopback, link-local, CGNAT, multicast and IPv6 ULA ranges; pin the resolved IP for the connection (no DNS rebinding); re-check every redirect hop (max 3); https only (http only in dev); timeouts and response size caps; no credentials forwarded across hosts |
+| I/E | SSRF: a customer-supplied URL (webhook endpoint, knowledge crawler URL, image proxy, Slack `url_private` redirect) reaches internal services or cloud metadata (169.254.169.254) | **Existing (T-111): `apps/server/src/lib/outbound/safe-fetch.ts`** — the only client allowed for customer-controlled URLs: resolve DNS first and refuse private, loopback, link-local, CGNAT, multicast and IPv6 ULA ranges; pin the resolved IP for the connection (no DNS rebinding); re-check every redirect hop (max 3); https only (http only in dev); timeouts and response size caps; no credentials forwarded across hosts |
 | T | Webhook receivers tampered / replayed | Outbound HMAC `Tickzy-Signature: t=…,v1=…` with timestamp (architecture §6) |
 
 ## 8. AI — M5 (T-501…T-508)
@@ -211,7 +211,7 @@ RLS) · **B6** Tickzy → third parties (secrets leave, untrusted responses come
 | TM-6 | Email sender spoofing | High · High | DMARC-verdict handling + reply tokens in T-302 |
 | TM-7 | Malicious/tracking email HTML | High · Medium | Sanitise + sandbox + remote images off in T-302 |
 | TM-8 | Slack ToS: training / cross-org benefit / retention | Medium · High (platform ban) | Provenance + per-tenant AI + retention; **legal review (founder) before Slack GA** |
-| TM-9 | SSRF through any outbound URL | Medium · High | **T-111** shared guarded client, required by T-303/T-504/webhooks |
+| TM-9 | SSRF through any outbound URL | — | **Mitigated 2026-11-24/26** (T-111: `safeFetch`, 38 tests incl. rebinding, redirects, IPv6-embedded IPv4, TLS hostname checks). Every M3/M5 caller with a customer-controlled URL (email images, Slack file downloads, knowledge crawler, webhooks) must use it — code review item |
 | TM-10 | No dependency/secret scanning or SAST in CI | — | **Mitigated 2026-11-24** (T-112, ADR-030); git-history scan and CodeQL not in place (ADR-030 limits) |
 | TM-11 | Widget impersonation of end users | Medium · High | HMAC identity in T-308; unsigned = anonymous |
 | TM-12 | Prompt injection / AI cost abuse | High · Medium | SEC-11 + no acting tools in MVP + spend caps (T-501, T-505) |

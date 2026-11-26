@@ -115,7 +115,7 @@ On issue/message events the SLA module recomputes targets deterministically from
 - **AuthN:** email magic link + Google/Microsoft OAuth (Better Auth library, sessions in Postgres, httpOnly SameSite=Lax cookies); API tokens (hashed, prefixed `tkz_live_`), scoped. SAML/SCIM via WorkOS at GA (ADR-006).
 - **AuthZ:** role-based permission sets (`admin`, `agent`, `collaborator`, `viewer`, `integration`) → permission strings (`issues:write`, `settings:manage` …) checked in route preHandlers; agents (AI) are principals with roles too.
 - **Secrets:** integration tokens encrypted with AES-256-GCM using a KMS-wrapped data key (envelope encryption); never logged.
-- **Webhook security:** inbound signature verification for every provider; outbound HMAC-SHA256 `Tickzy-Signature: t=…,v1=…`; SSRF guard (deny private ranges) for all outbound customer URLs.
+- **Webhook security:** inbound signature verification for every provider; outbound HMAC-SHA256 `Tickzy-Signature: t=…,v1=…`; SSRF guard (deny private ranges) for all outbound customer URLs — `apps/server/src/lib/outbound/safe-fetch.ts` (T-111): resolve-then-pin, every DNS answer must be public, redirects re-checked, https only in production, size/time caps.
 - **Audit log:** append-only `audit_log` for admin/data-access actions.
 - **Slack data provenance:** `source` column on messages/chunks; training/export pipelines exclude `slack` (Slack ToS).
 

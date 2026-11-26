@@ -85,5 +85,5 @@
 ## Recommended next steps (in priority order)
 1. M2 is complete (accounts/contacts/issues/messages APIs, whose-turn automation, search with a 1M-message benchmark within target, web inbox, realtime + presence, filters/bulk/palette, accounts UI, saved views). Register real Google/Microsoft OAuth apps before the first deployment (docs/operations/sign-in-providers.md).
 2. In parallel on the discovery track: write the interview guide and start design-partner conversations (Stage 1 gate is still open; the MVP scope is a hypothesis until then).
-3. Before M3 (channels): ~~written threat model~~ ✅ (`docs/security/threat-model.md`); ~~T-110 security headers~~ ✅; ~~T-112 CI scanning~~ ✅; next T-111 SSRF-guarded client (needed by T-303/T-504) and T-301 ingestion core; Slack ToS legal review (founder) before the Slack channel goes public.
+3. Before M3 (channels): ~~written threat model~~ ✅ (`docs/security/threat-model.md`); ~~T-110 security headers~~ ✅; ~~T-112 CI scanning~~ ✅; ~~T-111 SSRF-guarded client~~ ✅; next T-301 ingestion core; Slack ToS legal review (founder) before the Slack channel goes public.
 4. Before first deploy: staging + preview environments, Sentry/OTel, SLO draft, backup/restore drill.
