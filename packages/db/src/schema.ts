@@ -210,6 +210,7 @@ export const conversations = pgTable("conversations", {
   channelKind: text("channel_kind", { enum: CHANNEL_KINDS }).notNull(),
   endpointId: text("endpoint_id"),
   externalThreadKey: text("external_thread_key"),
+  replyToken: text("reply_token"),
   lastMessageAt: ts("last_message_at"),
   createdAt: ts("created_at").notNull().defaultNow(),
 });
@@ -263,6 +264,7 @@ export const messages = pgTable("messages", {
   createdAt: ts("created_at").notNull().defaultNow(),
   editedAt: ts("edited_at"),
   deletedAt: ts("deleted_at"),
+  meta: jsonb("meta").$type<Record<string, unknown>>().notNull().default({}),
 });
 
 export const attachments = pgTable("attachments", {

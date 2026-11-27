@@ -152,11 +152,12 @@ _Status 2026-11-26: the shared pipeline is **built** (ADR-032) — verify-before
 ### 6.3 Email (T-302 inbound, T-303 outbound)
 | STRIDE | Threat | Required control |
 |---|---|---|
-| S | **Spoofed sender** ("From: ceo@customer.com") creating or replying on issues as that contact | Use the provider's SPF/DKIM/DMARC verdicts: when DMARC fails, the message is still ingested but marked **unverified sender** in the UI, is **not** auto-mapped to an account by domain, and cannot reopen/continue an issue that belongs to a verified thread except through the per-issue reply token (TM-6) |
-| T | Thread hijack by guessing headers | Thread matching prefers the unguessable reply token (`support+<token>@`, ≥128-bit) over `In-Reply-To`/`References`; subject heuristics only within the same sender |
+| S | **Spoofed sender** ("From: ceo@customer.com") creating or replying on issues as that contact | **Existing (T-302a, ADR-033).** Postmark reports no DMARC verdict, so "verified" = SpamAssassin `DKIM_VALID_AU` (valid DKIM from the From domain). Unverified mail is ingested but flagged **Unverified sender** on the timeline (with an explanation), never mapped to an account by its claimed domain, and cannot continue an existing thread through headers — only through the per-thread reply token (TM-6). Accepted residual risk: a forged message claiming an existing contact's address attaches to that contact; the visible flag is the control |
+| T | Thread hijack by guessing headers | **Existing (T-302a):** 160-bit reply token first; header threading only for verified senders; no subject heuristics |
 | T/I | Malicious HTML (scripts, tracking pixels, CSS exfiltration, phishing forms) | Server-side allowlist sanitisation (SEC-5); stored as sanitised HTML + plain text; rendered in a sandboxed context (no scripts, no forms); remote images blocked until the agent opts in (tracking/IP leak) (TM-7) |
 | T | Malicious attachments | Size/type limits; stored in object storage; virus scan (async; quarantined until clean); served only from a separate domain with `Content-Disposition: attachment` and `nosniff` (SEC-14) via short-lived signed URLs |
-| D | Mail loops and auto-reply storms | Detect `Auto-Submitted`, `X-Autoreply`, `Precedence: bulk/list`, DSNs; never auto-reply to them; per-sender and per-workspace inbound rate limits; loop guard (stop after 3 automated exchanges) |
+| D | Mail loops and auto-reply storms | **Existing (T-302a):** automated mail detected (headers, DSN, senders, subjects), never opens/reopens issues, dropped without a thread; per-workspace ingestion budget (T-301). Still to do with outbound/AI replies: never auto-reply to automated mail, stop after 3 automated exchanges |
+| D | Crafted email content exhausting the worker (regex backtracking, huge bodies) | **Existing (T-302a):** input caps + linear HTML/text processing; a 200 KB crafted HTML went from 13.7 s to ≤ 22 ms; timing regression tests |
 | S | Outbound spoofing / domain abuse | Send only from domains the workspace verified (DKIM CNAME + Return-Path); refuse unverified From domains |
 | I | Bounce/complaint webhooks forged | Signature/credential verification as in §6.1 |
 
@@ -210,8 +211,8 @@ _Status 2026-11-26: the shared pipeline is **built** (ADR-032) — verify-before
 | TM-3 | Workspace chosen by client header | Low · High | Keep `requireMember` the only entry; tests exist |
 | TM-4 | No security headers (CSP, HSTS, frame-ancestors, nosniff, no-store) | — | **Mitigated 2026-11-24** (T-110, ADR-029); production hosting must send the web headers (`docs/operations/security-headers.md`) |
 | TM-5 | Webhook bodies / provider signatures could be logged | Low · Medium | **Partly mitigated** (T-301): request bodies are never logged, signature headers redacted, processing errors stored as messages only; extend the redaction list with each provider (T-302/T-305) |
-| TM-6 | Email sender spoofing | High · High | DMARC-verdict handling + reply tokens in T-302 |
-| TM-7 | Malicious/tracking email HTML | High · Medium | Sanitise + sandbox + remote images off in T-302 |
+| TM-6 | Email sender spoofing | Medium · High | **Mitigated** (T-302a): DKIM-alignment verification, flags, no domain mapping, token-only threading for unverified senders; residual: spoofing an existing contact is flagged, not blocked |
+| TM-7 | Malicious/tracking email HTML | Low now · Medium | HTML is not stored or rendered (text only, T-302a); sanitise + sandbox + remote images off when T-302b renders HTML |
 | TM-8 | Slack ToS: training / cross-org benefit / retention | Medium · High (platform ban) | Provenance + per-tenant AI + retention; **legal review (founder) before Slack GA** |
 | TM-9 | SSRF through any outbound URL | — | **Mitigated 2026-11-24/26** (T-111: `safeFetch`, 38 tests incl. rebinding, redirects, IPv6-embedded IPv4, TLS hostname checks). Every M3/M5 caller with a customer-controlled URL (email images, Slack file downloads, knowledge crawler, webhooks) must use it — code review item |
 | TM-10 | No dependency/secret scanning or SAST in CI | — | **Mitigated 2026-11-24** (T-112, ADR-030); git-history scan and CodeQL not in place (ADR-030 limits) |

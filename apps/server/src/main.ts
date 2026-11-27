@@ -6,6 +6,7 @@ import { startWorker, type Worker } from "./worker.ts";
 import { ConsoleEmailTransport } from "./lib/email.ts";
 import { createDeliveryRegistry } from "./modules/messages/delivery.ts";
 import { createIngestRegistry } from "./modules/ingest/channel.ts";
+import { postmarkInboundChannel } from "./modules/email/inbound-channel.ts";
 import { searchIndexAvailable } from "./modules/search/service.ts";
 
 // Process roles (architecture §3): `api` (REST + WebSocket), `ingest` (provider webhooks), `worker` (jobs), or `all`
@@ -21,7 +22,11 @@ const database = createDatabase(config.DATABASE_URL);
 // Channel adapters are registered here as channels ship (Slack, email — M3).
 const channels = createDeliveryRegistry([]);
 // Inbound channels (provider webhooks), shared by the ingest role (receives) and the worker (processes).
-const ingest = createIngestRegistry([]);
+const ingest = createIngestRegistry([
+  ...(config.INBOUND_EMAIL_DOMAIN && config.POSTMARK_INBOUND_USER && config.POSTMARK_INBOUND_PASSWORD
+    ? [postmarkInboundChannel({ inboundDomain: config.INBOUND_EMAIL_DOMAIN, username: config.POSTMARK_INBOUND_USER, password: config.POSTMARK_INBOUND_PASSWORD })]
+    : []),
+]);
 const app = await buildApp({
   config, database, email: new ConsoleEmailTransport(), channels, ingest,
   surfaces: { api: roleArg === "api" || roleArg === "all", ingest: roleArg === "ingest" || roleArg === "all" },

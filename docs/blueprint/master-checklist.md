@@ -7,7 +7,7 @@ Every strategy commitment must map to at least one requirement and task. ⬜ not
 | Module 1 Workspace & identity | FR-1.1–1.7 | T-002–T-008 ✅, T-101 ✅, T-101b ✅, T-102 ✅, T-103 ✅, T-104 ✅, T-105 ✅, T-106 ✅ | ✅ (M1 complete; real Google/Microsoft apps to verify at deploy) |
 | Tenant isolation (ADR-005) | FR-1.5, SEC-3 | T-003 ✅, T-004 ✅, T-201 ✅ (composite FKs, ADR-025) | 🟡 (extended with every new table) |
 | Module 2 Channels: Slack (modes, reply as user, internal threads) | FR-2.1–2.5 | T-301 ✅ (shared ingestion core, ADR-032), T-304–T-307, T-310 | 🟡 |
-| Module 2 Channels: email first-class | FR-2.7 | T-301 ✅ (ingestion core), T-302, T-303 | 🟡 |
+| Module 2 Channels: email first-class | FR-2.7 | T-301 ✅ (ingestion core), T-302a ✅ (inbound text, threading, automated mail, verification), T-302b (attachments, HTML), T-303 (outbound) | 🟡 |
 | Module 2 Channels: widget | FR-2.8 | T-308 | ⬜ |
 | Module 3 Inbox: one Issue object, status categories, whose-turn, ignored | FR-3.1, 3.2 | T-202 ✅ (schema, lifecycle rules), T-206 ✅ (automation, reopen, follow-ups, ignored) | ✅ backend (UI in T-209) |
 | Module 3 Search that works | FR-3.8 | T-207 ✅ (operators, snippets, indexed under RLS via ADR-028) | ✅ |

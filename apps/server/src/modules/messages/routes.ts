@@ -20,6 +20,16 @@ export function messageRoutes(db: Db, channels: DeliveryRegistry) {
   return async function routes(app: FastifyInstance): Promise<void> {
     const r = app.withTypeProvider<ZodTypeProvider>();
 
+    // Which channels can actually deliver a reply right now (an adapter is registered, ADR-026). The app uses it to
+    // say honestly when a reply is only saved (e.g. email before outbound email exists).
+    r.get("/v1/channels/delivery", {
+      schema: { tags: ["channels"], summary: "Channels whose replies are delivered to the customer", headers: WorkspaceHeader,
+        response: { 200: z.object({ deliverable: z.array(z.enum(["slack", "email", "widget"])) }) } },
+    }, async (req) => {
+      await requireMember(db, req, "issues:read");
+      return { deliverable: (["slack", "email", "widget"] as const).filter((k) => channels.adapterFor(k) !== null) };
+    });
+
     r.post("/v1/issues/:ref/messages", {
       schema: {
         tags: ["messages"], summary: "Reply to the customer (`public`) or add an internal note (`internal`, never sent to the customer)",

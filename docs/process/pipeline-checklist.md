@@ -41,7 +41,7 @@
 ## 05 · Build (3/6)
 - ✅ Repository and project setup — monorepo, CI file (`CURRENT-STATE.md`)
 - 🟡 Implement frontend and backend — M0 ✅; M1 ✅ (auth, members, API tokens, rate limiting, sign-in/onboarding); **M2 ✅ 2026-11-24** (accounts/contacts, issues/messages, whose-turn, search, inbox, realtime + presence, filters/bulk/palette, accounts UI, saved views); M3 (channels) next
-- 🟡 Implement database and integrations — migrations 0001–0014 with forced RLS and composite foreign keys ✅ (0013: definer entry points fixed for non-superuser owners, ADR-031); migrations verified under a non-superuser owner; integrations from M3
+- 🟡 Implement database and integrations — migrations 0001–0015 with forced RLS and composite foreign keys ✅ (0013: definer entry points fixed for non-superuser owners, ADR-031); migrations verified under a non-superuser owner; integrations from M3
 - 🟡 Code reviews — automated gates + self-review in place; CI green on GitHub ✅ (run #1, 2026-11-23); **founder review of auth/access code pending**
 - ✅ Documentation kept current — `CURRENT-STATE.md`, ADRs, checklists
 - ✅ Feature flags / trunk-based workflow defined — `engineering-workflow.md` (flags implemented when first needed)
@@ -85,5 +85,5 @@
 ## Recommended next steps (in priority order)
 1. M2 is complete (accounts/contacts/issues/messages APIs, whose-turn automation, search with a 1M-message benchmark within target, web inbox, realtime + presence, filters/bulk/palette, accounts UI, saved views). Register real Google/Microsoft OAuth apps before the first deployment (docs/operations/sign-in-providers.md).
 2. In parallel on the discovery track: write the interview guide and start design-partner conversations (Stage 1 gate is still open; the MVP scope is a hypothesis until then).
-3. Before M3 (channels): ~~written threat model~~ ✅ (`docs/security/threat-model.md`); ~~T-110 security headers~~ ✅; ~~T-112 CI scanning~~ ✅; ~~T-111 SSRF-guarded client~~ ✅; ~~T-301 ingestion core~~ ✅ (M3 started); next T-302 email inbound; Slack ToS legal review (founder) before the Slack channel goes public.
+3. Before M3 (channels): ~~written threat model~~ ✅ (`docs/security/threat-model.md`); ~~T-110 security headers~~ ✅; ~~T-112 CI scanning~~ ✅; ~~T-111 SSRF-guarded client~~ ✅; ~~T-301 ingestion core~~ ✅ (M3 started); ~~T-302a email inbound~~ ✅; next T-303 email outbound (then T-302b attachments/HTML); Slack ToS legal review (founder) before the Slack channel goes public.
 4. Before first deploy: staging + preview environments, Sentry/OTel, SLO draft, backup/restore drill.

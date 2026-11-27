@@ -32,6 +32,8 @@ export interface ResolveInput {
   name?: string | undefined;
   /** The channel endpoint's default account, when the conversation happens in an account-specific place. */
   defaultAccountId?: string | null | undefined;
+  /** False when the identity is not proven (unverified email sender): no account mapping by email domain. */
+  trustDomain?: boolean | undefined;
 }
 
 export async function resolveContact(tx: Tx, workspaceId: string, input: ResolveInput): Promise<{ contactId: string; accountId: string | null; created: boolean }> {
@@ -40,7 +42,7 @@ export async function resolveContact(tx: Tx, workspaceId: string, input: Resolve
   if (existing) {
     // Fill a missing automatic account (e.g. the domain was added to an account after the contact first wrote in).
     if (!existing.accountId && existing.accountSource === "auto") {
-      const accountId = input.defaultAccountId ?? (input.kind === "email" ? await accountForEmail(tx, key) : null);
+      const accountId = input.defaultAccountId ?? (input.kind === "email" && input.trustDomain !== false ? await accountForEmail(tx, key) : null);
       if (accountId) {
         await tx.update(schema.contacts).set({ accountId, updatedAt: new Date() }).where(eq(schema.contacts.id, existing.id));
         return { contactId: existing.id, accountId, created: false };
@@ -48,7 +50,8 @@ export async function resolveContact(tx: Tx, workspaceId: string, input: Resolve
     }
     return { contactId: existing.id, accountId: existing.accountId, created: false };
   }
-  const accountId = input.defaultAccountId ?? (input.kind === "email" ? await accountForEmail(tx, key) : null);
+  // An unverified email sender (threat model TM-6) is never placed into an account by its claimed domain.
+  const accountId = input.defaultAccountId ?? (input.kind === "email" && input.trustDomain !== false ? await accountForEmail(tx, key) : null);
   const contactId = newId("contact");
   await tx.insert(schema.contacts).values({ id: contactId, workspaceId, accountId, accountSource: "auto", name: input.name?.slice(0, 200) ?? "" });
   const inserted = await tx.insert(schema.contactIdentities)

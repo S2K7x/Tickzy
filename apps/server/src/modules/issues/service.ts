@@ -390,7 +390,7 @@ export function createIssuesService(db: Db) {
         const items = [
           ...msgs.map((m) => ({ kind: "message" as const, id: m.id, created_at: m.createdAt.toISOString(), message: {
             id: m.id, visibility: m.visibility, direction: m.direction, author: { type: m.authorType, id: m.authorId, name: names.get(`${m.authorType}:${m.authorId}`) ?? null }, body: { text: m.bodyText, ast: m.bodyAst },
-            source: m.source, delivery_state: m.deliveryState, edited_at: m.editedAt?.toISOString() ?? null,
+            source: m.source, delivery_state: m.deliveryState, edited_at: m.editedAt?.toISOString() ?? null, meta: m.meta,
           } })),
           ...evts.map((e) => ({ kind: "event" as const, id: String(e.id), created_at: e.createdAt.toISOString(), event: { type: e.type, actor: { type: e.actorType, id: e.actorId }, data: e.data } })),
         ].sort((a, b) => a.created_at.localeCompare(b.created_at) || (a.kind === b.kind ? 0 : a.kind === "event" ? -1 : 1));

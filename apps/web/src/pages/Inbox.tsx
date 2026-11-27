@@ -5,7 +5,7 @@ import { useCurrentWorkspace, useSession } from "../lib/session.ts";
 import { assignable, useMembers } from "../lib/members.ts";
 import {
   describeEvent, PRIORITY_LABEL, relativeTime, SORTS, STATUS_LABEL, useIssue, useIssueList, useIssueStats, usePostMessage, useTimeline, useUpdateIssue, viewCount, VIEWS,
-  type Issue, type SortId, type TimelineItem, type ViewId,
+  CHANNEL_LABEL, isProviderChannel, useDeliverableChannels, type Issue, type MessageMeta, type SortId, type TimelineItem, type ViewId,
 } from "../lib/issues.ts";
 import { Avatar, ChannelBadge, PriorityDot, StatusChip } from "../components/issue-ui.tsx";
 import { btn, segmented } from "../components/ui.ts";
@@ -237,6 +237,9 @@ function IssueView({ ws, issueRef, onBack, composerRef, resolveRef }: {
   const update = useUpdateIssue(ws, issueRef);
   const session = useSession();
   const presence = useIssuePresence(issue.data?.id ?? null, session.data?.user.id);
+  const delivery = useDeliverableChannels(ws);
+  // Replies on this issue's channel cannot reach the customer yet (no outbound adapter): say so on each one.
+  const undeliverable = !!issue.data && isProviderChannel(issue.data.channel) && !!delivery.data && !delivery.data.deliverable.includes(issue.data.channel);
   const memberName = (id: string) => {
     const m = members.data?.data.find((x) => x.id === id);
     return m ? m.name || m.email : null;
@@ -273,7 +276,7 @@ function IssueView({ ws, issueRef, onBack, composerRef, resolveRef }: {
         <div className="xl:hidden"><Details issue={i} ws={ws} update={update} memberName={memberName} collapsible /></div>
         <ol aria-label="Timeline" className="m-0 flex min-h-0 flex-1 list-none flex-col gap-3 overflow-y-auto px-4 py-4 md:px-6">
           {timeline.isPending && <li role="status" className="text-sm text-muted">Loading conversation…</li>}
-          {timeline.data?.data.map((item) => <TimelineRow key={`${item.kind}-${item.id}`} item={item} memberName={memberName} />)}
+          {timeline.data?.data.map((item) => <TimelineRow key={`${item.kind}-${item.id}`} item={item} memberName={memberName} undeliverable={undeliverable} />)}
           {timeline.data?.truncated && <li className="text-xs text-muted">Older activity is not shown.</li>}
         </ol>
         <Composer ref={composerRef} ws={ws} issue={i} onTyping={presence.onTyping} />
@@ -301,7 +304,7 @@ function PresenceNote({ viewers }: { viewers: Viewer[] }) {
   );
 }
 
-function TimelineRow({ item, memberName }: { item: TimelineItem; memberName: (id: string) => string | null }) {
+function TimelineRow({ item, memberName, undeliverable }: { item: TimelineItem; memberName: (id: string) => string | null; undeliverable: boolean }) {
   if (item.kind === "event") {
     return (
       <li className="flex items-center gap-2 text-[12px] text-muted">
@@ -321,12 +324,46 @@ function TimelineRow({ item, memberName }: { item: TimelineItem; memberName: (id
         {internal && <span className="ml-1.5 rounded bg-warn-soft px-1.5 py-px text-[11px] font-semibold text-warn">Internal note</span>}
         <span className="ml-1.5">{relativeTime(item.created_at)}</span>
         {m.delivery_state === "failed" && <span className="ml-1.5 font-semibold text-danger">Not delivered</span>}
+        {undeliverable && !customer && !internal && m.delivery_state === null && (
+          <span className="ml-1.5 font-semibold text-warn" title="This channel cannot deliver replies yet: the reply is saved on the issue but the customer did not receive it.">Not sent</span>
+        )}
       </span>
+      {m.meta && <MessageFlags meta={m.meta} />}
       <div className={`max-w-[85%] whitespace-pre-wrap rounded-2xl px-3.5 py-2.5 text-sm ${internal ? "border border-dashed border-warn bg-warn-soft text-fg" : customer ? "border border-line bg-surface-2 text-fg" : "bg-primary text-primary-fg"}`}>
         {m.body.text}
       </div>
     </li>
   );
+}
+
+/**
+ * What the agent must know about an inbound message before acting on it (threat model TM-6/TM-7, FR-2.7). Text, not
+ * colour alone, carries the meaning; the title explains each flag.
+ */
+function MessageFlags({ meta }: { meta: MessageMeta }) {
+  const chip = "rounded-full border px-2 py-px text-[11px] font-semibold";
+  const files = meta.attachments_imported === false ? meta.attachments ?? [] : [];
+  const flags = [
+    meta.sender_verified === false && (
+      <span key="unverified" className={`${chip} border-danger text-danger`} title="The sender's address could not be authenticated (no valid DKIM signature from their domain). Anyone can forge a From address — be careful with requests for payments, credentials or data.">
+        Unverified sender
+      </span>
+    ),
+    meta.thread_unverified && (
+      <span key="thread" className={`${chip} border-line text-muted`} title="It replies to an earlier conversation, but because the sender is not verified it was kept separate.">
+        Not added to the earlier thread
+      </span>
+    ),
+    meta.automated && <span key="auto" className={`${chip} border-line text-muted`} title={`Automated mail (${meta.automated_reason ?? "auto-reply"}) — it did not reopen or change the issue.`}>Automated</span>,
+    meta.spam && <span key="spam" className={`${chip} border-warn text-warn`} title="The spam filter scored this message as likely spam.">Possible spam</span>,
+    files.length > 0 && (
+      <span key="files" className={`${chip} border-line text-muted`} title={files.map((f) => f.name).join(", ")}>
+        {files.length} attachment{files.length === 1 ? "" : "s"} not imported yet
+      </span>
+    ),
+  ].filter(Boolean);
+  if (!flags.length) return null;
+  return <span className="flex flex-wrap gap-1">{flags}</span>;
 }
 
 function Details({ issue: i, ws, update, memberName, collapsible }: {
@@ -454,6 +491,8 @@ const Composer = ({ ref, ws, issue, onTyping }: { ref: React.Ref<ComposerHandle>
   const [body, setBody] = useState("");
   const area = useRef<HTMLTextAreaElement>(null);
   const post = usePostMessage(ws, issue.key);
+  const delivery = useDeliverableChannels(ws);
+  const willDeliver = !isProviderChannel(issue.channel) || !!delivery.data?.deliverable.includes(issue.channel);
   useEffect(() => {
     const handle: ComposerHandle = { focus: (m) => { setMode(m); area.current?.focus(); } };
     if (typeof ref === "function") ref(handle);
@@ -485,7 +524,7 @@ const Composer = ({ ref, ws, issue, onTyping }: { ref: React.Ref<ComposerHandle>
         className="w-full resize-y rounded-xl border border-line bg-surface-2 px-3 py-2 text-sm text-fg outline-none focus:border-accent" />
       {post.isError && <p role="alert" className="m-0 text-[13px] text-danger">{errorMessage(post.error)}</p>}
       <div className="flex items-center justify-between gap-2">
-        <span className="text-[12px] text-muted">{internal ? "Never sent to the customer." : issue.channel === "api" || issue.channel === "ui" ? "Visible to the customer through the API." : "Sent to the customer's conversation."} ⌘↵ to send</span>
+        <span className="text-[12px] text-muted">{internal ? "Never sent to the customer." : !isProviderChannel(issue.channel) ? "Visible to the customer through the API." : willDeliver ? "Sent to the customer's conversation." : `Saved on the issue but not sent: ${CHANNEL_LABEL[issue.channel]} replies are not available yet.`} ⌘↵ to send</span>
         <button type="submit" disabled={!body.trim() || post.isPending} className={`${btn.primary} ${btn.md} shrink-0`}>
           {post.isPending ? "Sending…" : internal ? "Add note" : "Send"}
         </button>

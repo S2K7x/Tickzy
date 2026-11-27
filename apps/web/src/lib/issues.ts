@@ -22,7 +22,13 @@ export interface Issue {
 }
 export interface TimelineMessage {
   kind: "message"; id: string; created_at: string;
-  message: { id: string; visibility: "public" | "internal"; direction: "in" | "out"; author: { type: string; id: string | null; name: string | null }; body: { text: string }; source: string; delivery_state: string | null };
+  message: { id: string; visibility: "public" | "internal"; direction: "in" | "out"; author: { type: string; id: string | null; name: string | null }; body: { text: string }; source: string; delivery_state: string | null;
+    /** Channel facts (email): subject, sender_verified, automated_reason, spam, thread_unverified, attachments. */
+    meta?: MessageMeta };
+}
+export interface MessageMeta {
+  subject?: string; sender_verified?: boolean; automated?: boolean; automated_reason?: string; spam?: boolean; thread_unverified?: boolean;
+  attachments?: { name: string; type: string; size: number; inline: boolean }[]; attachments_imported?: boolean;
 }
 export interface TimelineEvent {
   kind: "event"; id: string; created_at: string;
@@ -177,6 +183,18 @@ export function useBulkUpdate(ws: string | null) {
     onSettled: () => qc.invalidateQueries({ queryKey: issuesKey(ws) }),
   });
 }
+
+/** Channels whose replies actually reach the customer (an outbound adapter exists on the server, ADR-026). */
+export function useDeliverableChannels(ws: string | null) {
+  return useQuery({
+    queryKey: ["channels-delivery", ws],
+    queryFn: () => api<{ deliverable: string[] }>("/v1/channels/delivery", { workspaceId: ws }),
+    enabled: !!ws,
+    staleTime: 5 * 60_000,
+  });
+}
+/** A conversation channel that needs a provider to deliver replies (api/ui conversations are read through the API). */
+export const isProviderChannel = (channel: string) => channel === "slack" || channel === "email" || channel === "widget";
 
 export function usePostMessage(ws: string | null, ref: string) {
   const qc = useQueryClient();

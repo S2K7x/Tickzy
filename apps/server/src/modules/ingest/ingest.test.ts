@@ -20,7 +20,8 @@ import { processInboundEvent, purgeInboundEvents } from "./processor.ts";
 const SECRET = "test-signing-secret";
 const sign = (raw: string, ts: number, secret = SECRET) => `v0=${createHmac("sha256", secret).update(`v0:${ts}:${raw}`).digest("hex")}`;
 const processed: string[] = [];
-let failNext = 0;
+/** Event ids whose processing throws, with how many times. */
+const failTimes = new Map<string, number>();
 
 function fakeChannel(kind: "slack" | "email"): InboundChannel {
   return {
@@ -45,7 +46,8 @@ function fakeChannel(kind: "slack" | "email"): InboundChannel {
     },
     async process(tx: Tx, ev: StoredInboundEvent) {
       const p = ev.payload as Record<string, string>;
-      if (failNext > 0) { failNext--; throw new Error("provider hiccup"); }
+      const left = failTimes.get(ev.providerEventId) ?? 0;
+      if (left > 0) { failTimes.set(ev.providerEventId, left - 1); throw new Error("provider hiccup"); }
       if (p.kind === "noise") return "ignored";
       await recordInboundMessage(tx, ev.workspaceId, {
         channel: kind, threadKey: p.thread ?? p.event_id!, endpointId: ev.endpointId, externalId: p.event_id!,
@@ -172,13 +174,27 @@ describe("processing (worker side)", () => {
   it("records failures without the payload, retries, and marks the event failed on the last attempt", async () => {
     await send("slack", { event_id: "Ev_fail", team: "T_ACME", text: "Will fail" });
     const ev = (await eventRow(wsA, "Ev_fail"))!;
-    failNext = 2;
+    failTimes.set("Ev_fail", 2);
     await expect(processInboundEvent(t.database.db, registry, { workspaceId: wsA, inboundEventId: ev.id, finalAttempt: false }, () => undefined)).rejects.toThrow("provider hiccup");
     expect(await eventRow(wsA, "Ev_fail")).toMatchObject({ status: "received", attempts: 1, lastError: "provider hiccup" });
     await processInboundEvent(t.database.db, registry, { workspaceId: wsA, inboundEventId: ev.id, finalAttempt: true }, () => undefined);
     expect(await eventRow(wsA, "Ev_fail")).toMatchObject({ status: "failed", attempts: 2 });
     const issues = (await app.inject({ url: "/v1/issues?q=Will%20fail", headers: auth(alice, wsA) })).json().data;
     expect(issues).toHaveLength(0); // the failed attempts left nothing behind (savepoint rolled back)
+  });
+
+  it("processes a workspace's events in arrival order even when a later event's job runs first", async () => {
+    await send("slack", { event_id: "Ev_order_1", team: "T_ACME", text: "first" });
+    await send("slack", { event_id: "Ev_order_2", team: "T_ACME", text: "second" });
+    const second = (await eventRow(wsA, "Ev_order_2"))!;
+    const mark = processed.length;
+    await processInboundEvent(t.database.db, registry, { workspaceId: wsA, inboundEventId: second.id, finalAttempt: false }, () => undefined);
+    const order = processed.slice(mark).filter((id) => id.startsWith("Ev_order_"));
+    expect(order).toEqual(["Ev_order_1", "Ev_order_2"]);
+    expect((await eventRow(wsA, "Ev_order_1"))!.status).toBe("processed");
+    const first = (await eventRow(wsA, "Ev_order_1"))!;
+    await processInboundEvent(t.database.db, registry, { workspaceId: wsA, inboundEventId: first.id, finalAttempt: false }, () => undefined); // its own job: no-op
+    expect(processed.filter((id) => id === "Ev_order_1")).toHaveLength(1);
   });
 
   it("end to end through the real worker: webhook → outbox → queue → channel → issue", async () => {

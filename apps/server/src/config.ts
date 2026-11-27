@@ -31,6 +31,15 @@ const ConfigSchema = z
     INGEST_PER_WORKSPACE_PER_MIN: z.coerce.number().int().min(1).default(600),
     /** Days raw provider payloads (inbound_events) are kept once handled (threat model §6.1). */
     INBOUND_RETENTION_DAYS: z.coerce.number().int().min(1).max(365).default(30),
+    /**
+     * Inbound email (T-302a, ADR-033). The domain whose MX points at Postmark (forwarding addresses live on it) and
+     * the HTTP Basic credentials embedded in Postmark's inbound webhook URL. Email is enabled only when all are set.
+     */
+    // Operator-supplied config (not request input), length-capped by the lookahead.
+    // eslint-disable-next-line security/detect-unsafe-regex
+    INBOUND_EMAIL_DOMAIN: z.string().regex(/^(?=.{3,253}$)([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$/, "a lower-case domain name").optional(),
+    POSTMARK_INBOUND_USER: z.string().min(8).max(100).optional(),
+    POSTMARK_INBOUND_PASSWORD: z.string().min(24, "use at least 24 random characters").max(200).optional(),
     /** Google / Microsoft sign-in (T-101b, ADR-024). A provider is offered only when its client id and secret are set. */
     GOOGLE_CLIENT_ID: z.string().optional(),
     GOOGLE_CLIENT_SECRET: z.string().optional(),
@@ -50,6 +59,10 @@ const ConfigSchema = z
       if (c.NODE_ENV === "production" && !c[key].startsWith("https://")) {
         ctx.addIssue({ code: "custom", path: [key], message: "identity provider issuers must use https in production" });
       }
+    }
+    const email = [c.INBOUND_EMAIL_DOMAIN, c.POSTMARK_INBOUND_USER, c.POSTMARK_INBOUND_PASSWORD].filter(Boolean).length;
+    if (email !== 0 && email !== 3) {
+      ctx.addIssue({ code: "custom", path: ["INBOUND_EMAIL_DOMAIN"], message: "set INBOUND_EMAIL_DOMAIN, POSTMARK_INBOUND_USER and POSTMARK_INBOUND_PASSWORD together" });
     }
     if (c.NODE_ENV === "production" && !c.COOKIE_SECURE) {
       ctx.addIssue({ code: "custom", path: ["COOKIE_SECURE"], message: "cookies must be Secure in production" });

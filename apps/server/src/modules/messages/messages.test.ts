@@ -61,6 +61,10 @@ beforeAll(async () => {
 afterAll(async () => { await app.close(); await t.teardown(); });
 
 describe("posting messages (T-205)", () => {
+  it("reports the channels with a registered delivery adapter", async () => {
+    expect((await app.inject({ url: "/v1/channels/delivery", headers: H() })).json()).toEqual({ deliverable: ["email"] });
+  });
+
   it("a reply on an app-created issue has nothing to deliver; it is on the timeline with its author", async () => {
     const res = await post("ACME-1", { body: "Thanks — looking into it", visibility: "public" });
     expect(res.statusCode).toBe(201);

@@ -41,6 +41,8 @@ const TimelineItem = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("message"), id: z.string(), created_at: z.string(), message: z.object({
     id: z.string(), visibility: z.enum(["public", "internal"]), direction: z.enum(["in", "out"]), author: z.object({ type: z.string(), id: z.string().nullable(), name: z.string().nullable() }),
     body: z.object({ text: z.string(), ast: z.unknown() }), source: z.string(), delivery_state: z.string().nullable(), edited_at: z.string().nullable(),
+    /** Channel facts (email: subject, sender_verified, automated_reason, spam, thread_unverified, attachments). */
+    meta: z.record(z.string(), z.unknown()),
   }) }),
   z.object({ kind: z.literal("event"), id: z.string(), created_at: z.string(), event: z.object({ type: z.string(), actor: z.object({ type: z.string(), id: z.string().nullable() }), data: z.record(z.string(), z.unknown()) }) }),
 ]);

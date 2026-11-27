@@ -25,6 +25,7 @@ import { searchRoutes } from "./modules/search/routes.ts";
 import { registerSecurityHeaders } from "./http/security-headers.ts";
 import { taxonomyRoutes } from "./modules/taxonomy/routes.ts";
 import { ingestRoutes } from "./modules/ingest/routes.ts";
+import { emailRoutes } from "./modules/email/routes.ts";
 import { createIngestRegistry, type IngestRegistry } from "./modules/ingest/channel.ts";
 import { viewRoutes } from "./modules/views/routes.ts";
 import { realtimeGateway } from "./modules/realtime/gateway.ts";
@@ -34,7 +35,7 @@ import { createApiTokenService } from "./modules/api-tokens/service.ts";
 
 export interface AppDeps {
   config: Pick<Config, "LOG_LEVEL" | "AUTH_DEV_MODE" | "APP_ORIGIN" | "ALLOWED_ORIGINS" | "COOKIE_SECURE" | "TRUST_PROXY" | "RATE_LIMIT_PER_MIN" | "RATE_LIMIT_IP_PER_MIN" | "RATE_LIMIT_AUTH_PER_MIN"> &
-    Partial<Pick<Config, "INGEST_PER_WORKSPACE_PER_MIN">> &
+    Partial<Pick<Config, "INGEST_PER_WORKSPACE_PER_MIN" | "INBOUND_EMAIL_DOMAIN">> &
     Partial<Pick<Config, "GOOGLE_CLIENT_ID" | "GOOGLE_CLIENT_SECRET" | "GOOGLE_ISSUER" | "MICROSOFT_CLIENT_ID" | "MICROSOFT_CLIENT_SECRET" | "MICROSOFT_ISSUER">>;
   database: Database;
   email: EmailTransport;
@@ -120,6 +121,7 @@ export async function buildApp({ config, database, email, rateLimitStore = new M
   await app.register(searchRoutes(database.db));
   await app.register(taxonomyRoutes(database.db));
   await app.register(viewRoutes(database.db));
+  await app.register(emailRoutes(database.db, { inboundDomain: config.INBOUND_EMAIL_DOMAIN }));
   const realtime = realtimeGateway({
     db: database.db, pool: database.pool, sessions: auth, allowedOrigins: allowedOrigins(config),
     log: (msg, err) => app.log.error({ err }, msg), ...(realtimeSweepMs ? { sweepMs: realtimeSweepMs } : {}),
